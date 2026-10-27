@@ -8,7 +8,7 @@ A single-page travel planner for mainland China, Hong Kong and Macau. Open `inde
 3. Trip style: sightseeing, culture & history, food, adventure, nature, relaxing, shopping, nightlife, family — or "Other" with your own description
 4. Nights in each city (the planner checks they add up to days − 1, with a one-click fix)
 
-Plus pace (relaxed / balanced) and hotel budget.
+Plus pace (relaxed / balanced), hotel budget, passport (Australian / other) and home airport (Sydney / elsewhere). With an Australian passport and Sydney selected, visa notes, flights, consular contacts, insurance and return-customs advice are tailored for Australians.
 
 ## What you get
 - **Day-by-day itinerary** split into Morning, Evening and Night, with an alternative option for each slot

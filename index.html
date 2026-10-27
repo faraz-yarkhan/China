@@ -288,6 +288,20 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
         </div>
       </div>
       <div class="row">
+        <span class="hint" style="width:62px">Passport</span>
+        <div class="seg" role="radiogroup" aria-label="Passport">
+          <label><input type="radio" name="passport" id="ppAU" value="au" checked><span>Australian</span></label>
+          <label><input type="radio" name="passport" id="ppOther" value="other"><span>Other</span></label>
+        </div>
+      </div>
+      <div class="row">
+        <span class="hint" style="width:62px">Fly from</span>
+        <div class="seg" role="radiogroup" aria-label="Home airport">
+          <label><input type="radio" name="home" id="homeSYD" value="syd" checked><span>Sydney</span></label>
+          <label><input type="radio" name="home" id="homeOther" value="other"><span>Elsewhere</span></label>
+        </div>
+      </div>
+      <div class="row">
         <span class="hint" style="width:62px">Hotels</span>
         <div class="seg" role="radiogroup" aria-label="Hotel budget">
           <label><input type="radio" name="budget" id="budBudget" value="budget"><span>Budget</span></label>

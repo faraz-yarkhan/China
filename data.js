@@ -860,3 +860,22 @@ const ROUTES = {
   "cq|hk": "Fly ~2 h.",
   "zjj|hk": "Fly to Hong Kong or Shenzhen (limited flights), or high-speed train via Changsha South (~5–6 h total).",
 };
+
+/* Flights between Sydney (SYD) and each destination. Nonstop routes checked October 2026;
+   airlines and schedules change each season, so confirm on the airline's site before booking. */
+const SYD_FLIGHTS = {
+  bj: { direct: true, airport: "Beijing Capital (PEK)", text: "Nonstop with Air China, about 11.5–12 h. Otherwise connect in Shanghai, Guangzhou or Hong Kong." },
+  sh: { direct: true, airport: "Shanghai Pudong (PVG)", text: "Nonstop with China Eastern (also sold by Qantas as a codeshare) and Juneyao Air, about 10.5–11 h. China Eastern's overnight flight leaves Sydney late evening and lands around 05:00." },
+  gz: { direct: true, airport: "Guangzhou Baiyun (CAN)", text: "Nonstop with China Southern, several flights a day, about 9–9.5 h." },
+  cd: { direct: true, airport: "Chengdu Tianfu (TFU)", text: "Nonstop with Sichuan Airlines (a few flights a week), about 10–11 h. Otherwise connect in Guangzhou or Shanghai." },
+  cq: { direct: false, airport: "Chongqing Jiangbei (CKG)", text: "Nonstop service has been limited or seasonal; most travellers connect in Guangzhou, Shanghai or Chengdu (~13–16 h total)." },
+  xa: { direct: false, airport: "Xi'an Xianyang (XIY)", text: "No nonstop. Connect in Guangzhou, Shanghai or Beijing (~14–17 h total)." },
+  hz: { direct: false, airport: "Hangzhou Xiaoshan (HGH)", text: "No regular nonstop. Easiest: fly to Shanghai Pudong, then high-speed train to Hangzhou (~1 h from Hongqiao; ~2 h from Pudong)." },
+  su: { direct: false, airport: "Shanghai (PVG/SHA)", text: "Fly to Shanghai Pudong (nonstop, ~11 h), then train to Suzhou (~1.5 h from Pudong)." },
+  sz: { direct: false, airport: "Shenzhen Bao'an (SZX)", text: "No regular nonstop. Fly to Hong Kong (~9.5 h) and take the high-speed train from West Kowloon (~15–20 min), or fly to Guangzhou." },
+  gl: { direct: false, airport: "Guilin Liangjiang (KWL)", text: "No nonstop. Fly to Guangzhou (~9 h) and take the high-speed train (~2.5–3 h), or connect by air." },
+  ys: { direct: false, airport: "Guilin Liangjiang (KWL)", text: "No nonstop. Fly to Guangzhou (~9 h), then high-speed train to Yangshuo (~2.5 h)." },
+  zjj: { direct: false, airport: "Zhangjiajie Hehua (DYG)", text: "No nonstop. Connect via Guangzhou, Shanghai or Chengdu, or fly to Changsha and take the high-speed train." },
+  hk: { direct: true, airport: "Hong Kong (HKG)", text: "Nonstop with Cathay Pacific (several a day) and Qantas, about 9–9.5 h. Overnight southbound flights land in Sydney early morning." },
+  mo: { direct: false, airport: "Hong Kong (HKG) or Macau (MFM)", text: "No nonstop. Fly to Hong Kong (~9.5 h), then the Hong Kong–Zhuhai–Macao Bridge bus (~45 min) or the TurboJET ferry from Sheung Wan (~1 h)." },
+};

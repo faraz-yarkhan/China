@@ -23,7 +23,7 @@
 
   /* ---------- state ---------- */
   const DEFAULT = {
-    days: 10, start: "", pace: "balanced", budget: "mid",
+    days: 10, start: "", pace: "balanced", budget: "mid", passport: "au", home: "syd",
     types: ["sightseeing", "culture", "food"], other: "",
     stops: [
       { city: "bj", nights: 3, places: ["bj-0", "bj-3"] },
@@ -32,7 +32,7 @@
       { city: "hk", nights: 2, places: [] },
     ],
   };
-  let state = load("form") || structuredCloneSafe(DEFAULT);
+  let state = Object.assign(structuredCloneSafe(DEFAULT), load("form") || {});
   let isExample = !load("form");
 
   function structuredCloneSafe(o) { return JSON.parse(JSON.stringify(o)); }
@@ -99,6 +99,27 @@
     const located = city.halal.filter((h) => h.ll).map((h) => ({ ...h, d: km(ll, h.ll) })).sort((a, b) => a.d - b.d).slice(0, n);
     const general = city.halal.filter((h) => !h.ll);
     return { located, general, far: !located.length || located[0].d > 4 };
+  }
+
+  /* ---------- Australians & Sydney ---------- */
+  const isAU = () => state.passport === "au";
+  const fromSyd = () => state.home === "syd";
+  // Nights spent in each unbroken stretch of the mainland (each HK/Macau visit ends a stretch)
+  function mainlandStretches() {
+    const out = []; let cur = 0;
+    state.stops.forEach((st) => {
+      if (CITIES[st.city].region === "mainland") cur += st.nights;
+      else if (cur) { out.push(cur); cur = 0; }
+    });
+    if (cur) out.push(cur);
+    return out;
+  }
+  function sydLine(id, dir) {
+    const f = SYD_FLIGHTS[id];
+    if (!f) return "";
+    return dir === "in"
+      ? `<b>From Sydney:</b> ${esc(f.text)} Arrive at ${esc(f.airport)}. China is 2 h behind Sydney (3 h during Australian daylight saving), so jet lag is minimal.`
+      : `<b>Back to Sydney:</b> ${esc(f.text)} Fly out of ${esc(f.airport)}.`;
   }
 
   /* ---------- itinerary engine ---------- */
@@ -239,6 +260,8 @@
     $("#otherText").value = state.other || "";
     document.querySelector(`input[name=pace][value=${state.pace}]`).checked = true;
     document.querySelector(`input[name=budget][value=${state.budget}]`).checked = true;
+    document.querySelector(`input[name=passport][value=${state.passport}]`).checked = true;
+    document.querySelector(`input[name=home][value=${state.home}]`).checked = true;
     renderStops();
   }
 
@@ -295,6 +318,8 @@
     state.other = $("#type-other").checked ? $("#otherText").value.trim() : "";
     state.pace = document.querySelector("input[name=pace]:checked").value;
     state.budget = document.querySelector("input[name=budget]:checked").value;
+    state.passport = document.querySelector("input[name=passport]:checked").value;
+    state.home = document.querySelector("input[name=home]:checked").value;
   }
 
   function bindForm() {
@@ -372,16 +397,16 @@
         ${day.friday && (s.part === "m" || s.part === "full") ? jumuah(city, p.ll) : ""}
         ${eatHTML(s.eat)}`;
     } else if (s.type === "arrive") {
-      body = `<div class="travel"><b class="k">Arrive & check in</b><span>${esc(s.text)}</span><span>Check in to your hotel in <b>${esc(city.stay.area)}</b>, rest, and change money/test Alipay if you haven't.</span></div>`;
+      body = `<div class="travel"><b class="k">Arrive & check in</b>${fromSyd() ? `<span>${sydLine(day.cityId, "in")}</span>` : ""}<span>${esc(s.text)}</span><span>Check in to your hotel in <b>${esc(city.stay.area)}</b>, rest, and change money/test Alipay if you haven't.</span></div>`;
     } else if (s.type === "travel") {
       body = `<div class="travel"><b class="k">Travel day · ${esc(s.from.name)} → ${esc(s.to.name)}</b>
         <span>Check out after breakfast. ${esc(s.text)}</span>
-        ${s.border ? `<span><b>Border crossing:</b> passport out. Leaving or entering the mainland uses one visa entry — see Before you go.</span>` : ""}
+        ${s.border ? `<span><b>Border crossing:</b> passport out. ${isAU() ? (s.to.region === "mainland" ? "Australians: entering the mainland starts a fresh visa-free stay of up to 30 days." : s.to.region === "hk" ? "Australians: visa-free in Hong Kong for up to 90 days." : "Australians: visa-free entry to Macau.") : "Leaving or entering the mainland uses one visa entry — see Before you go."}</span>` : ""}
         <span><b>On arrival:</b> ${esc(s.arrive)}</span>
         <span>Check in to your hotel in <b>${esc(s.to.stay.area)}</b>.</span></div>
         ${eatHTML({ label: "Lunch on arrival (halal)", ...eatNear(s.to, s.to.stay.ll) })}`;
     } else if (s.type === "depart") {
-      body = `<div class="travel"><b class="k">Departure</b><span>Check out (usually by 12:00; ask the hotel to hold bags). ${esc(s.text)}</span></div>`;
+      body = `<div class="travel"><b class="k">Departure</b><span>Check out (usually by 12:00; ask the hotel to hold bags). ${esc(s.text)}</span>${fromSyd() ? `<span>${sydLine(day.cityId, "out")}</span>` : ""}${fromSyd() && isAU() ? `<span><b>Landing in Sydney:</b> declare all food, plant and animal products (many Chinese snacks contain meat, egg or seeds). Duty-free allowance: A$900 of goods, 2.25 L alcohol, 25 cigarettes.</span>` : ""}</div>`;
     } else if (s.type === "rest") {
       body = `<p class="act-name">Free time & rest</p><p class="act-desc">Keep this block open: nap, pray, do laundry, or revisit somewhere you liked. A relaxed pace keeps a 2-week trip enjoyable.</p>`;
     } else if (s.type === "free") {
@@ -425,7 +450,19 @@
     const notes = [];
     if (isExample) notes.push(["info", "Example", "This is a sample 10-day trip. Change anything on the left and press <b>Build my itinerary</b>."]);
     plan.warnings.forEach((w) => notes.push(["warn", "Didn't fit", esc(w)]));
-    if (hasMainland && (hasHK || hasMO)) {
+    if (isAU() && hasMainland) {
+      const longest = Math.max(...mainlandStretches());
+      if (longest > 30) notes.push(["warn", "Visa", `Your longest unbroken mainland stretch is <b>${longest} nights</b>. Australians get up to 30 days visa-free per entry, so either break it with a Hong Kong/Macau visit or apply for a tourist (L) visa.`]);
+      else notes.push(["good", "Visa", `No visa needed: Australian passports get up to 30 days visa-free per mainland entry (tourism, business, family visits, transit). Your longest mainland stretch is ${longest} nights${hasHK || hasMO ? ", and each re-entry from Hong Kong/Macau starts a fresh 30 days" : ""}.`]);
+      if (endD && endD > new Date("2026-12-31T23:59:59")) notes.push(["warn", "Visa", "The visa-free arrangement for Australians currently runs to <b>31 December 2026</b> and your trip goes past that date. Check Smartraveller for an extension before booking."]);
+    }
+    if (isAU() && hasHK) notes.push(["info", "Visa", "Hong Kong: Australians can stay up to 90 days without a visa."]);
+    if (fromSyd()) {
+      const a = SYD_FLIGHTS[ids[0]], z = SYD_FLIGHTS[ids[ids.length - 1]];
+      const same = ids[0] === ids[ids.length - 1];
+      notes.push(["info", "Flights", `Book ${same ? "a return" : "a <b>multi-city</b>"} ticket: Sydney → ${esc(CITIES[ids[0]].name)}${a && a.direct ? " (nonstop)" : " (via a connection)"}${same ? " and back" : `, then ${esc(CITIES[ids[ids.length - 1]].name)} → Sydney${z && z.direct ? " (nonstop)" : " (via a connection)"}`}. ${same ? "" : "Flying into one city and out of another avoids backtracking. "}Details are on Day 1 and the last day.`]);
+    }
+    if (!isAU() && hasMainland && (hasHK || hasMO)) {
       // Count mainland entries
       let entries = 0, inMain = false;
       ids.forEach((i) => { const m = CITIES[i].region === "mainland"; if (m && !inMain) entries++; inMain = m; });
@@ -515,8 +552,9 @@
   function prepHTML(ids, hasMainland, hasHK, hasMO) {
     const checklist = [
       "Passport valid for 6+ months after your return, with 2 blank pages",
-      "Check visa-free / transit eligibility for your passport, or apply for a visa (double/multiple entry if you go via Hong Kong or Macau)",
-      "Book flights in and out",
+      isAU() ? "Confirm Australian visa-free entry still applies for your dates (Smartraveller); keep each mainland stretch to 30 days or less" : "Check visa-free / transit eligibility for your passport, or apply for a visa (double/multiple entry if you go via Hong Kong or Macau)",
+      ...(isAU() ? ["Register your trip and subscribe to China and Hong Kong updates on Smartraveller", "Save the Consular Emergency Centre number: +61 2 6261 3305"] : []),
+      fromSyd() ? "Book a multi-city flight from Sydney: into your first city, out of your last" : "Book flights in and out",
       "Book intercity trains (12306 opens sales ~15 days ahead; Trip.com takes earlier requests and auto-books)",
       "Book hotels and confirm they accept foreign passports",
       "Reserve timed tickets: Forbidden City, National Museum, Shaanxi History Museum, Terracotta Army, Panda Base, Shanghai Museum (most open 7 days ahead and need your passport number)",
@@ -527,7 +565,7 @@
       "Save hotel names and addresses in Chinese (screenshot them)",
       "Tell your bank you're travelling; carry two cards from different networks (Visa + Mastercard)",
       "Carry ¥500–1,000 in cash for small shops and emergencies",
-      "Plug adapters: mainland uses Type A/C/I (220 V); Hong Kong and Macau use Type G (UK)",
+      isAU() ? "Plugs: Australian plugs fit most mainland sockets (Type I, 220 V); buy a Type G (UK) adapter for Hong Kong and Macau" : "Plug adapters: mainland uses Type A/C/I (220 V); Hong Kong and Macau use Type G (UK)",
       "Power bank with the Chinese 3C mark if flying domestically (others are refused at security)",
       "Copies of passport and visa: on paper and on your phone",
       "Prescription medicines in original packaging with a copy of the prescription",
@@ -536,7 +574,23 @@
     return `
     <section class="panel">
       <h3>Visas & entry forms</h3>
-      ${hasMainland ? `<h4>Mainland China — three ways in</h4>
+      ${hasMainland && isAU() ? `<h4>Mainland China — Australian passport</h4>
+      <ul>
+        <li><b>No visa needed for up to 30 days per entry</b> for tourism, business, visiting family or friends, and transit. The arrangement currently runs until <b>31 December 2026</b> — check Smartraveller if you travel later.</li>
+        <li>Each entry is counted separately, so leaving for Hong Kong or Macau and coming back starts a new 30 days.</li>
+        <li>Work, study and journalism still need a visa. Border officers make the final call, so carry your return ticket and hotel bookings.</li>
+        <li>Staying longer than 30 days in one go? Apply for a tourist (L) visa through the Chinese Visa Application Service Centre in Sydney (or Melbourne, Brisbane, Perth): fill in the online form at visaforchina.cn, then attend in person.</li>
+        <li>Passport: valid for at least 6 months after you get home, with blank pages.</li>
+        <li><b>Dual Australian–Chinese nationals:</b> China doesn't recognise dual nationality. Enter and leave on your Australian passport; if you also hold Chinese documents, Australian consular help may be limited. Read Smartraveller's dual-national advice before you go.</li>
+      </ul>
+      <h4>On arrival</h4>
+      <ul>
+        <li>Fill in the foreigner arrival card (paper cards at the airport, or pre-fill online via the National Immigration Administration's website/app where offered). Write your first hotel's address.</li>
+        <li>Fingerprints and a photo are taken at immigration. Tell the officer you're visiting for tourism under visa-free entry.</li>
+        <li>Hotels register you with the police automatically. Staying in a private home means registering at the local police station within 24 h.</li>
+        <li>Carry your passport at all times: it's your ticket for trains, museums and many attractions.</li>
+      </ul>` : ""}
+      ${hasMainland && !isAU() ? `<h4>Mainland China — three ways in</h4>
       <ol>
         <li><b>Visa-free entry (up to 30 days).</b> China has rapidly expanded unilateral and mutual visa-free entry since 2023–2026 — it now covers most of Europe, Australia, New Zealand, Japan, South Korea, several Gulf, Latin American and ASEAN states (e.g. Malaysia, Singapore, Thailand, Saudi Arabia, UAE, Qatar). The list keeps changing: check your passport on the <b>National Immigration Administration</b> site (nia.gov.cn) or your local Chinese embassy site before booking.</li>
         <li><b>240-hour visa-free transit.</b> Citizens of 55 countries (including the US, UK, Canada and most of Europe) can stay up to 10 days if they fly <i>from</i> one country and leave <i>to a different</i> country or region (Hong Kong and Macau count). You need a confirmed onward ticket, must enter and leave through designated ports, and stay within the permitted provinces. Tell the airline at check-in you're using visa-free transit.</li>
@@ -555,18 +609,23 @@
         <li>Hotels register you with the police automatically. If you stay in a private home, you must register at the local police station within 24 h.</li>
         <li>Carry your passport at all times: it's your ticket for trains, museums and many attractions.</li>
       </ul>` : ""}
-      ${hasHK ? `<h4>Hong Kong</h4><p>Visa-free for 170+ nationalities (7–180 days). Indian passport holders must complete the free online <b>Pre-arrival Registration</b> first. Others needing a visa apply through the HK Immigration Department (immd.gov.hk). No arrival form or health declaration needed.</p>` : ""}
-      ${hasMO ? `<h4>Macau</h4><p>Visa-free for most nationalities for 30–90 days; some get a visa on arrival. Check the Macau Public Security Police site (fsm.gov.mo).</p>` : ""}
-      <div class="note warn"><b class="tag">Important</b><span>Hong Kong and Macau are outside mainland immigration. Going mainland → Hong Kong → mainland uses two entries.</span></div>
+      ${hasHK && isAU() ? `<h4>Hong Kong</h4><p>Australians: visa-free for up to 90 days. Passport must be valid for at least 1 month beyond your stay. No arrival card or health form.</p>` : ""}
+      ${hasMO && isAU() ? `<h4>Macau</h4><p>Australians can visit without a visa (generally up to 30 days). Confirm on Smartraveller's Macau page.</p>` : ""}
+      ${hasHK && !isAU() ? `<h4>Hong Kong</h4><p>Visa-free for 170+ nationalities (7–180 days). Indian passport holders must complete the free online <b>Pre-arrival Registration</b> first. Others needing a visa apply through the HK Immigration Department (immd.gov.hk). No arrival form or health declaration needed.</p>` : ""}
+      ${hasMO && !isAU() ? `<h4>Macau</h4><p>Visa-free for most nationalities for 30–90 days; some get a visa on arrival. Check the Macau Public Security Police site (fsm.gov.mo).</p>` : ""}
+      <div class="note ${isAU() ? "info" : "warn"}"><b class="tag">${isAU() ? "Good to know" : "Important"}</b><span>Hong Kong and Macau are outside mainland immigration. Going mainland → Hong Kong → mainland counts as two mainland entries${isAU() ? " — fine for Australians, since each visa-free entry gets its own 30 days" : ""}.</span></div>
     </section>
 
+    ${fromSyd() ? flightsPanel(ids) : ""}
+    ${isAU() ? ausPanel(ids) : ""}
     <section class="panel">
       <h3>Insurance</h3>
       <ul>
-        <li><b>Not usually required</b> for a Chinese tourist visa, but strongly recommended: international hospitals in big cities and all private care in Hong Kong are expensive.</li>
+        ${isAU() ? "<li><b>Medicare doesn't cover you in China or Hong Kong</b> (Australia has no reciprocal health agreement with either). Smartraveller's line: if you can't afford travel insurance, you can't afford to travel.</li>" : ""}
+        <li><b>Not usually required</b> for entry, but strongly recommended: international hospitals in big cities and all private care in Hong Kong are expensive.</li>
         <li>Look for: medical cover (aim for US$100,000+), emergency evacuation/repatriation, trip cancellation and delay, baggage and phone theft.</li>
         <li><b>Adventure add-on:</b> check that hiking (Huashan, Dragon's Back), rafting, glass bridges, climbing or bungee are covered — many basic policies exclude them.</li>
-        <li>Examples to compare: World Nomads, SafetyWing, Allianz Travel, or your credit card's cover. Read the exclusions.</li>
+        <li>${isAU() ? "Australian options to compare: Cover-More, Allianz Travel, World Nomads, Fast Cover, or your credit card's complimentary cover (it usually only applies if you paid the trip on that card). Check pre-existing conditions are declared." : "Examples to compare: World Nomads, SafetyWing, Allianz Travel, or your credit card's cover."} Read the exclusions.</li>
       </ul>
     </section>
 
@@ -639,6 +698,42 @@
       <h3>Pre-departure checklist</h3>
       <p class="hint">Ticks are saved in this browser.</p>
       <ul class="checklist">${checklist.map((c, i) => `<li><input type="checkbox" id="chk-${i}" data-chk="${i}"><label for="chk-${i}"><span>${esc(c)}</span></label></li>`).join("")}</ul>
+    </section>`;
+  }
+
+  function flightsPanel(ids) {
+    const first = ids[0], last = ids[ids.length - 1];
+    const rows = Object.entries(SYD_FLIGHTS).filter(([id]) => ids.includes(id)).concat(
+      Object.entries(SYD_FLIGHTS).filter(([id]) => !ids.includes(id) && SYD_FLIGHTS[id].direct));
+    return `<section class="panel">
+      <h3>Flights to and from Sydney</h3>
+      <p>Suggested ticket: <b>Sydney → ${esc(CITIES[first].name)}</b>${first === last ? " and back" : `, returning <b>${esc(CITIES[last].name)} → Sydney</b> (book as a multi-city ticket on the airline site, Google Flights or Skyscanner)`}. Overnight flights from Sydney usually land in China early in the morning; flights home are often overnight, landing in Sydney in the morning.</p>
+      <div class="tbl-wrap"><table><thead><tr><th>City</th><th>Airport</th><th>From Sydney</th></tr></thead><tbody>
+        ${rows.map(([id, f]) => `<tr><td><b>${esc(CITIES[id].name)}</b>${id === first ? " · start" : ""}${id === last ? " · end" : ""}${!ids.includes(id) ? " · other nonstop option" : ""}</td><td>${esc(f.airport)}</td><td>${f.direct ? '<b style="color:var(--jade)">Nonstop</b> · ' : ""}${esc(f.text)}</td></tr>`).join("")}
+      </tbody></table></div>
+      <ul>
+        <li>Nonstop cities from Sydney: Beijing, Shanghai, Guangzhou, Chengdu and Hong Kong. Everywhere else needs a connection or a train from one of these.</li>
+        <li>Chinese carriers (China Southern, China Eastern, Air China, Sichuan) are usually cheapest and include onward domestic connections on one ticket. Cathay Pacific and Qantas serve Hong Kong.</li>
+        <li>Ask the airline for a Muslim meal (MOML) when booking — at least 24–48 h before departure.</li>
+        <li>Schedules change each season. Confirm days and times on the airline's site before you book.</li>
+      </ul>
+    </section>`;
+  }
+
+  function ausPanel(ids) {
+    const hk = ids.includes("hk") || ids.includes("mo");
+    return `<section class="panel">
+      <h3>For Australians</h3>
+      <ul>
+        <li><b>Smartraveller:</b> register your trip and subscribe to the China${hk ? " and Hong Kong" : ""} pages at smartraveller.gov.au for alerts. Check the current advice level before you go.</li>
+        <li><b>Emergencies abroad:</b> the 24-hour Consular Emergency Centre is <b>+61 2 6261 3305</b> (or 1300 555 135 from within Australia). Australia has an Embassy in Beijing and Consulates-General in Shanghai, Guangzhou, Chengdu and Shenyang${hk ? ", plus Hong Kong (which also covers Macau)" : ""}.</li>
+        <li><b>Laws to know:</b> respect local laws, which differ from Australia's — don't fly drones without permission, avoid photographing military or government sites, don't join unregistered religious gatherings or preach, and avoid political activity. Drug penalties are severe.</li>
+        <li><b>Medicines:</b> bring prescription medicines in their original packaging with a letter from your doctor. Some medicines legal in Australia are controlled in China; ask the Chinese Embassy if you're unsure.</li>
+        <li><b>Money:</b> link your Australian Visa or Mastercard to Alipay and WeChat Pay before you leave (verification texts go to your Australian number, so keep roaming on). Low-fee travel cards (e.g. Wise, ING, Macquarie, Up) save on foreign transaction fees. Check today's rate on XE.</li>
+        <li><b>Power:</b> mainland China uses the same angled Type I plug as Australia on most sockets (220 V, fine for Australian 230 V devices). Hong Kong and Macau need a Type G (UK) adapter.</li>
+        <li><b>Time:</b> China, Hong Kong and Macau are UTC+8 all year — 2 h behind Sydney, 3 h during Australian daylight saving (Oct–Apr).</li>
+        <li><b>Coming home:</b> declare food, plant and animal products on your arrival declaration (Australia is replacing the paper card with a digital Australia Travel Declaration in stages). Dried meats, many egg and dairy products, seeds and some herbal medicines are prohibited or must be inspected. Duty-free: A$900 of goods, 2.25 L alcohol, 25 cigarettes.</li>
+      </ul>
     </section>`;
   }
 
@@ -755,8 +850,8 @@
           if (s.p.tip) L.push(`    Tip: ${s.p.tip}`);
           if (s.eat && s.eat.located.length) L.push(`    ${s.eat.label}: ${s.eat.located.map((h) => h.n).join("; ")}`);
         } else if (s.type === "travel") L.push(`  ${w}: Travel ${s.from.name} → ${s.to.name}. ${s.text}`);
-        else if (s.type === "arrive") L.push(`  ARRIVE: ${s.text}`);
-        else if (s.type === "depart") L.push(`  DEPART: ${s.text}`);
+        else if (s.type === "arrive") L.push(`  ARRIVE: ${fromSyd() ? strip(sydLine(d.cityId, "in")) + " " : ""}${s.text}`);
+        else if (s.type === "depart") L.push(`  DEPART: ${s.text}${fromSyd() ? " " + strip(sydLine(d.cityId, "out")) : ""}`);
         else if (s.type === "rest") L.push(`  ${w}: Free time & rest`);
         else if (s.type === "free") L.push(`  ${w}: ${s.text}`);
       });

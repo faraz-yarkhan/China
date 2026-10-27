@@ -118,6 +118,13 @@ select { flex: 1 1 160px; min-width: 0; max-width: 100%; }
 .seg span { display: block; padding: 7px 12px; font-size: 14px; cursor: pointer; }
 .seg input:checked + span { background: var(--ink); color: var(--paper); }
 .seg input:focus-visible + span { outline: 2px solid var(--seal); outline-offset: -2px; }
+.check { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; cursor: pointer; }
+.check input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--seal); flex: none; }
+.suggest { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.badge { display: inline-block; font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.04em; padding: 2px 7px; border-radius: 4px; vertical-align: middle; white-space: nowrap; }
+.badge.top { background: var(--gold-soft); color: var(--gold); }
+.badge.pick { background: var(--seal-soft); color: var(--seal); }
+.badge.rec { background: var(--sky-soft); color: var(--sky); }
 .tally { font-family: var(--mono); font-size: 13px; padding: 8px 10px; border-radius: 8px; background: var(--paper); border: 1px dashed var(--line); display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: center; }
 .tally.bad { border-color: var(--seal); color: var(--seal); background: var(--seal-soft); }
 .tally.ok { border-color: var(--jade); color: var(--jade); background: var(--jade-soft); }
@@ -257,23 +264,31 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
     </div>
 
     <div class="field">
-      <span class="label"><span class="step">2</span> Cities & places, in travel order</span>
+      <span class="label"><span class="step">2</span> Where you fly in and out</span>
+      <div class="row"><label class="hint" for="arriveSel" style="width:92px">Arrive in</label><select id="arriveSel"></select></div>
+      <div class="row"><label class="hint" for="departSel" style="width:92px">Fly home from</label><select id="departSel"></select></div>
+      <label class="check" for="optimise"><input type="checkbox" id="optimise" checked> Arrange my cities in the best order for these airports</label>
+      <p class="hint">The trip starts in your arrival city and ends in your departure city. If either isn't one of your stops, day 1 or the last day includes the transfer.</p>
+    </div>
+
+    <div class="field">
+      <span class="label"><span class="step">3</span> Cities & places</span>
       <div class="row">
         <select id="citySel" aria-label="Choose a city to add"></select>
         <button type="button" class="btn" id="addCity">Add city</button>
       </div>
       <div class="stops" id="stops"></div>
-      <p class="hint">Pick places from each city's list, or leave it empty and the planner chooses the best fit for your trip style.</p>
+      <p class="hint">Pick places from each city's list, or leave it empty and we'll plan the top-rated places for your trip style.</p>
     </div>
 
     <div class="field">
-      <span class="label"><span class="step">3</span> Type of trip</span>
+      <span class="label"><span class="step">4</span> Type of trip</span>
       <div class="types" id="types"></div>
       <input type="text" id="otherText" placeholder="Describe it, e.g. photography, temples, mountains" aria-label="Other trip type" hidden>
     </div>
 
     <div class="field">
-      <span class="label"><span class="step">4</span> Nights per city</span>
+      <span class="label"><span class="step">5</span> Nights per city</span>
       <div class="tally" id="tally"></div>
       <p class="hint">Set nights on each city above. Nights should add up to days − 1 (the last day is your departure).</p>
     </div>

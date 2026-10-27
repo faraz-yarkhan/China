@@ -118,6 +118,13 @@ select { flex: 1 1 160px; min-width: 0; max-width: 100%; }
 .seg span { display: block; padding: 7px 12px; font-size: 14px; cursor: pointer; }
 .seg input:checked + span { background: var(--ink); color: var(--paper); }
 .seg input:focus-visible + span { outline: 2px solid var(--seal); outline-offset: -2px; }
+.check { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; cursor: pointer; }
+.check input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--seal); flex: none; }
+.suggest { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.badge { display: inline-block; font-family: var(--mono); font-size: 11px; font-weight: 500; letter-spacing: 0.04em; padding: 2px 7px; border-radius: 4px; vertical-align: middle; white-space: nowrap; }
+.badge.top { background: var(--gold-soft); color: var(--gold); }
+.badge.pick { background: var(--seal-soft); color: var(--seal); }
+.badge.rec { background: var(--sky-soft); color: var(--sky); }
 .tally { font-family: var(--mono); font-size: 13px; padding: 8px 10px; border-radius: 8px; background: var(--paper); border: 1px dashed var(--line); display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: center; }
 .tally.bad { border-color: var(--seal); color: var(--seal); background: var(--seal-soft); }
 .tally.ok { border-color: var(--jade); color: var(--jade); background: var(--jade-soft); }
@@ -257,23 +264,31 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
     </div>
 
     <div class="field">
-      <span class="label"><span class="step">2</span> Cities & places, in travel order</span>
+      <span class="label"><span class="step">2</span> Where you fly in and out</span>
+      <div class="row"><label class="hint" for="arriveSel" style="width:92px">Arrive in</label><select id="arriveSel"></select></div>
+      <div class="row"><label class="hint" for="departSel" style="width:92px">Fly home from</label><select id="departSel"></select></div>
+      <label class="check" for="optimise"><input type="checkbox" id="optimise" checked> Arrange my cities in the best order for these airports</label>
+      <p class="hint">The trip starts in your arrival city and ends in your departure city. If either isn't one of your stops, day 1 or the last day includes the transfer.</p>
+    </div>
+
+    <div class="field">
+      <span class="label"><span class="step">3</span> Cities & places</span>
       <div class="row">
         <select id="citySel" aria-label="Choose a city to add"></select>
         <button type="button" class="btn" id="addCity">Add city</button>
       </div>
       <div class="stops" id="stops"></div>
-      <p class="hint">Pick places from each city's list, or leave it empty and the planner chooses the best fit for your trip style.</p>
+      <p class="hint">Pick places from each city's list, or leave it empty and we'll plan the top-rated places for your trip style.</p>
     </div>
 
     <div class="field">
-      <span class="label"><span class="step">3</span> Type of trip</span>
+      <span class="label"><span class="step">4</span> Type of trip</span>
       <div class="types" id="types"></div>
       <input type="text" id="otherText" placeholder="Describe it, e.g. photography, temples, mountains" aria-label="Other trip type" hidden>
     </div>
 
     <div class="field">
-      <span class="label"><span class="step">4</span> Nights per city</span>
+      <span class="label"><span class="step">5</span> Nights per city</span>
       <div class="tally" id="tally"></div>
       <p class="hint">Set nights on each city above. Nights should add up to days − 1 (the last day is your departure).</p>
     </div>
@@ -1227,7 +1242,7 @@ const SYD_FLIGHTS = {
 
   /* ---------- state ---------- */
   const DEFAULT = {
-    days: 10, start: "", pace: "balanced", budget: "mid", passport: "au", home: "syd",
+    days: 10, start: "", pace: "balanced", budget: "mid", passport: "au", home: "syd", arrive: "bj", depart: "hk", optimise: true,
     types: ["sightseeing", "culture", "food"], other: "",
     stops: [
       { city: "bj", nights: 3, places: ["bj-0", "bj-3"] },
@@ -1236,7 +1251,9 @@ const SYD_FLIGHTS = {
       { city: "hk", nights: 2, places: [] },
     ],
   };
-  let state = Object.assign(structuredCloneSafe(DEFAULT), load("form") || {});
+  const saved = load("form");
+  if (saved && !("arrive" in saved)) Object.assign(saved, { arrive: "", depart: "", optimise: false });
+  let state = Object.assign(structuredCloneSafe(DEFAULT), saved || {});
   let isExample = !load("form");
 
   function structuredCloneSafe(o) { return JSON.parse(JSON.stringify(o)); }
@@ -1349,7 +1366,7 @@ const SYD_FLIGHTS = {
     const scored = pool.map((p) => {
       const chosen = sel.has(p.id);
       const match = p.t.filter((t) => prefs.types.has(t)).length;
-      let sc = (chosen ? 1000 : 0) + (p.r || 1) * 4 + match * 12;
+      let sc = (chosen ? 1000 : 0) + (p.r || 1) * 9 + match * 8;
       if (prefs.words.length) {
         const hay = (p.n + " " + p.d + " " + p.t.join(" ")).toLowerCase();
         if (prefs.words.some((w) => hay.includes(w))) sc += 14;
@@ -1365,7 +1382,9 @@ const SYD_FLIGHTS = {
 
   function activity(ctx, part, p, alt, prev) {
     const city = ctx.city;
-    const slot = { part, type: "act", p, alt, how: getThere(prev, p, city) };
+    const matched = TRIP_TYPES.filter((t) => (t.tags || [t.id]).some((x) => p.t.includes(x)) && ctx.prefs.types.has((t.tags || [t.id])[0])).map((t) => t.label);
+    const why = ctx.sel.has(p.id) ? ["pick", "Your pick"] : p.r === 3 ? ["top", "★ Top rated"] : matched.length ? ["rec", "Recommended · " + matched.slice(0, 2).join(", ")] : ["rec", "Recommended"];
+    const slot = { part, type: "act", p, alt, why, how: getThere(prev, p, city) };
     if (part === "m" || part === "full") slot.eat = { label: part === "full" ? "Lunch (halal)" : "Lunch nearby (halal)", ...eatNear(city, p.ll) };
     if (part === "n") slot.eat = { label: "Dinner nearby (halal)", ...eatNear(city, p.ll) };
     return slot;
@@ -1383,36 +1402,55 @@ const SYD_FLIGHTS = {
       return { id: st.city, city, used: usedByCity[st.city], sel: new Set(st.places), prefs, nights: st.nights, fullCount: 0 };
     });
 
+    const arriveId = s.arrive || stopCtx[0].id;
+    const departId = s.depart || stopCtx[stopCtx.length - 1].id;
+    if (arriveId !== stopCtx[0].id && km(CITIES[arriveId].stay.ll, stopCtx[0].city.stay.ll) > 700)
+      warnings.push(`You land in ${CITIES[arriveId].name} but your first stop is ${stopCtx[0].city.name}, a long onward journey on day 1. Consider adding ${CITIES[arriveId].name} as your first stop, or changing your arrival city.`);
+    if (departId !== stopCtx[stopCtx.length - 1].id && km(CITIES[departId].stay.ll, stopCtx[stopCtx.length - 1].city.stay.ll) > 700)
+      warnings.push(`Your last stop is ${stopCtx[stopCtx.length - 1].city.name} but you fly home from ${CITIES[departId].name}. Book the international flight for the evening, or travel there the day before.`);
+
     let dayIdx = 0;
     const dateFor = (i) => (startDate ? new Date(startDate.getTime() + i * 86400000) : null);
 
     stopCtx.forEach((ctx, si) => {
       for (let k = 0; k < ctx.nights; k++) {
         const kind = si === 0 && k === 0 ? "arrival" : k === 0 ? "transfer" : "full";
-        days.push(makeDay(ctx, kind, dateFor(dayIdx), si > 0 ? stopCtx[si - 1] : null));
+        days.push(makeDay(ctx, kind, dateFor(dayIdx), si > 0 ? stopCtx[si - 1] : null, arriveId));
         dayIdx++;
       }
     });
     const last = stopCtx[stopCtx.length - 1];
-    days.push(makeDay(last, "depart", dateFor(dayIdx), null));
+    days.push(makeDay(last, "depart", dateFor(dayIdx), null, departId));
 
     // Selected places that didn't fit
     stopCtx.forEach((ctx) => {
       const missed = [...ctx.sel].filter((id) => !ctx.used.has(id)).map((id) => ctx.city.places.find((p) => p.id === id)).filter(Boolean);
       if (missed.length) warnings.push(`${ctx.city.name}: no room for ${missed.map((p) => p.n).join(", ")}. Add a night there, or swap it for another pick (full-day trips need a full day, not an arrival or travel day).`);
     });
-    return { days, warnings, stops: stopCtx };
+    return { days, warnings, stops: stopCtx, arriveId, departId };
   }
 
-  function makeDay(ctx, kind, date, prevCtx) {
+  function travelSlot(fromId, toId, extra) {
+    const from = CITIES[fromId], to = CITIES[toId];
+    return Object.assign({ part: "m", type: "travel", from, to, text: routeText(fromId, toId), border: crossesBorder(fromId, toId), arrive: to.arrive }, extra);
+  }
+
+  function makeDay(ctx, kind, date, prevCtx, flyId) {
     const city = ctx.city;
     const hotel = hotelPoint(city);
     ctx.dow = date ? date.getDay() : null;
     const day = { kind, city, cityId: ctx.id, date, slots: [], friday: date && date.getDay() === 5 };
     let prev = hotel;
 
-    if (kind === "arrival") day.slots.push({ part: "m", type: "arrive", text: city.arrive, city });
-    if (kind === "transfer") day.slots.push({ part: "m", type: "travel", from: prevCtx.city, to: city, text: routeText(prevCtx.id, ctx.id), border: crossesBorder(prevCtx.id, ctx.id), arrive: city.arrive });
+    if (kind === "arrival") {
+      day.flyIn = flyId;
+      if (flyId === ctx.id) day.slots.push({ part: "m", type: "arrive", text: city.arrive, city, flyIn: flyId });
+      else {
+        day.slots.push({ part: "m", type: "arrive", via: true, city: CITIES[flyId], flyIn: flyId, text: `Clear immigration and customs in ${CITIES[flyId].name}, then continue straight to ${city.name}.` });
+        day.slots.push(travelSlot(flyId, ctx.id, { sameDay: true, part: "e" }));
+      }
+    }
+    if (kind === "transfer") day.slots.push(travelSlot(prevCtx.id, ctx.id));
 
     if (kind === "full") {
       ctx.fullCount++;
@@ -1427,14 +1465,21 @@ const SYD_FLIGHTS = {
         prev = a;
       }
     }
+    if (kind === "depart" && flyId !== ctx.id) {
+      day.flyOut = flyId;
+      day.slots.push(travelSlot(ctx.id, flyId, { toFlight: true }));
+      day.slots.push({ part: "e", type: "depart", text: CITIES[flyId].depart, flyOut: flyId });
+      return day;
+    }
     if (kind === "depart") {
+      day.flyOut = flyId;
       const [a, alt] = pick(ctx, "m", prev, { near: true });
       if (a) { ctx.used.add(a.id); day.slots.push(activity(ctx, "m", a, alt, prev)); day.back = getThere(a, hotel, city); }
-      day.slots.push({ part: "e", type: "depart", text: city.depart });
+      day.slots.push({ part: "e", type: "depart", text: city.depart, flyOut: flyId });
       return day;
     }
 
-    const hadFull = day.slots.some((x) => x.part === "full");
+    const hadFull = day.slots.some((x) => x.part === "full" || x.sameDay);
     if (!hadFull) {
       const restDay = kind === "full" && ctx.prefs.pace === "relaxed" && ctx.prefs.fullTotal % 2 === 0;
       if (restDay) {
@@ -1452,6 +1497,38 @@ const SYD_FLIGHTS = {
     return day;
   }
 
+  /* Put the arrival city first, the departure city last, and order the rest by shortest hops */
+  function arrangeStops() {
+    if (!state.optimise || state.stops.length < 2) return false;
+    const before = state.stops.map((x) => x.city).join();
+    const rest = state.stops.slice();
+    const take = (id, fromEnd) => {
+      const i = fromEnd ? rest.map((x) => x.city).lastIndexOf(id) : rest.findIndex((x) => x.city === id);
+      return i >= 0 ? rest.splice(i, 1)[0] : null;
+    };
+    const head = state.arrive ? take(state.arrive) : null;
+    const tail = state.depart && rest.length ? take(state.depart, true) : null;
+    // Try every order of the middle stops (≤ 8, so at most 40,320) and keep the shortest.
+    // Each crossing between the mainland and Hong Kong/Macau costs an extra 800 km so those stay together.
+    const startId = head ? head.city : state.arrive || null;
+    const endId = tail ? tail.city : state.depart || null;
+    const leg = (a, b) => (a && b ? km(CITIES[a].stay.ll, CITIES[b].stay.ll) + (CITIES[a].region !== CITIES[b].region ? 800 : 0) : 0);
+    const cost = (seq) => { let c = 0, prevId = startId; seq.forEach((x) => { c += leg(prevId, x.city); prevId = x.city; }); return c + leg(prevId, endId); };
+    let best = rest.slice();
+    if (rest.length <= 8) {
+      let bestCost = Infinity;
+      const permute = (arr, k) => {
+        if (k === arr.length) { const c = cost(arr); if (c < bestCost) { bestCost = c; best = arr.slice(); } return; }
+        for (let i = k; i < arr.length; i++) { [arr[k], arr[i]] = [arr[i], arr[k]]; permute(arr, k + 1); [arr[k], arr[i]] = [arr[i], arr[k]]; }
+      };
+      permute(rest.slice(), 0);
+    }
+    const ordered = (head ? [head] : []).concat(best, tail ? [tail] : []);
+    state.stops = ordered;
+    return ordered.map((x) => x.city).join() !== before;
+  }
+  let reordered = false;
+
   /* ---------- form ---------- */
   function renderForm() {
     $("#days").value = state.days;
@@ -1464,6 +1541,12 @@ const SYD_FLIGHTS = {
     $("#otherText").value = state.other || "";
     document.querySelector(`input[name=pace][value=${state.pace}]`).checked = true;
     document.querySelector(`input[name=budget][value=${state.budget}]`).checked = true;
+    const cityOpts = (first) => `<option value="">${first}</option>` + Object.entries(CITIES).map(([id, c]) => `<option value="${id}">${esc(c.name)} ${c.zh}</option>`).join("");
+    $("#arriveSel").innerHTML = cityOpts("Same as my first city");
+    $("#departSel").innerHTML = cityOpts("Same as my last city");
+    $("#arriveSel").value = state.arrive || "";
+    $("#departSel").value = state.depart || "";
+    $("#optimise").checked = !!state.optimise;
     document.querySelector(`input[name=passport][value=${state.passport}]`).checked = true;
     document.querySelector(`input[name=home][value=${state.home}]`).checked = true;
     renderStops();
@@ -1486,7 +1569,7 @@ const SYD_FLIGHTS = {
           <button type="button" class="icon-btn" data-act="remove" data-i="${i}" aria-label="Remove ${esc(c.name)}">✕</button></div>
         <label class="nights" for="nights-${i}">Nights <input type="number" id="nights-${i}" min="1" max="30" value="${st.nights}" data-act="nights" data-i="${i}"></label>
         <div class="row"><select id="place-${i}" data-act="place" data-i="${i}" aria-label="Add a place in ${esc(c.name)}"><option value="">Add a place to see…</option>${opts}</select></div>
-        ${chips ? `<div class="chips">${chips}</div>` : ""}
+        ${chips ? `<div class="chips">${chips}</div>` : `<p class="hint suggest">No places chosen, so we'll plan the top-rated ones for your trip style, e.g. ${topPicks(st.city, 3).map((p) => esc(p.n.split(/[:(]/)[0].trim())).join(", ")}. <button type="button" class="btn small" data-act="addtop" data-i="${i}">Add top picks</button></p>`}
       </div>`;
     }).join("");
     renderTally();
@@ -1500,6 +1583,11 @@ const SYD_FLIGHTS = {
     if (nights === need) { t.className = "tally ok"; t.innerHTML = `<span>${nights} nights · ${state.days} days</span><span>✓ Fits</span>`; return; }
     t.className = "tally bad";
     t.innerHTML = `<span>${nights} nights set, ${need} needed for ${state.days} days</span><button type="button" class="btn small" data-act="fit">Fit nights to days</button>`;
+  }
+
+  function topPicks(cid, n) {
+    const types = prefsFrom(state).types;
+    return CITIES[cid].places.slice().sort((a, b) => ((b.r || 1) * 9 + b.t.filter((t) => types.has(t)).length * 8) - ((a.r || 1) * 9 + a.t.filter((t) => types.has(t)).length * 8)).slice(0, n);
   }
 
   function fitNights() {
@@ -1524,6 +1612,9 @@ const SYD_FLIGHTS = {
     state.budget = document.querySelector("input[name=budget]:checked").value;
     state.passport = document.querySelector("input[name=passport]:checked").value;
     state.home = document.querySelector("input[name=home]:checked").value;
+    state.arrive = $("#arriveSel").value;
+    state.depart = $("#departSel").value;
+    state.optimise = $("#optimise").checked;
   }
 
   function bindForm() {
@@ -1538,8 +1629,10 @@ const SYD_FLIGHTS = {
       const b = e.target.closest("[data-act]");
       if (!b || b.tagName === "SELECT" || b.tagName === "INPUT") return;
       const i = +b.dataset.i, act = b.dataset.act;
+      if ((act === "up" || act === "down") && state.optimise) { state.optimise = false; $("#optimise").checked = false; toast("Automatic ordering turned off so your manual order is kept."); }
       if (act === "up" && i > 0) [state.stops[i - 1], state.stops[i]] = [state.stops[i], state.stops[i - 1]];
       else if (act === "down" && i < state.stops.length - 1) [state.stops[i + 1], state.stops[i]] = [state.stops[i], state.stops[i + 1]];
+      else if (act === "addtop") { const st = state.stops[i]; st.places = topPicks(st.city, Math.min(2 + st.nights, 5)).filter((p) => !p.s.includes("full") || st.nights > 1).map((p) => p.id); }
       else if (act === "remove") state.stops.splice(i, 1);
       else if (act === "unplace") state.stops[i].places = state.stops[i].places.filter((x) => x !== b.dataset.id);
       else if (act === "fit") { fitNights(); return; }
@@ -1550,6 +1643,11 @@ const SYD_FLIGHTS = {
       const t = e.target;
       if (t.dataset.act === "place" && t.value) { state.stops[+t.dataset.i].places.push(t.value); persist(); renderStops(); return; }
       if (t.dataset.act === "nights") { state.stops[+t.dataset.i].nights = Math.max(1, Math.min(30, parseInt(t.value, 10) || 1)); persist(); renderTally(); return; }
+      if (t.id === "arriveSel" || t.id === "departSel" || t.id === "optimise") {
+        readForm();
+        if (arrangeStops()) toast("Cities re-ordered to start and end at your airports.");
+        persist(); renderStops(); return;
+      }
       if (t.id === "type-other") { $("#otherText").hidden = !t.checked; if (t.checked) $("#otherText").focus(); }
       readForm(); persist(); renderTally();
     });
@@ -1560,7 +1658,8 @@ const SYD_FLIGHTS = {
       if (!state.stops.length) { toast("Add at least one city first."); $("#citySel").focus(); return; }
       const nights = state.stops.reduce((a, s) => a + s.nights, 0);
       if (nights !== state.days - 1) { toast(`Your nights add up to ${nights} but ${state.days} days needs ${state.days - 1}. Use “Fit nights to days” or adjust.`); $("#tally").scrollIntoView({ block: "center", behavior: "smooth" }); return; }
-      persist();
+      reordered = arrangeStops();
+      persist(); renderStops();
       generate(true);
     });
   }
@@ -1592,7 +1691,7 @@ const SYD_FLIGHTS = {
     if (s.type === "act") {
       const p = s.p;
       body = `<div class="how"><b class="k">${esc(s.how.mode)}</b>${s.how.text}</div>
-        <p class="act-name">${esc(p.n)}${p.zh ? `<span class="han">${esc(p.zh)}</span>` : ""}</p>
+        <p class="act-name">${esc(p.n)}${p.zh ? `<span class="han">${esc(p.zh)}</span>` : ""} <span class="badge ${s.why[0]}">${esc(s.why[1])}</span></p>
         <p class="act-desc">${esc(p.d)}</p>
         <div class="kv"><span>Time needed <b>${esc(p.h)}</b></span><span>Cost <b>${esc(p.c)}</b></span>${p.m ? `<span>Nearest metro <b>${esc(p.m)}</b></span>` : ""}</div>
         ${p.tip ? `<p class="tip">${esc(p.tip)}</p>` : ""}
@@ -1601,16 +1700,18 @@ const SYD_FLIGHTS = {
         ${day.friday && (s.part === "m" || s.part === "full") ? jumuah(city, p.ll) : ""}
         ${eatHTML(s.eat)}`;
     } else if (s.type === "arrive") {
-      body = `<div class="travel"><b class="k">Arrive & check in</b>${fromSyd() ? `<span>${sydLine(day.cityId, "in")}</span>` : ""}<span>${esc(s.text)}</span><span>Check in to your hotel in <b>${esc(city.stay.area)}</b>, rest, and change money/test Alipay if you haven't.</span></div>`;
+      body = s.via
+        ? `<div class="travel"><b class="k">Land in ${esc(s.city.name)}</b>${fromSyd() ? `<span>${sydLine(s.flyIn, "in")}</span>` : ""}<span>${esc(s.text)}</span></div>`
+        : `<div class="travel"><b class="k">Arrive & check in</b>${fromSyd() ? `<span>${sydLine(s.flyIn, "in")}</span>` : ""}<span>${esc(s.text)}</span><span>Check in to your hotel in <b>${esc(city.stay.area)}</b>, rest, and change money/test Alipay if you haven't.</span></div>`;
     } else if (s.type === "travel") {
-      body = `<div class="travel"><b class="k">Travel day · ${esc(s.from.name)} → ${esc(s.to.name)}</b>
-        <span>Check out after breakfast. ${esc(s.text)}</span>
+      body = `<div class="travel"><b class="k">${s.toFlight ? "To your flight" : s.sameDay ? "Onward the same day" : "Travel day"} · ${esc(s.from.name)} → ${esc(s.to.name)}</b>
+        <span>${s.sameDay ? "From the airport or station: " : s.toFlight ? "Check out early and allow a buffer of at least 3 h before your international flight. " : "Check out after breakfast. "}${esc(s.text)}</span>
         ${s.border ? `<span><b>Border crossing:</b> passport out. ${isAU() ? (s.to.region === "mainland" ? "Australians: entering the mainland starts a fresh visa-free stay of up to 30 days." : s.to.region === "hk" ? "Australians: visa-free in Hong Kong for up to 90 days." : "Australians: visa-free entry to Macau.") : "Leaving or entering the mainland uses one visa entry — see Before you go."}</span>` : ""}
-        <span><b>On arrival:</b> ${esc(s.arrive)}</span>
-        <span>Check in to your hotel in <b>${esc(s.to.stay.area)}</b>.</span></div>
-        ${eatHTML({ label: "Lunch on arrival (halal)", ...eatNear(s.to, s.to.stay.ll) })}`;
+        ${s.toFlight ? "" : `<span><b>On arrival:</b> ${esc(s.arrive)}</span>
+        <span>Check in to your hotel in <b>${esc(s.to.stay.area)}</b>.</span>`}</div>
+        ${s.toFlight ? "" : eatHTML({ label: s.sameDay ? "First meal on arrival (halal)" : "Lunch on arrival (halal)", ...eatNear(s.to, s.to.stay.ll) })}`;
     } else if (s.type === "depart") {
-      body = `<div class="travel"><b class="k">Departure</b><span>Check out (usually by 12:00; ask the hotel to hold bags). ${esc(s.text)}</span>${fromSyd() ? `<span>${sydLine(day.cityId, "out")}</span>` : ""}${fromSyd() && isAU() ? `<span><b>Landing in Sydney:</b> declare all food, plant and animal products (many Chinese snacks contain meat, egg or seeds). Duty-free allowance: A$900 of goods, 2.25 L alcohol, 25 cigarettes.</span>` : ""}</div>`;
+      body = `<div class="travel"><b class="k">Departure</b><span>${day.flyOut === day.cityId ? "Check out (usually by 12:00; ask the hotel to hold bags). " : ""}${esc(s.text)}</span>${fromSyd() ? `<span>${sydLine(s.flyOut, "out")}</span>` : ""}${fromSyd() && isAU() ? `<span><b>Landing in Sydney:</b> declare all food, plant and animal products (many Chinese snacks contain meat, egg or seeds). Duty-free allowance: A$900 of goods, 2.25 L alcohol, 25 cigarettes.</span>` : ""}</div>`;
     } else if (s.type === "rest") {
       body = `<p class="act-name">Free time & rest</p><p class="act-desc">Keep this block open: nap, pray, do laundry, or revisit somewhere you liked. A relaxed pace keeps a 2-week trip enjoyable.</p>`;
     } else if (s.type === "free") {
@@ -1630,8 +1731,10 @@ const SYD_FLIGHTS = {
   const KIND = { arrival: "Arrival", transfer: "Travel day", full: "", depart: "Departure" };
   function dayTitle(day) {
     const acts = day.slots.filter((s) => s.type === "act").map((s) => s.p.n.split(/[:(]/)[0].trim());
+    if (day.kind === "arrival" && day.flyIn !== day.cityId) return `Land in ${CITIES[day.flyIn].name}, on to ${day.city.name}` + (acts.length ? ` · ${acts[0]}` : "");
     if (day.kind === "arrival") return `Arrive in ${day.city.name}` + (acts.length ? ` · ${acts[0]}` : "");
     if (day.kind === "transfer") return `To ${day.city.name}` + (acts.length ? ` · ${acts.join(" & ")}` : "");
+    if (day.kind === "depart" && day.flyOut !== day.cityId) return `${day.city.name} → ${CITIES[day.flyOut].name}, then fly home`;
     if (day.kind === "depart") return `Last morning in ${day.city.name}, then home`;
     return acts.join(" · ") || `${day.city.name} at your own pace`;
   }
@@ -1641,11 +1744,15 @@ const SYD_FLIGHTS = {
     const plan = buildPlan(state);
     lastPlan = plan;
     const ids = state.stops.map((s) => s.city);
-    const hasMainland = ids.some((i) => CITIES[i].region === "mainland");
-    const hasHK = ids.includes("hk"), hasMO = ids.includes("mo");
+    const arrId = plan.arriveId, depId = plan.departId;
+    const routeIds = [arrId, ...ids, depId];
+    const hasMainland = routeIds.some((i) => CITIES[i].region === "mainland");
+    const hasHK = routeIds.includes("hk"), hasMO = routeIds.includes("mo");
 
     // Summary
-    const route = state.stops.map((s, i) => `${i ? '<span class="arrow">→</span>' : ""}<span class="stopname">${esc(CITIES[s.city].name)}</span><span class="n">${s.nights}N</span>`).join(" ");
+    const route = `<span class="n">✈ ${fromSyd() ? "Sydney" : ""}${arrId !== ids[0] ? (fromSyd() ? " → " : "") + esc(CITIES[arrId].name) : ""}</span><span class="arrow">→</span> ` +
+      state.stops.map((s, i) => `${i ? '<span class="arrow">→</span>' : ""}<span class="stopname">${esc(CITIES[s.city].name)}</span><span class="n">${s.nights}N</span>`).join(" ") +
+      ` <span class="arrow">→</span><span class="n">✈ ${depId !== ids[ids.length - 1] ? esc(CITIES[depId].name) + (fromSyd() ? " → " : "") : ""}${fromSyd() ? "Sydney" : ""}</span>`;
     const typeLabels = state.types.map((t) => TRIP_TYPES.find((x) => x.id === t).label).concat(state.other ? [state.other] : []);
     const b = BUDGET[state.budget];
     const startD = state.start ? new Date(state.start + "T00:00:00") : null;
@@ -1653,23 +1760,25 @@ const SYD_FLIGHTS = {
 
     const notes = [];
     if (isExample) notes.push(["info", "Example", "This is a sample 10-day trip. Change anything on the left and press <b>Build my itinerary</b>."]);
-    plan.warnings.forEach((w) => notes.push(["warn", "Didn't fit", esc(w)]));
+    if (reordered) notes.push(["info", "Route", `Cities re-ordered so you start in ${esc(CITIES[arrId].name)}, finish near ${esc(CITIES[depId].name)} and travel the shortest way between them. Untick “Arrange my cities” to keep your own order.`]);
+    reordered = false;
+    plan.warnings.forEach((w) => notes.push(["warn", "Check", esc(w)]));
     if (isAU() && hasMainland) {
-      const longest = Math.max(...mainlandStretches());
+      const longest = Math.max(0, ...mainlandStretches());
       if (longest > 30) notes.push(["warn", "Visa", `Your longest unbroken mainland stretch is <b>${longest} nights</b>. Australians get up to 30 days visa-free per entry, so either break it with a Hong Kong/Macau visit or apply for a tourist (L) visa.`]);
       else notes.push(["good", "Visa", `No visa needed: Australian passports get up to 30 days visa-free per mainland entry (tourism, business, family visits, transit). Your longest mainland stretch is ${longest} nights${hasHK || hasMO ? ", and each re-entry from Hong Kong/Macau starts a fresh 30 days" : ""}.`]);
       if (endD && endD > new Date("2026-12-31T23:59:59")) notes.push(["warn", "Visa", "The visa-free arrangement for Australians currently runs to <b>31 December 2026</b> and your trip goes past that date. Check Smartraveller for an extension before booking."]);
     }
     if (isAU() && hasHK) notes.push(["info", "Visa", "Hong Kong: Australians can stay up to 90 days without a visa."]);
     if (fromSyd()) {
-      const a = SYD_FLIGHTS[ids[0]], z = SYD_FLIGHTS[ids[ids.length - 1]];
-      const same = ids[0] === ids[ids.length - 1];
-      notes.push(["info", "Flights", `Book ${same ? "a return" : "a <b>multi-city</b>"} ticket: Sydney → ${esc(CITIES[ids[0]].name)}${a && a.direct ? " (nonstop)" : " (via a connection)"}${same ? " and back" : `, then ${esc(CITIES[ids[ids.length - 1]].name)} → Sydney${z && z.direct ? " (nonstop)" : " (via a connection)"}`}. ${same ? "" : "Flying into one city and out of another avoids backtracking. "}Details are on Day 1 and the last day.`]);
+      const a = SYD_FLIGHTS[arrId], z = SYD_FLIGHTS[depId];
+      const same = arrId === depId;
+      notes.push(["info", "Flights", `Book ${same ? "a return" : "a <b>multi-city</b>"} ticket: Sydney → ${esc(CITIES[arrId].name)}${a && a.direct ? " (nonstop)" : " (via a connection)"}${same ? " and back" : `, then ${esc(CITIES[depId].name)} → Sydney${z && z.direct ? " (nonstop)" : " (via a connection)"}`}. ${same ? "" : "Flying into one city and out of another avoids backtracking. "}Details are on Day 1 and the last day.`]);
     }
     if (!isAU() && hasMainland && (hasHK || hasMO)) {
       // Count mainland entries
       let entries = 0, inMain = false;
-      ids.forEach((i) => { const m = CITIES[i].region === "mainland"; if (m && !inMain) entries++; inMain = m; });
+      routeIds.forEach((i) => { const m = CITIES[i].region === "mainland"; if (m && !inMain) entries++; inMain = m; });
       if (entries > 1) notes.push(["warn", "Visa", `Your route enters mainland China <b>${entries} times</b> (Hong Kong/Macau are outside the mainland's border). A single-entry visa is not enough: apply for a <b>double- or multiple-entry</b> visa, or reorder so Hong Kong/Macau come first or last.`]);
       else notes.push(["info", "Visa", "Hong Kong/Macau are separate immigration zones. Your route enters the mainland once, so a single-entry visa works (if you need a visa at all)."]);
     }
@@ -1707,7 +1816,8 @@ const SYD_FLIGHTS = {
       if (day.kind !== "full" && day.kind !== "depart") {
         const st = state.stops[n];
         html += `<div class="city-band"><h3>${esc(day.city.name)}</h3><span class="han">${day.city.zh}</span><span class="meta">${st ? st.nights + " night" + (st.nights > 1 ? "s" : "") : ""}</span></div>
-          <p class="city-stay">${esc(day.city.intro)} <b>Stay:</b> ${esc(day.city.stay.area)}. ${esc(day.city.stay.why)}</p>`;
+          <p class="city-stay">${esc(day.city.intro)} <b>Stay:</b> ${esc(day.city.stay.area)}. ${esc(day.city.stay.why)}</p>
+          <p class="city-stay"><b>Top rated here:</b> ${day.city.places.filter((p) => p.r === 3).map((p) => plan.stops[n].used.has(p.id) ? `${esc(p.n)} <span style="color:var(--jade)">✓ in your plan</span>` : `${esc(p.n)} <i>(not in this plan — add a night)</i>`).join(" · ")}</p>`;
         n++;
       }
       html += `<article class="day">
@@ -1722,7 +1832,7 @@ const SYD_FLIGHTS = {
     out.innerHTML = hdr + tabs +
       `<div id="pane-plan" role="tabpanel" aria-labelledby="tab-plan" class="out" ${currentTab !== "plan" ? "hidden" : ""}>${html}</div>
        <div id="pane-stay" role="tabpanel" aria-labelledby="tab-stay" class="out" ${currentTab !== "stay" ? "hidden" : ""}>${stayHTML(ids)}</div>
-       <div id="pane-prep" role="tabpanel" aria-labelledby="tab-prep" class="out" ${currentTab !== "prep" ? "hidden" : ""}>${prepHTML(ids, hasMainland, hasHK, hasMO)}</div>
+       <div id="pane-prep" role="tabpanel" aria-labelledby="tab-prep" class="out" ${currentTab !== "prep" ? "hidden" : ""}>${prepHTML(routeIds, hasMainland, hasHK, hasMO)}</div>
        <div id="pane-talk" role="tabpanel" aria-labelledby="tab-talk" class="out" ${currentTab !== "talk" ? "hidden" : ""}>${phrasesHTML(hasHK || hasMO)}</div>
        <p class="foot">Prices, opening hours and visa rules change. Figures here are typical for 2025–26 and meant for planning; confirm bookings and entry rules on official sites before you travel. Directions are estimates from map distance — use Apple Maps or Amap on the day for live routes.</p>`;
     restoreChecks();
@@ -1742,6 +1852,7 @@ const SYD_FLIGHTS = {
         <h4>Best area to stay</h4><p><b>${esc(c.stay.area)}.</b> ${esc(c.stay.why)}</p>
         <h4>Hotels</h4><div class="hotels">${hotels}</div>
         <p class="hint">Book on Trip.com, Booking.com or directly. In the mainland, a small number of hotels still cannot register foreign guests — Trip.com listings show this, and the hotel will register your passport with the police for you.</p>
+        <h4>Top-rated things to do</h4><ul>${c.places.filter((p) => p.r >= 2).sort((a, b) => b.r - a.r).map((p) => `<li><b>${esc(p.n)}</b> <span style="color:var(--gold)">${"★".repeat(p.r)}</span> — ${esc(p.d.split(". ")[0].replace(/\.$/, ""))}. <span class="hint">${esc(p.h)} · ${esc(p.c)}</span></li>`).join("")}</ul>
         <h4>Halal food</h4><ul>${halal}</ul><p>${esc(c.halalTip)}</p>
         ${mosques}
         <h4>Dishes to try (ask for the halal version)</h4><ul>${c.dishes.map((d) => `<li>${esc(d)}</li>`).join("")}</ul>
@@ -1820,7 +1931,7 @@ const SYD_FLIGHTS = {
       <div class="note ${isAU() ? "info" : "warn"}"><b class="tag">${isAU() ? "Good to know" : "Important"}</b><span>Hong Kong and Macau are outside mainland immigration. Going mainland → Hong Kong → mainland counts as two mainland entries${isAU() ? " — fine for Australians, since each visa-free entry gets its own 30 days" : ""}.</span></div>
     </section>
 
-    ${fromSyd() ? flightsPanel(ids) : ""}
+    ${fromSyd() ? flightsPanel(ids, lastPlan.arriveId, lastPlan.departId) : ""}
     ${isAU() ? ausPanel(ids) : ""}
     <section class="panel">
       <h3>Insurance</h3>
@@ -1905,8 +2016,7 @@ const SYD_FLIGHTS = {
     </section>`;
   }
 
-  function flightsPanel(ids) {
-    const first = ids[0], last = ids[ids.length - 1];
+  function flightsPanel(ids, first, last) {
     const rows = Object.entries(SYD_FLIGHTS).filter(([id]) => ids.includes(id)).concat(
       Object.entries(SYD_FLIGHTS).filter(([id]) => !ids.includes(id) && SYD_FLIGHTS[id].direct));
     return `<section class="panel">
@@ -2048,14 +2158,14 @@ const SYD_FLIGHTS = {
       d.slots.forEach((s) => {
         const w = SLOT[s.part].label.toUpperCase();
         if (s.type === "act") {
-          L.push(`  ${w} (${SLOT[s.part].time}): ${s.p.n}${s.p.zh ? " / " + s.p.zh : ""}`);
+          L.push(`  ${w} (${SLOT[s.part].time}): ${s.p.n}${s.p.zh ? " / " + s.p.zh : ""} [${s.why[1]}]`);
           L.push(`    Getting there: ${strip(s.how.text)}`);
           L.push(`    ${s.p.d}`);
           if (s.p.tip) L.push(`    Tip: ${s.p.tip}`);
           if (s.eat && s.eat.located.length) L.push(`    ${s.eat.label}: ${s.eat.located.map((h) => h.n).join("; ")}`);
         } else if (s.type === "travel") L.push(`  ${w}: Travel ${s.from.name} → ${s.to.name}. ${s.text}`);
-        else if (s.type === "arrive") L.push(`  ARRIVE: ${fromSyd() ? strip(sydLine(d.cityId, "in")) + " " : ""}${s.text}`);
-        else if (s.type === "depart") L.push(`  DEPART: ${s.text}${fromSyd() ? " " + strip(sydLine(d.cityId, "out")) : ""}`);
+        else if (s.type === "arrive") L.push(`  ARRIVE: ${fromSyd() ? strip(sydLine(s.flyIn, "in")) + " " : ""}${s.text}`);
+        else if (s.type === "depart") L.push(`  DEPART: ${s.text}${fromSyd() ? " " + strip(sydLine(s.flyOut, "out")) : ""}`);
         else if (s.type === "rest") L.push(`  ${w}: Free time & rest`);
         else if (s.type === "free") L.push(`  ${w}: ${s.text}`);
       });

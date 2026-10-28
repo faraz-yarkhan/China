@@ -362,8 +362,10 @@
     const t = $("#tally");
     if (!state.stops.length) { t.className = "tally"; t.innerHTML = "Add a city to start."; return; }
     if (nights === need) { t.className = "tally ok"; t.innerHTML = `<span>${nights} nights · ${state.days} days</span><span>✓ Fits</span>`; return; }
+    const html = `<span>${nights} nights set, ${need} needed for ${state.days} days</span><button type="button" class="btn small" data-act="fit">Fit nights to days</button>`;
     t.className = "tally bad";
-    t.innerHTML = `<span>${nights} nights set, ${need} needed for ${state.days} days</span><button type="button" class="btn small" data-act="fit">Fit nights to days</button>`;
+    // Don't replace the button while it's being clicked (the days field's change event fires first)
+    if (t.innerHTML !== html) t.innerHTML = html;
   }
 
   function topPicks(cid, n) {
@@ -584,8 +586,7 @@
         <div class="fact"><b>${state.pace === "relaxed" ? "Relaxed" : "Balanced"}</b><span>Pace</span></div>
       </div>
       <div class="notes">${notes.map(([k, t, h]) => `<div class="note ${k}"><b class="tag">${t}</b><span>${h}</span></div>`).join("")}</div>
-      <div class="actions">${window.NO_PRINT ? "" : '<button type="button" class="btn" id="printPlan">Print itinerary & info</button>'}<button type="button" class="btn" id="copyPlan">Copy itinerary as text</button></div>
-      ${window.NO_PRINT ? '<p class="hint">To print, download the standalone HTML file and open it in your browser — printing is blocked inside this preview.</p>' : ""}
+      <div class="actions"><button type="button" class="btn print-btn" data-print>🖨 Print itinerary & info (${plan.days.length + 4} pages)</button><button type="button" class="btn" id="copyPlan">Copy itinerary as text</button></div>
     </div>`;
 
     const tabs = `<div class="tabs" role="tablist">
@@ -618,6 +619,7 @@
        <div id="pane-talk" role="tabpanel" aria-labelledby="tab-talk" class="out" ${currentTab !== "talk" ? "hidden" : ""}><h2 class="print-only">Phrases</h2>${phrasesHTML(hasHK || hasMO)}</div>
        <p class="foot">Prices, opening hours and visa rules change. Figures here are typical for 2025–26 and meant for planning; confirm bookings and entry rules on official sites before you travel. Directions are estimates from map distance — use Apple Maps or Amap on the day for live routes.</p>`;
     restoreChecks();
+    buildPrintView(plan, { ids, routeIds, arrId, depId, hasMainland, hasHK, hasMO, startD, endD, notes });
     if (scroll) out.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -646,8 +648,8 @@
   }
 
   /* ---------- before you go ---------- */
-  function prepHTML(ids, hasMainland, hasHK, hasMO) {
-    const checklist = [
+  function checklistItems() {
+    return [
       "Passport valid for 6+ months after your return, with 2 blank pages",
       isAU() ? "Confirm Australian visa-free entry still applies for your dates (Smartraveller); keep each mainland stretch to 30 days or less" : "Check visa-free / transit eligibility for your passport, or apply for a visa (double/multiple entry if you go via Hong Kong or Macau)",
       ...(isAU() ? ["Register your trip and subscribe to China and Hong Kong updates on Smartraveller", "Save the Consular Emergency Centre number: +61 2 6261 3305"] : []),
@@ -668,6 +670,10 @@
       "Prescription medicines in original packaging with a copy of the prescription",
       "Prayer mat, qibla app and halal snacks for remote days (Zhangjiajie, Guilin, Great Wall)",
     ];
+  }
+
+  function prepHTML(ids, hasMainland, hasHK, hasMO) {
+    const checklist = checklistItems();
     return `
     <section class="panel">
       <h3>Visas & entry forms</h3>
@@ -927,6 +933,130 @@
       ${CANTONESE.map(([en, zh, jp, sl]) => `<tr><td>${esc(en)}</td><td class="zh">${zh}</td><td class="py">${esc(jp)}</td><td>${esc(sl)}</td></tr>`).join("")}</tbody></table></div></section>` : ""}`;
   }
 
+  /* ---------- print view: overview, 1 page per day, info, checklist, phrases ---------- */
+  const firstSentence = (t) => String(t).split(/(?<=\.)\s/)[0];
+  const plain = (h) => String(h).replace(/<[^>]+>/g, "");
+
+  function pvSlot(s, day) {
+    const when = SLOT[s.part];
+    let b = "";
+    if (s.type === "act") {
+      const p = s.p, eat = s.eat;
+      const food = eat ? eat.located.map((h) => `${h.n} (${h.d < 1 ? Math.round(h.d * 1000) + " m" : h.d.toFixed(1) + " km"})`).concat(eat.general.map((h) => h.n)).slice(0, 2) : [];
+      b = `<div class="pv-name">${esc(p.n)} <span class="han">${esc(p.zh || "")}</span> <span class="pv-why">${esc(s.why[1])}</span></div>
+        <div><b>Getting there:</b> ${plain(s.how.text)}</div>
+        <div>${esc(firstSentence(p.d))}</div>
+        <div class="pv-meta">${esc(p.h)} · ${esc(p.c)}${p.m ? " · Metro: " + esc(p.m) : ""}</div>
+        ${p.tip ? `<div><b>Tip:</b> ${esc(firstSentence(p.tip))}</div>` : ""}
+        ${food.length || (eat && eat.far) ? `<div class="pv-halal"><b>${esc(eat.label)}:</b> ${food.length ? esc(food.join("; ")) : ""}${eat.far ? (food.length ? "; " : "") + "or any 清真 noodle shop" : ""}</div>` : ""}
+        ${day.friday && (s.part === "m" || s.part === "full") ? `<div class="pv-halal"><b>Jumu'ah:</b> ${esc((day.city.mosques[0] || { n: "search 清真寺 in Amap" }).n)}</div>` : ""}
+        ${s.alt ? `<div class="pv-meta">Or instead: ${esc(s.alt.n)}</div>` : ""}`;
+    } else if (s.type === "arrive") {
+      b = `<div class="pv-name">${s.via ? "Land in " + esc(s.city.name) : "Arrive & check in"}</div>${fromSyd() ? `<div>${plain(sydLine(s.flyIn, "in"))}</div>` : ""}<div>${esc(s.text)}</div>`;
+    } else if (s.type === "travel") {
+      b = `<div class="pv-name">${s.toFlight ? "To your flight" : "Travel"}: ${esc(s.from.name)} → ${esc(s.to.name)}</div><div>${esc(s.text)}</div>
+        ${s.border ? `<div>Border crossing — passport ready.</div>` : ""}
+        ${s.toFlight ? "" : `<div><b>On arrival:</b> ${esc(firstSentence(s.arrive))} Check in at ${esc(s.to.stay.area)}.</div>`}`;
+    } else if (s.type === "depart") {
+      b = `<div class="pv-name">Departure</div><div>${esc(s.text)}</div>${fromSyd() ? `<div>${plain(sydLine(s.flyOut, "out"))}</div>` : ""}`;
+    } else if (s.type === "rest") {
+      b = `<div class="pv-name">Free time & rest</div><div>Rest, pray, or revisit somewhere you liked.</div>`;
+    } else if (s.type === "free") {
+      b = `<div class="pv-name">Easy evening</div><div>${esc(s.text)}</div>`;
+    }
+    return `<tr><th><b>${when.label}</b><br>${when.time}</th><td>${b}</td></tr>`;
+  }
+
+  function buildPrintView(plan, c) {
+    let pv = $("#printView");
+    if (!pv) { pv = document.createElement("div"); pv.id = "printView"; pv.setAttribute("aria-hidden", "true"); document.body.appendChild(pv); }
+    const pages = [];
+    const head = (t, sub) => `<div class="pv-head"><span>China & Hong Kong Trip Planner</span><span>${esc(sub || "")}</span></div><h1>${t}</h1>`;
+    const routeTxt = [fromSyd() ? "Sydney" : null, c.arrId !== c.ids[0] ? CITIES[c.arrId].name : null].filter(Boolean).concat(state.stops.map((s) => `${CITIES[s.city].name} (${s.nights}N)`), [c.depId !== c.ids[c.ids.length - 1] ? CITIES[c.depId].name : null, fromSyd() ? "Sydney" : null].filter(Boolean)).join(" → ");
+
+    // 1. Overview
+    pages.push(`${head(`${state.days}-day trip`, c.startD ? fmtDate(c.startD) + " – " + fmtDate(c.endD) : "")}
+      <p class="pv-route">${esc(routeTxt)}</p>
+      <ul class="pv-notes">${c.notes.filter((n) => n[1] !== "Example").map(([, t, h]) => `<li><b>${t}:</b> ${plain(h)}</li>`).join("")}</ul>
+      <table class="pv-tbl"><thead><tr><th>Day</th><th>City</th><th>Plan</th></tr></thead><tbody>
+      ${plan.days.map((d, i) => `<tr><td>${i + 1}${d.date ? "<br>" + fmtDate(d.date) : ""}</td><td>${esc(d.city.name)}</td><td>${esc(dayTitle(d))}</td></tr>`).join("")}
+      </tbody></table>`);
+
+    // 2. One page per day
+    plan.days.forEach((d, i) => {
+      const firstInCity = d.kind === "arrival" || d.kind === "transfer";
+      const hotel = d.city.hotels.find((h) => h.tier === state.budget) || d.city.hotels[0];
+      pages.push(`${head(`Day ${i + 1} · ${esc(d.city.name)} <span class="han">${d.city.zh}</span>`, (d.date ? fmtDate(d.date) + " · " : "") + (KIND[d.kind] || "Sightseeing"))}
+        <p class="pv-sub">${esc(dayTitle(d))}</p>
+        ${firstInCity ? `<p class="pv-stay"><b>Stay:</b> ${esc(d.city.stay.area)} — e.g. ${esc(hotel.n)}. <b>Halal near hotel:</b> ${esc(eatNear(d.city, d.city.stay.ll, 2).located.map((h) => h.n).join("; ") || d.city.halalTip)}</p>` : ""}
+        <table class="pv-day"><tbody>${d.slots.map((s) => pvSlot(s, d)).join("")}</tbody></table>
+        ${d.back && d.kind !== "depart" ? `<p class="pv-meta"><b>Back to the hotel:</b> ${plain(d.back.text)}</p>` : ""}`);
+    });
+
+    // 3. Key information
+    const uniq = c.ids.filter((v, i, a) => a.indexOf(v) === i);
+    const T = { lux: "Lux", mid: "Mid", budget: "Budget" };
+    pages.push(`${head("Key information")}
+      <div class="pv-cols">
+        ${uniq.map((id) => { const ct = CITIES[id]; return `<section><h2>${esc(ct.name)} <span class="han">${ct.zh}</span></h2>
+          <p><b>Stay:</b> ${esc(ct.stay.area)}</p>
+          <p><b>Hotels:</b> ${ct.hotels.map((h) => `${esc(h.n)} (${T[h.tier]})`).join("; ")}</p>
+          <p><b>Halal:</b> ${ct.halal.map((h) => esc(h.n)).join("; ")}</p>
+          ${ct.mosques.length ? `<p><b>Mosque:</b> ${ct.mosques.map((m) => esc(m.n)).join("; ")}</p>` : ""}
+          <p><b>Getting around:</b> ${esc(firstSentence(ct.getAround))}</p></section>`; }).join("")}
+        <section><h2>Visa & entry</h2>
+          ${isAU() ? `<p>Australian passport: visa-free up to 30 days per mainland entry (to 31 Dec 2026); Hong Kong 90 days; Macau visa-free. Passport valid 6+ months. Fill in the arrival card on landing; carry your passport at all times.</p>`
+            : `<p>Check visa-free entry or the 240-hour transit for your passport, otherwise apply for an L visa (COVA form at visaforchina.cn). Double/multiple entry if you visit Hong Kong/Macau mid-trip. Arrival card on landing; carry your passport.</p>`}</section>
+        ${fromSyd() ? `<section><h2>Flights</h2><p><b>Out:</b> Sydney → ${esc(CITIES[c.arrId].name)}: ${esc(SYD_FLIGHTS[c.arrId] ? SYD_FLIGHTS[c.arrId].text : "")}</p><p><b>Home:</b> ${esc(CITIES[c.depId].name)} → Sydney: ${esc(SYD_FLIGHTS[c.depId] ? SYD_FLIGHTS[c.depId].text : "")}</p></section>` : ""}
+        <section><h2>Emergencies</h2><p>Mainland: police 110, ambulance 120, fire 119. Hong Kong & Macau: 999.${isAU() ? " Australian Consular Emergency Centre (24 h): +61 2 6261 3305." : ""}</p></section>
+        <section><h2>Money & internet</h2><p>Link a Visa/Mastercard to Alipay and WeChat Pay before leaving (no fee up to ¥200, then 3%). Carry ¥500–1,000 cash. Google, WhatsApp and Instagram are blocked in the mainland — use a roaming eSIM.</p></section>
+        <section><h2>Apps</h2><p>Alipay, WeChat, Apple Maps or Amap, DiDi, Trip.com, Railway 12306, Dianping (search 清真), a translator with offline Chinese, Muslim Pro, travel eSIM${c.hasHK ? ", MTR Mobile, Octopus" : ""}.</p></section>
+        <section><h2>Insurance</h2><p>Medical + evacuation cover; check adventure activities are included.${isAU() ? " Medicare does not cover you in China or Hong Kong." : ""}</p></section>
+        <section><h2>Tips</h2><p>Book top museums ~7 days ahead with your passport number; most close Mondays. Arrive at stations 45–60 min early. Avoid Golden Week (1–7 Oct) and Chinese New Year. Don't drink tap water. Carry tissues. Look for the green 清真 sign. Beware the 'tea house' scam.</p></section>
+      </div>`);
+
+    // 4. Checklist
+    pages.push(`${head("Pre-departure checklist")}<ul class="pv-check">${checklistItems().map((t) => `<li>☐ ${esc(t)}</li>`).join("")}</ul>
+      <h2>Bookings</h2><table class="pv-tbl pv-blank"><thead><tr><th>What</th><th>Date</th><th>Reference</th></tr></thead><tbody>${"<tr><td>&nbsp;</td><td></td><td></td></tr>".repeat(8)}</tbody></table>`);
+
+    // 5. Phrases
+    const rows = PHRASES.flatMap(([t, r]) => [[t]].concat(r));
+    pages.push(`${head("Phrases")}
+      <div class="pv-card"><span class="han">${HALAL_CARD}</span><br><span class="pv-meta">I am Muslim and only eat halal food. Please don't use pork, lard, pork-bone broth, alcohol or cooking wine. If this dish is not halal, please tell me. Thank you!</span></div>
+      ${phraseTables(rows.concat(c.hasHK || c.hasMO ? [["Cantonese (Hong Kong & Macau)"]].concat(CANTONESE.map(([en, zh, , sl]) => [en, zh, sl])) : []))}`);
+
+    pv.innerHTML = pages.map((p) => `<section class="pv-page">${p}</section>`).join("");
+    fitPrintPages();
+  }
+
+  // Two side-by-side tables, split at a section heading near the middle
+  function phraseTables(rows) {
+    let cut = Math.ceil(rows.length / 2);
+    while (cut < rows.length && rows[cut].length !== 1) cut++;
+    const tbl = (rs) => `<table class="pv-tbl pv-phr"><tbody>${rs.map((r) => r.length === 1 ? `<tr><th colspan="3">${esc(r[0])}</th></tr>` : `<tr><td>${esc(r[0])}</td><td class="han">${r[1]}</td><td><i>${esc(r[2])}</i></td></tr>`).join("")}</tbody></table>`;
+    return `<div class="pv-split">${tbl(rows.slice(0, cut))}${tbl(rows.slice(cut))}</div>`;
+  }
+
+  // Shrink each printed page's text until it fits on one A4 page (190 × 277 mm printable area)
+  function fitPrintPages() {
+    const pv = $("#printView");
+    if (!pv) return;
+    pv.classList.add("measuring");
+    const limit = 272 * 3.7795; // mm → CSS px, with a small safety margin
+    pv.querySelectorAll(".pv-page").forEach((pg) => {
+      let size = 11;
+      pg.style.fontSize = size + "pt";
+      while (pg.scrollHeight > limit && size > 5.5) { size -= 0.25; pg.style.fontSize = size + "pt"; }
+    });
+    pv.classList.remove("measuring");
+  }
+
+  function doPrint() {
+    if (window.NO_PRINT) toast("Printing is blocked inside this preview. Download the standalone HTML file, open it in Chrome or Safari, and print from there.");
+    fitPrintPages();
+    try { window.print(); } catch (e) { /* print unavailable */ }
+  }
+
   /* ---------- export & misc ---------- */
   function planText() {
     if (!lastPlan) return "";
@@ -993,7 +1123,6 @@
         ["plan", "stay", "prep", "talk"].forEach((id) => ($("#pane-" + id).hidden = id !== currentTab));
         return;
       }
-      if (e.target.id === "printPlan") { window.print(); return; }
       if (e.target.id === "copyPlan") copy(planText(), "Itinerary copied — paste it into Notes or a message.");
       if (e.target.id === "copyCard") copy(HALAL_CARD, "Halal card copied.");
     });
@@ -1004,6 +1133,9 @@
       save("checks", saved);
     });
   }
+
+  document.addEventListener("click", (e) => { if (e.target.closest("[data-print]")) doPrint(); });
+  window.addEventListener("beforeprint", fitPrintPages);
 
   renderForm();
   bindForm();

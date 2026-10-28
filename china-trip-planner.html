@@ -241,32 +241,53 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
 .foot { font-size: 12.5px; color: var(--muted); max-width: 80ch; }
 @media (prefers-reduced-motion: no-preference) { .day { animation: rise .35s ease both; } @keyframes rise { from { transform: translateY(6px); opacity: .6; } to { transform: none; opacity: 1; } } }
 .print-only { display: none; }
+.print-btn { border-color: var(--ink); font-weight: 600; }
+#printView { display: none; }
+/* Off-screen copy used to measure page heights at A4 width */
+#printView.measuring { display: block; position: absolute; left: -10000px; top: 0; width: 190mm; visibility: hidden; }
+.pv-page { width: 190mm; color: #111; background: #fff; font-family: var(--body); line-height: 1.35; }
+.pv-page h1 { font-family: var(--display); font-size: 1.9em; line-height: 1.1; margin: 0.2em 0 0.3em; }
+.pv-page h2 { font-family: var(--display); font-size: 1.2em; margin: 0.6em 0 0.2em; }
+.pv-page p { margin: 0.25em 0; }
+.pv-page .han { font-family: var(--han); color: #A3241E; }
+.pv-head { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 0.8em; color: #555; border-bottom: 2px solid #A3241E; padding-bottom: 2px; }
+.pv-sub { font-weight: 600; font-size: 1.1em; }
+.pv-route { font-weight: 600; font-size: 1.1em; }
+.pv-stay { background: #F3F4F2; padding: 4px 6px; }
+.pv-meta { color: #555; font-size: 0.92em; }
+.pv-name { font-weight: 700; font-size: 1.08em; }
+.pv-why { font-family: var(--mono); font-size: 0.75em; font-weight: 500; color: #7A560C; border: 1px solid #C9A65A; padding: 0 3px; border-radius: 3px; }
+.pv-halal { color: #1D6B4F; }
+.pv-notes { padding-left: 1.2em; margin: 0.3em 0 0.6em; }
+.pv-notes li { margin: 0.15em 0; }
+.pv-tbl, .pv-day { width: 100%; border-collapse: collapse; font-size: inherit; }
+.pv-tbl th, .pv-tbl td { border-bottom: 1px solid #ccc; padding: 2px 5px; text-align: left; vertical-align: top; font-size: 1em; text-transform: none; letter-spacing: 0; color: #111; }
+.pv-tbl thead th { font-size: 0.8em; color: #555; text-transform: uppercase; }
+.pv-day th { width: 23mm; text-align: left; vertical-align: top; padding: 5px 6px 5px 0; font-family: var(--mono); font-size: 0.85em; font-weight: 400; color: #555; text-transform: none; letter-spacing: 0; border-top: 1px solid #ccc; }
+.pv-day th b { font-family: var(--display); font-size: 1.15em; color: #111; }
+.pv-day td { padding: 5px 0; border-top: 1px solid #ccc; vertical-align: top; }
+.pv-day td > div { margin: 1px 0; }
+.pv-cols { column-count: 2; column-gap: 7mm; }
+.pv-cols section { break-inside: avoid; }
+.pv-check { list-style: none; padding: 0; margin: 0.4em 0; }
+.pv-check li { margin: 0.35em 0; }
+.pv-blank td { height: 2em; }
+.pv-card { border: 2px solid #1D6B4F; padding: 6px 8px; margin: 0.3em 0 0.6em; font-size: 1.15em; }
+.pv-split { display: flex; gap: 5mm; align-items: flex-start; }
+.pv-split > table { flex: 1 1 0; min-width: 0; }
+.pv-phr th { background: #F3F4F2; font-weight: 700; }
+.pv-phr td { font-size: 0.95em; }
 @media print {
-  /* Always print in the light palette, on white */
-  :root:not(#print) {
-    --paper: #FFFFFF; --card: #FFFFFF; --ink: #111111; --muted: #4A4F57; --line: #C9CDD2;
-    --seal: #A3241E; --seal-soft: #F7E4E1; --jade: #1D6B4F; --jade-soft: #E6F3EC;
-    --gold: #7A560C; --gold-soft: #F6EEDC; --sky: #24527D; --sky-soft: #E8F0F7;
-    color-scheme: light;
-  }
-  @page { margin: 14mm 12mm; }
-  html, body { background: #fff; }
-  body { font-size: 10.5pt; padding: 0; }
-  body::before, .rail, .tabs, .actions, .toast, .maplinks, .seal, .mast p, .summary .hint { display: none !important; }
-  #out [role=tabpanel] { display: grid !important; }
-  .wrap { display: block; max-width: none; }
-  .mast { padding-block: 0 8px; }
-  .print-only { display: block; font-family: var(--display); font-size: 20pt; margin: 0; padding-top: 4px; border-bottom: 3px solid var(--seal); break-after: avoid; }
-  #pane-stay, #pane-prep, #pane-talk { break-before: page; }
-  .summary, .panel, .day { border-color: var(--line); box-shadow: none; }
-  .day { animation: none !important; display: block; }
-  .day-num { flex-direction: row; justify-content: flex-start; gap: 10px; border-right: 0; border-bottom: 1px solid var(--line); padding: 6px 12px; }
-  .day-num .stamp { width: 34px; height: 34px; font-size: 16px; }
-  .slot, .hotel, .app, .note, .eat, .travel, tr, .card-show, .city-band { break-inside: avoid; }
-  .city-band, .day-title, .panel h3, .panel h4 { break-after: avoid; }
-  a { color: var(--ink); text-decoration: none; }
-  .tbl-wrap { overflow: visible; }
-  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  @page { size: A4; margin: 10mm; }
+  html, body { height: auto !important; min-height: 0 !important; overflow: visible !important; background: #fff !important; }
+  :root { padding: 0 !important; }
+  body { margin: 0 !important; padding: 0 !important; }
+  body::before { display: none !important; }
+  body > *:not(#printView) { display: none !important; }
+  #printView { display: block !important; position: static !important; visibility: visible !important; }
+  .pv-page { break-after: page; page-break-after: always; break-inside: avoid; }
+  .pv-page:last-child { break-after: auto; page-break-after: auto; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; animation: none !important; }
 }
 </style>
 </head>
@@ -355,6 +376,7 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
     </div>
 
     <button type="submit" class="btn primary" id="go">Build my itinerary</button>
+    <button type="button" class="btn print-btn" data-print>🖨 Print itinerary & info</button>
   </form>
 
   <section class="out" id="out" aria-live="polite"></section>
@@ -1609,8 +1631,10 @@ const SYD_FLIGHTS = {
     const t = $("#tally");
     if (!state.stops.length) { t.className = "tally"; t.innerHTML = "Add a city to start."; return; }
     if (nights === need) { t.className = "tally ok"; t.innerHTML = `<span>${nights} nights · ${state.days} days</span><span>✓ Fits</span>`; return; }
+    const html = `<span>${nights} nights set, ${need} needed for ${state.days} days</span><button type="button" class="btn small" data-act="fit">Fit nights to days</button>`;
     t.className = "tally bad";
-    t.innerHTML = `<span>${nights} nights set, ${need} needed for ${state.days} days</span><button type="button" class="btn small" data-act="fit">Fit nights to days</button>`;
+    // Don't replace the button while it's being clicked (the days field's change event fires first)
+    if (t.innerHTML !== html) t.innerHTML = html;
   }
 
   function topPicks(cid, n) {
@@ -1831,8 +1855,7 @@ const SYD_FLIGHTS = {
         <div class="fact"><b>${state.pace === "relaxed" ? "Relaxed" : "Balanced"}</b><span>Pace</span></div>
       </div>
       <div class="notes">${notes.map(([k, t, h]) => `<div class="note ${k}"><b class="tag">${t}</b><span>${h}</span></div>`).join("")}</div>
-      <div class="actions">${window.NO_PRINT ? "" : '<button type="button" class="btn" id="printPlan">Print itinerary & info</button>'}<button type="button" class="btn" id="copyPlan">Copy itinerary as text</button></div>
-      ${window.NO_PRINT ? '<p class="hint">To print, download the standalone HTML file and open it in your browser — printing is blocked inside this preview.</p>' : ""}
+      <div class="actions"><button type="button" class="btn print-btn" data-print>🖨 Print itinerary & info (${plan.days.length + 4} pages)</button><button type="button" class="btn" id="copyPlan">Copy itinerary as text</button></div>
     </div>`;
 
     const tabs = `<div class="tabs" role="tablist">
@@ -1865,6 +1888,7 @@ const SYD_FLIGHTS = {
        <div id="pane-talk" role="tabpanel" aria-labelledby="tab-talk" class="out" ${currentTab !== "talk" ? "hidden" : ""}><h2 class="print-only">Phrases</h2>${phrasesHTML(hasHK || hasMO)}</div>
        <p class="foot">Prices, opening hours and visa rules change. Figures here are typical for 2025–26 and meant for planning; confirm bookings and entry rules on official sites before you travel. Directions are estimates from map distance — use Apple Maps or Amap on the day for live routes.</p>`;
     restoreChecks();
+    buildPrintView(plan, { ids, routeIds, arrId, depId, hasMainland, hasHK, hasMO, startD, endD, notes });
     if (scroll) out.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -1893,8 +1917,8 @@ const SYD_FLIGHTS = {
   }
 
   /* ---------- before you go ---------- */
-  function prepHTML(ids, hasMainland, hasHK, hasMO) {
-    const checklist = [
+  function checklistItems() {
+    return [
       "Passport valid for 6+ months after your return, with 2 blank pages",
       isAU() ? "Confirm Australian visa-free entry still applies for your dates (Smartraveller); keep each mainland stretch to 30 days or less" : "Check visa-free / transit eligibility for your passport, or apply for a visa (double/multiple entry if you go via Hong Kong or Macau)",
       ...(isAU() ? ["Register your trip and subscribe to China and Hong Kong updates on Smartraveller", "Save the Consular Emergency Centre number: +61 2 6261 3305"] : []),
@@ -1915,6 +1939,10 @@ const SYD_FLIGHTS = {
       "Prescription medicines in original packaging with a copy of the prescription",
       "Prayer mat, qibla app and halal snacks for remote days (Zhangjiajie, Guilin, Great Wall)",
     ];
+  }
+
+  function prepHTML(ids, hasMainland, hasHK, hasMO) {
+    const checklist = checklistItems();
     return `
     <section class="panel">
       <h3>Visas & entry forms</h3>
@@ -2174,6 +2202,130 @@ const SYD_FLIGHTS = {
       ${CANTONESE.map(([en, zh, jp, sl]) => `<tr><td>${esc(en)}</td><td class="zh">${zh}</td><td class="py">${esc(jp)}</td><td>${esc(sl)}</td></tr>`).join("")}</tbody></table></div></section>` : ""}`;
   }
 
+  /* ---------- print view: overview, 1 page per day, info, checklist, phrases ---------- */
+  const firstSentence = (t) => String(t).split(/(?<=\.)\s/)[0];
+  const plain = (h) => String(h).replace(/<[^>]+>/g, "");
+
+  function pvSlot(s, day) {
+    const when = SLOT[s.part];
+    let b = "";
+    if (s.type === "act") {
+      const p = s.p, eat = s.eat;
+      const food = eat ? eat.located.map((h) => `${h.n} (${h.d < 1 ? Math.round(h.d * 1000) + " m" : h.d.toFixed(1) + " km"})`).concat(eat.general.map((h) => h.n)).slice(0, 2) : [];
+      b = `<div class="pv-name">${esc(p.n)} <span class="han">${esc(p.zh || "")}</span> <span class="pv-why">${esc(s.why[1])}</span></div>
+        <div><b>Getting there:</b> ${plain(s.how.text)}</div>
+        <div>${esc(firstSentence(p.d))}</div>
+        <div class="pv-meta">${esc(p.h)} · ${esc(p.c)}${p.m ? " · Metro: " + esc(p.m) : ""}</div>
+        ${p.tip ? `<div><b>Tip:</b> ${esc(firstSentence(p.tip))}</div>` : ""}
+        ${food.length || (eat && eat.far) ? `<div class="pv-halal"><b>${esc(eat.label)}:</b> ${food.length ? esc(food.join("; ")) : ""}${eat.far ? (food.length ? "; " : "") + "or any 清真 noodle shop" : ""}</div>` : ""}
+        ${day.friday && (s.part === "m" || s.part === "full") ? `<div class="pv-halal"><b>Jumu'ah:</b> ${esc((day.city.mosques[0] || { n: "search 清真寺 in Amap" }).n)}</div>` : ""}
+        ${s.alt ? `<div class="pv-meta">Or instead: ${esc(s.alt.n)}</div>` : ""}`;
+    } else if (s.type === "arrive") {
+      b = `<div class="pv-name">${s.via ? "Land in " + esc(s.city.name) : "Arrive & check in"}</div>${fromSyd() ? `<div>${plain(sydLine(s.flyIn, "in"))}</div>` : ""}<div>${esc(s.text)}</div>`;
+    } else if (s.type === "travel") {
+      b = `<div class="pv-name">${s.toFlight ? "To your flight" : "Travel"}: ${esc(s.from.name)} → ${esc(s.to.name)}</div><div>${esc(s.text)}</div>
+        ${s.border ? `<div>Border crossing — passport ready.</div>` : ""}
+        ${s.toFlight ? "" : `<div><b>On arrival:</b> ${esc(firstSentence(s.arrive))} Check in at ${esc(s.to.stay.area)}.</div>`}`;
+    } else if (s.type === "depart") {
+      b = `<div class="pv-name">Departure</div><div>${esc(s.text)}</div>${fromSyd() ? `<div>${plain(sydLine(s.flyOut, "out"))}</div>` : ""}`;
+    } else if (s.type === "rest") {
+      b = `<div class="pv-name">Free time & rest</div><div>Rest, pray, or revisit somewhere you liked.</div>`;
+    } else if (s.type === "free") {
+      b = `<div class="pv-name">Easy evening</div><div>${esc(s.text)}</div>`;
+    }
+    return `<tr><th><b>${when.label}</b><br>${when.time}</th><td>${b}</td></tr>`;
+  }
+
+  function buildPrintView(plan, c) {
+    let pv = $("#printView");
+    if (!pv) { pv = document.createElement("div"); pv.id = "printView"; pv.setAttribute("aria-hidden", "true"); document.body.appendChild(pv); }
+    const pages = [];
+    const head = (t, sub) => `<div class="pv-head"><span>China & Hong Kong Trip Planner</span><span>${esc(sub || "")}</span></div><h1>${t}</h1>`;
+    const routeTxt = [fromSyd() ? "Sydney" : null, c.arrId !== c.ids[0] ? CITIES[c.arrId].name : null].filter(Boolean).concat(state.stops.map((s) => `${CITIES[s.city].name} (${s.nights}N)`), [c.depId !== c.ids[c.ids.length - 1] ? CITIES[c.depId].name : null, fromSyd() ? "Sydney" : null].filter(Boolean)).join(" → ");
+
+    // 1. Overview
+    pages.push(`${head(`${state.days}-day trip`, c.startD ? fmtDate(c.startD) + " – " + fmtDate(c.endD) : "")}
+      <p class="pv-route">${esc(routeTxt)}</p>
+      <ul class="pv-notes">${c.notes.filter((n) => n[1] !== "Example").map(([, t, h]) => `<li><b>${t}:</b> ${plain(h)}</li>`).join("")}</ul>
+      <table class="pv-tbl"><thead><tr><th>Day</th><th>City</th><th>Plan</th></tr></thead><tbody>
+      ${plan.days.map((d, i) => `<tr><td>${i + 1}${d.date ? "<br>" + fmtDate(d.date) : ""}</td><td>${esc(d.city.name)}</td><td>${esc(dayTitle(d))}</td></tr>`).join("")}
+      </tbody></table>`);
+
+    // 2. One page per day
+    plan.days.forEach((d, i) => {
+      const firstInCity = d.kind === "arrival" || d.kind === "transfer";
+      const hotel = d.city.hotels.find((h) => h.tier === state.budget) || d.city.hotels[0];
+      pages.push(`${head(`Day ${i + 1} · ${esc(d.city.name)} <span class="han">${d.city.zh}</span>`, (d.date ? fmtDate(d.date) + " · " : "") + (KIND[d.kind] || "Sightseeing"))}
+        <p class="pv-sub">${esc(dayTitle(d))}</p>
+        ${firstInCity ? `<p class="pv-stay"><b>Stay:</b> ${esc(d.city.stay.area)} — e.g. ${esc(hotel.n)}. <b>Halal near hotel:</b> ${esc(eatNear(d.city, d.city.stay.ll, 2).located.map((h) => h.n).join("; ") || d.city.halalTip)}</p>` : ""}
+        <table class="pv-day"><tbody>${d.slots.map((s) => pvSlot(s, d)).join("")}</tbody></table>
+        ${d.back && d.kind !== "depart" ? `<p class="pv-meta"><b>Back to the hotel:</b> ${plain(d.back.text)}</p>` : ""}`);
+    });
+
+    // 3. Key information
+    const uniq = c.ids.filter((v, i, a) => a.indexOf(v) === i);
+    const T = { lux: "Lux", mid: "Mid", budget: "Budget" };
+    pages.push(`${head("Key information")}
+      <div class="pv-cols">
+        ${uniq.map((id) => { const ct = CITIES[id]; return `<section><h2>${esc(ct.name)} <span class="han">${ct.zh}</span></h2>
+          <p><b>Stay:</b> ${esc(ct.stay.area)}</p>
+          <p><b>Hotels:</b> ${ct.hotels.map((h) => `${esc(h.n)} (${T[h.tier]})`).join("; ")}</p>
+          <p><b>Halal:</b> ${ct.halal.map((h) => esc(h.n)).join("; ")}</p>
+          ${ct.mosques.length ? `<p><b>Mosque:</b> ${ct.mosques.map((m) => esc(m.n)).join("; ")}</p>` : ""}
+          <p><b>Getting around:</b> ${esc(firstSentence(ct.getAround))}</p></section>`; }).join("")}
+        <section><h2>Visa & entry</h2>
+          ${isAU() ? `<p>Australian passport: visa-free up to 30 days per mainland entry (to 31 Dec 2026); Hong Kong 90 days; Macau visa-free. Passport valid 6+ months. Fill in the arrival card on landing; carry your passport at all times.</p>`
+            : `<p>Check visa-free entry or the 240-hour transit for your passport, otherwise apply for an L visa (COVA form at visaforchina.cn). Double/multiple entry if you visit Hong Kong/Macau mid-trip. Arrival card on landing; carry your passport.</p>`}</section>
+        ${fromSyd() ? `<section><h2>Flights</h2><p><b>Out:</b> Sydney → ${esc(CITIES[c.arrId].name)}: ${esc(SYD_FLIGHTS[c.arrId] ? SYD_FLIGHTS[c.arrId].text : "")}</p><p><b>Home:</b> ${esc(CITIES[c.depId].name)} → Sydney: ${esc(SYD_FLIGHTS[c.depId] ? SYD_FLIGHTS[c.depId].text : "")}</p></section>` : ""}
+        <section><h2>Emergencies</h2><p>Mainland: police 110, ambulance 120, fire 119. Hong Kong & Macau: 999.${isAU() ? " Australian Consular Emergency Centre (24 h): +61 2 6261 3305." : ""}</p></section>
+        <section><h2>Money & internet</h2><p>Link a Visa/Mastercard to Alipay and WeChat Pay before leaving (no fee up to ¥200, then 3%). Carry ¥500–1,000 cash. Google, WhatsApp and Instagram are blocked in the mainland — use a roaming eSIM.</p></section>
+        <section><h2>Apps</h2><p>Alipay, WeChat, Apple Maps or Amap, DiDi, Trip.com, Railway 12306, Dianping (search 清真), a translator with offline Chinese, Muslim Pro, travel eSIM${c.hasHK ? ", MTR Mobile, Octopus" : ""}.</p></section>
+        <section><h2>Insurance</h2><p>Medical + evacuation cover; check adventure activities are included.${isAU() ? " Medicare does not cover you in China or Hong Kong." : ""}</p></section>
+        <section><h2>Tips</h2><p>Book top museums ~7 days ahead with your passport number; most close Mondays. Arrive at stations 45–60 min early. Avoid Golden Week (1–7 Oct) and Chinese New Year. Don't drink tap water. Carry tissues. Look for the green 清真 sign. Beware the 'tea house' scam.</p></section>
+      </div>`);
+
+    // 4. Checklist
+    pages.push(`${head("Pre-departure checklist")}<ul class="pv-check">${checklistItems().map((t) => `<li>☐ ${esc(t)}</li>`).join("")}</ul>
+      <h2>Bookings</h2><table class="pv-tbl pv-blank"><thead><tr><th>What</th><th>Date</th><th>Reference</th></tr></thead><tbody>${"<tr><td>&nbsp;</td><td></td><td></td></tr>".repeat(8)}</tbody></table>`);
+
+    // 5. Phrases
+    const rows = PHRASES.flatMap(([t, r]) => [[t]].concat(r));
+    pages.push(`${head("Phrases")}
+      <div class="pv-card"><span class="han">${HALAL_CARD}</span><br><span class="pv-meta">I am Muslim and only eat halal food. Please don't use pork, lard, pork-bone broth, alcohol or cooking wine. If this dish is not halal, please tell me. Thank you!</span></div>
+      ${phraseTables(rows.concat(c.hasHK || c.hasMO ? [["Cantonese (Hong Kong & Macau)"]].concat(CANTONESE.map(([en, zh, , sl]) => [en, zh, sl])) : []))}`);
+
+    pv.innerHTML = pages.map((p) => `<section class="pv-page">${p}</section>`).join("");
+    fitPrintPages();
+  }
+
+  // Two side-by-side tables, split at a section heading near the middle
+  function phraseTables(rows) {
+    let cut = Math.ceil(rows.length / 2);
+    while (cut < rows.length && rows[cut].length !== 1) cut++;
+    const tbl = (rs) => `<table class="pv-tbl pv-phr"><tbody>${rs.map((r) => r.length === 1 ? `<tr><th colspan="3">${esc(r[0])}</th></tr>` : `<tr><td>${esc(r[0])}</td><td class="han">${r[1]}</td><td><i>${esc(r[2])}</i></td></tr>`).join("")}</tbody></table>`;
+    return `<div class="pv-split">${tbl(rows.slice(0, cut))}${tbl(rows.slice(cut))}</div>`;
+  }
+
+  // Shrink each printed page's text until it fits on one A4 page (190 × 277 mm printable area)
+  function fitPrintPages() {
+    const pv = $("#printView");
+    if (!pv) return;
+    pv.classList.add("measuring");
+    const limit = 272 * 3.7795; // mm → CSS px, with a small safety margin
+    pv.querySelectorAll(".pv-page").forEach((pg) => {
+      let size = 11;
+      pg.style.fontSize = size + "pt";
+      while (pg.scrollHeight > limit && size > 5.5) { size -= 0.25; pg.style.fontSize = size + "pt"; }
+    });
+    pv.classList.remove("measuring");
+  }
+
+  function doPrint() {
+    if (window.NO_PRINT) toast("Printing is blocked inside this preview. Download the standalone HTML file, open it in Chrome or Safari, and print from there.");
+    fitPrintPages();
+    try { window.print(); } catch (e) { /* print unavailable */ }
+  }
+
   /* ---------- export & misc ---------- */
   function planText() {
     if (!lastPlan) return "";
@@ -2240,7 +2392,6 @@ const SYD_FLIGHTS = {
         ["plan", "stay", "prep", "talk"].forEach((id) => ($("#pane-" + id).hidden = id !== currentTab));
         return;
       }
-      if (e.target.id === "printPlan") { window.print(); return; }
       if (e.target.id === "copyPlan") copy(planText(), "Itinerary copied — paste it into Notes or a message.");
       if (e.target.id === "copyCard") copy(HALAL_CARD, "Halal card copied.");
     });
@@ -2251,6 +2402,9 @@ const SYD_FLIGHTS = {
       save("checks", saved);
     });
   }
+
+  document.addEventListener("click", (e) => { if (e.target.closest("[data-print]")) doPrint(); });
+  window.addEventListener("beforeprint", fitPrintPages);
 
   renderForm();
   bindForm();

@@ -19,7 +19,7 @@ Plus pace (relaxed / balanced), hotel budget, passport (Australian / other) and 
 - **Intercity transfers** (high-speed rail, flights, border crossings to Hong Kong/Macau)
 - **Hotels and best areas to stay** for every city, matched to your budget
 - **Before you go**: visas and entry forms, insurance, apps, payments, internet, tips, and a saved checklist
-- **Print**: one button prints the summary, itinerary, hotels & food, travel prep and phrases (or save as PDF from the print dialog)
+- **Print**: a compact print layout — overview page, one page per day, a key-information page, a checklist page and a phrases page; text shrinks automatically so each fits on one A4 page
 - **Phrases**: Mandarin and Cantonese with pinyin/Jyutping, plus a halal dietary card to show restaurant staff
 
 ## Files

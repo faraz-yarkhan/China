@@ -240,6 +240,34 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 8px; font-size: 14px; z-index: 20; }
 .foot { font-size: 12.5px; color: var(--muted); max-width: 80ch; }
 @media (prefers-reduced-motion: no-preference) { .day { animation: rise .35s ease both; } @keyframes rise { from { transform: translateY(6px); opacity: .6; } to { transform: none; opacity: 1; } } }
+.print-only { display: none; }
+@media print {
+  /* Always print in the light palette, on white */
+  :root:not(#print) {
+    --paper: #FFFFFF; --card: #FFFFFF; --ink: #111111; --muted: #4A4F57; --line: #C9CDD2;
+    --seal: #A3241E; --seal-soft: #F7E4E1; --jade: #1D6B4F; --jade-soft: #E6F3EC;
+    --gold: #7A560C; --gold-soft: #F6EEDC; --sky: #24527D; --sky-soft: #E8F0F7;
+    color-scheme: light;
+  }
+  @page { margin: 14mm 12mm; }
+  html, body { background: #fff; }
+  body { font-size: 10.5pt; padding: 0; }
+  body::before, .rail, .tabs, .actions, .toast, .maplinks, .seal, .mast p, .summary .hint { display: none !important; }
+  #out [role=tabpanel] { display: grid !important; }
+  .wrap { display: block; max-width: none; }
+  .mast { padding-block: 0 8px; }
+  .print-only { display: block; font-family: var(--display); font-size: 20pt; margin: 0; padding-top: 4px; border-bottom: 3px solid var(--seal); break-after: avoid; }
+  #pane-stay, #pane-prep, #pane-talk { break-before: page; }
+  .summary, .panel, .day { border-color: var(--line); box-shadow: none; }
+  .day { animation: none !important; display: block; }
+  .day-num { flex-direction: row; justify-content: flex-start; gap: 10px; border-right: 0; border-bottom: 1px solid var(--line); padding: 6px 12px; }
+  .day-num .stamp { width: 34px; height: 34px; font-size: 16px; }
+  .slot, .hotel, .app, .note, .eat, .travel, tr, .card-show, .city-band { break-inside: avoid; }
+  .city-band, .day-title, .panel h3, .panel h4 { break-after: avoid; }
+  a { color: var(--ink); text-decoration: none; }
+  .tbl-wrap { overflow: visible; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
 </style>
 </head>
 <body>
@@ -1803,7 +1831,8 @@ const SYD_FLIGHTS = {
         <div class="fact"><b>${state.pace === "relaxed" ? "Relaxed" : "Balanced"}</b><span>Pace</span></div>
       </div>
       <div class="notes">${notes.map(([k, t, h]) => `<div class="note ${k}"><b class="tag">${t}</b><span>${h}</span></div>`).join("")}</div>
-      <div class="actions"><button type="button" class="btn" id="copyPlan">Copy itinerary as text</button></div>
+      <div class="actions">${window.NO_PRINT ? "" : '<button type="button" class="btn" id="printPlan">Print itinerary & info</button>'}<button type="button" class="btn" id="copyPlan">Copy itinerary as text</button></div>
+      ${window.NO_PRINT ? '<p class="hint">To print, download the standalone HTML file and open it in your browser — printing is blocked inside this preview.</p>' : ""}
     </div>`;
 
     const tabs = `<div class="tabs" role="tablist">
@@ -1830,10 +1859,10 @@ const SYD_FLIGHTS = {
 
     const out = $("#out");
     out.innerHTML = hdr + tabs +
-      `<div id="pane-plan" role="tabpanel" aria-labelledby="tab-plan" class="out" ${currentTab !== "plan" ? "hidden" : ""}>${html}</div>
-       <div id="pane-stay" role="tabpanel" aria-labelledby="tab-stay" class="out" ${currentTab !== "stay" ? "hidden" : ""}>${stayHTML(ids)}</div>
-       <div id="pane-prep" role="tabpanel" aria-labelledby="tab-prep" class="out" ${currentTab !== "prep" ? "hidden" : ""}>${prepHTML(routeIds, hasMainland, hasHK, hasMO)}</div>
-       <div id="pane-talk" role="tabpanel" aria-labelledby="tab-talk" class="out" ${currentTab !== "talk" ? "hidden" : ""}>${phrasesHTML(hasHK || hasMO)}</div>
+      `<div id="pane-plan" role="tabpanel" aria-labelledby="tab-plan" class="out" ${currentTab !== "plan" ? "hidden" : ""}><h2 class="print-only">Day-by-day itinerary</h2>${html}</div>
+       <div id="pane-stay" role="tabpanel" aria-labelledby="tab-stay" class="out" ${currentTab !== "stay" ? "hidden" : ""}><h2 class="print-only">Hotels, halal food & things to do</h2>${stayHTML(ids)}</div>
+       <div id="pane-prep" role="tabpanel" aria-labelledby="tab-prep" class="out" ${currentTab !== "prep" ? "hidden" : ""}><h2 class="print-only">Before you go</h2>${prepHTML(routeIds, hasMainland, hasHK, hasMO)}</div>
+       <div id="pane-talk" role="tabpanel" aria-labelledby="tab-talk" class="out" ${currentTab !== "talk" ? "hidden" : ""}><h2 class="print-only">Phrases</h2>${phrasesHTML(hasHK || hasMO)}</div>
        <p class="foot">Prices, opening hours and visa rules change. Figures here are typical for 2025–26 and meant for planning; confirm bookings and entry rules on official sites before you travel. Directions are estimates from map distance — use Apple Maps or Amap on the day for live routes.</p>`;
     restoreChecks();
     if (scroll) out.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -2211,6 +2240,7 @@ const SYD_FLIGHTS = {
         ["plan", "stay", "prep", "talk"].forEach((id) => ($("#pane-" + id).hidden = id !== currentTab));
         return;
       }
+      if (e.target.id === "printPlan") { window.print(); return; }
       if (e.target.id === "copyPlan") copy(planText(), "Itinerary copied — paste it into Notes or a message.");
       if (e.target.id === "copyCard") copy(HALAL_CARD, "Halal card copied.");
     });

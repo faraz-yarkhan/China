@@ -584,7 +584,8 @@
         <div class="fact"><b>${state.pace === "relaxed" ? "Relaxed" : "Balanced"}</b><span>Pace</span></div>
       </div>
       <div class="notes">${notes.map(([k, t, h]) => `<div class="note ${k}"><b class="tag">${t}</b><span>${h}</span></div>`).join("")}</div>
-      <div class="actions"><button type="button" class="btn" id="copyPlan">Copy itinerary as text</button></div>
+      <div class="actions">${window.NO_PRINT ? "" : '<button type="button" class="btn" id="printPlan">Print itinerary & info</button>'}<button type="button" class="btn" id="copyPlan">Copy itinerary as text</button></div>
+      ${window.NO_PRINT ? '<p class="hint">To print, download the standalone HTML file and open it in your browser — printing is blocked inside this preview.</p>' : ""}
     </div>`;
 
     const tabs = `<div class="tabs" role="tablist">
@@ -611,10 +612,10 @@
 
     const out = $("#out");
     out.innerHTML = hdr + tabs +
-      `<div id="pane-plan" role="tabpanel" aria-labelledby="tab-plan" class="out" ${currentTab !== "plan" ? "hidden" : ""}>${html}</div>
-       <div id="pane-stay" role="tabpanel" aria-labelledby="tab-stay" class="out" ${currentTab !== "stay" ? "hidden" : ""}>${stayHTML(ids)}</div>
-       <div id="pane-prep" role="tabpanel" aria-labelledby="tab-prep" class="out" ${currentTab !== "prep" ? "hidden" : ""}>${prepHTML(routeIds, hasMainland, hasHK, hasMO)}</div>
-       <div id="pane-talk" role="tabpanel" aria-labelledby="tab-talk" class="out" ${currentTab !== "talk" ? "hidden" : ""}>${phrasesHTML(hasHK || hasMO)}</div>
+      `<div id="pane-plan" role="tabpanel" aria-labelledby="tab-plan" class="out" ${currentTab !== "plan" ? "hidden" : ""}><h2 class="print-only">Day-by-day itinerary</h2>${html}</div>
+       <div id="pane-stay" role="tabpanel" aria-labelledby="tab-stay" class="out" ${currentTab !== "stay" ? "hidden" : ""}><h2 class="print-only">Hotels, halal food & things to do</h2>${stayHTML(ids)}</div>
+       <div id="pane-prep" role="tabpanel" aria-labelledby="tab-prep" class="out" ${currentTab !== "prep" ? "hidden" : ""}><h2 class="print-only">Before you go</h2>${prepHTML(routeIds, hasMainland, hasHK, hasMO)}</div>
+       <div id="pane-talk" role="tabpanel" aria-labelledby="tab-talk" class="out" ${currentTab !== "talk" ? "hidden" : ""}><h2 class="print-only">Phrases</h2>${phrasesHTML(hasHK || hasMO)}</div>
        <p class="foot">Prices, opening hours and visa rules change. Figures here are typical for 2025–26 and meant for planning; confirm bookings and entry rules on official sites before you travel. Directions are estimates from map distance — use Apple Maps or Amap on the day for live routes.</p>`;
     restoreChecks();
     if (scroll) out.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -992,6 +993,7 @@
         ["plan", "stay", "prep", "talk"].forEach((id) => ($("#pane-" + id).hidden = id !== currentTab));
         return;
       }
+      if (e.target.id === "printPlan") { window.print(); return; }
       if (e.target.id === "copyPlan") copy(planText(), "Itinerary copied — paste it into Notes or a message.");
       if (e.target.id === "copyCard") copy(HALAL_CARD, "Halal card copied.");
     });

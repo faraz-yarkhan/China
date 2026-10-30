@@ -529,6 +529,8 @@
     readForm();
     const plan = buildPlan(state);
     lastPlan = plan;
+    plan.map = routeMapSVG(plan);
+    lmap = null;
     const ids = state.stops.map((s) => s.city);
     const arrId = plan.arriveId, depId = plan.departId;
     const routeIds = [arrId, ...ids, depId];
@@ -582,6 +584,8 @@
       <div class="eyebrow">${isExample ? "Example itinerary" : "Your itinerary"} · ${state.days} days${startD ? ` · ${fmtDate(startD)} – ${fmtDate(endD)}` : ""}</div>
       <h2>${esc(typeLabels.length ? typeLabels.join(", ") : "All-round")} trip through ${esc(state.stops.map((s) => CITIES[s.city].name).filter((v, i, a) => a.indexOf(v) === i).join(", "))}</h2>
       <div class="route">${route}</div>
+      <div class="map-wrap map-summary">${plan.map.svg}</div>
+      <div class="map-legend">${plan.map.legend}<button type="button" class="btn small" data-tab="map">Open the map tab for street maps →</button></div>
       <div class="facts">
         <div class="fact"><b>${state.days} days / ${state.days - 1} nights</b><span>Length</span></div>
         <div class="fact"><b>${state.stops.length} ${state.stops.length === 1 ? "stop" : "stops"}</b><span>Cities</span></div>
@@ -589,11 +593,11 @@
         <div class="fact"><b>${state.pace === "relaxed" ? "Relaxed" : "Balanced"}</b><span>Pace</span></div>
       </div>
       <div class="notes">${notes.map(([k, t, h]) => `<div class="note ${k}"><b class="tag">${t}</b><span>${h}</span></div>`).join("")}</div>
-      <div class="actions"><button type="button" class="btn print-btn" data-print>🖨 Print itinerary & info (${plan.days.length + 4} pages)</button><button type="button" class="btn" data-save>⬇ Save offline copy</button><button type="button" class="btn" id="copyPlan">Copy itinerary as text</button></div>
+      <div class="actions"><button type="button" class="btn print-btn" data-print>🖨 Print itinerary & info (${plan.days.length + 5} pages)</button><button type="button" class="btn" data-save>⬇ Save offline copy</button><button type="button" class="btn" id="copyPlan">Copy itinerary as text</button></div>
     </div>`;
 
     const tabs = `<div class="tabs" role="tablist">
-      ${[["plan", "Day by day"], ["stay", "Hotels & halal food"], ["prep", "Before you go"], ["talk", "Phrases"]].map(([id, l]) => `<button type="button" role="tab" id="tab-${id}" aria-selected="${currentTab === id}" aria-controls="pane-${id}" data-tab="${id}">${l}</button>`).join("")}
+      ${[["plan", "Day by day"], ["map", "Map"], ["stay", "Hotels & halal food"], ["prep", "Before you go"], ["talk", "Phrases"]].map(([id, l]) => `<button type="button" role="tab" id="tab-${id}" aria-selected="${currentTab === id}" aria-controls="pane-${id}" data-tab="${id}">${l}</button>`).join("")}
     </div>`;
 
     // Day by day
@@ -611,17 +615,20 @@
         <div class="day-body"><h4 class="day-title">${esc(dayTitle(day))}${KIND[day.kind] ? `<span class="kind">${KIND[day.kind]}</span>` : ""}</h4>
           ${day.slots.map((s) => slotHTML(s, day)).join("")}
           ${day.back && day.kind !== "depart" ? `<div class="back"><b>Back to the hotel:</b> ${day.back.text}</div>` : ""}
+          ${googleDayLink(day) ? `<div class="maplinks"><a href="${googleDayLink(day)}" target="_blank" rel="noopener">🗺 Open this day's route in Google Maps ↗</a><a href="#" data-tab="map" data-mapday-open="${i}">See it on the map</a></div>` : ""}
         </div></article>`;
     });
 
     const out = $("#out");
     out.innerHTML = hdr + tabs +
       `<div id="pane-plan" role="tabpanel" aria-labelledby="tab-plan" class="out" ${currentTab !== "plan" ? "hidden" : ""}><h2 class="print-only">Day-by-day itinerary</h2>${html}</div>
+       <div id="pane-map" role="tabpanel" aria-labelledby="tab-map" class="out" ${currentTab !== "map" ? "hidden" : ""}><h2 class="print-only">Map</h2>${mapPaneHTML(plan)}</div>
        <div id="pane-stay" role="tabpanel" aria-labelledby="tab-stay" class="out" ${currentTab !== "stay" ? "hidden" : ""}><h2 class="print-only">Hotels, halal food & things to do</h2>${stayHTML(ids)}</div>
        <div id="pane-prep" role="tabpanel" aria-labelledby="tab-prep" class="out" ${currentTab !== "prep" ? "hidden" : ""}><h2 class="print-only">Before you go</h2>${prepHTML(routeIds, hasMainland, hasHK, hasMO)}</div>
        <div id="pane-talk" role="tabpanel" aria-labelledby="tab-talk" class="out" ${currentTab !== "talk" ? "hidden" : ""}><h2 class="print-only">Phrases</h2>${phrasesHTML(hasHK || hasMO)}</div>
        <p class="foot">Prices, opening hours and visa rules change. Figures here are typical for 2025–26 and meant for planning; confirm bookings and entry rules on official sites before you travel. Directions are estimates from map distance — use Apple Maps or Amap on the day for live routes.</p>`;
     restoreChecks();
+    if (currentTab === "map") showStreetMap();
     buildPrintView(plan, { ids, routeIds, arrId, depId, hasMainland, hasHK, hasMO, startD, endD, notes });
     if (scroll) out.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -936,6 +943,256 @@
       ${CANTONESE.map(([en, zh, jp, sl]) => `<tr><td>${esc(en)}</td><td class="zh">${zh}</td><td class="py">${esc(jp)}</td><td>${esc(sl)}</td></tr>`).join("")}</tbody></table></div></section>` : ""}`;
   }
 
+  /* ---------- maps: route map (built-in SVG) and interactive street map (Leaflet + OpenStreetMap) ---------- */
+  const mp = (ll) => [(ll[1] - MAP_GEO.lon0) * MAP_GEO.cos * MAP_GEO.k, (MAP_GEO.lat1 - ll[0]) * MAP_GEO.k];
+  const SYD_LL = [-33.94, 151.18];
+  const MODE = {
+    train: { label: "High-speed train", cls: "leg-train" },
+    flight: { label: "Flight", cls: "leg-flight" },
+    road: { label: "Bus / ferry", cls: "leg-road" },
+    boat: { label: "River cruise", cls: "leg-boat" },
+  };
+
+  // How a leg is travelled, read from the first sentence of the route advice
+  function legMode(a, b) {
+    const first = routeText(a, b).toLowerCase().split(/\.\s|;/)[0];
+    if (/cruise/.test(first)) return "boat";
+    if (/(bridge|ferry)/.test(first) && !/train/.test(first)) return "road";
+    if (/fly/.test(first) && !/train/.test(first)) return "flight";
+    return "train";
+  }
+
+  // Stops in travel order, including arrival/departure airports that aren't stops
+  function routeSequence(plan) {
+    const ids = state.stops.map((s) => s.city);
+    const seq = [];
+    if (plan.arriveId !== ids[0]) seq.push({ id: plan.arriveId, air: true });
+    state.stops.forEach((s, i) => seq.push({ id: s.city, n: i + 1, nights: s.nights }));
+    if (plan.departId !== ids[ids.length - 1]) seq.push({ id: plan.departId, air: true });
+    return seq;
+  }
+
+  function routeMapSVG(plan) {
+    const W = MAP_GEO.w, H = MAP_GEO.h;
+    const seq = routeSequence(plan);
+    const places = {};
+    seq.forEach((p) => {
+      const q = places[p.id] || (places[p.id] = { id: p.id, xy: mp(CITIES[p.id].stay.ll), nums: [], nights: 0, air: false });
+      if (p.n) { q.nums.push(p.n); q.nights += p.nights; } else q.air = true;
+    });
+    const P = Object.keys(places).map((k) => places[k]);
+    const legs = [];
+    for (let i = 1; i < seq.length; i++) if (seq[i].id !== seq[i - 1].id) legs.push({ a: places[seq[i - 1].id], b: places[seq[i].id], mode: legMode(seq[i - 1].id, seq[i].id) });
+    const modes = {};
+    legs.forEach((l) => (modes[l.mode] = 1));
+
+    const legSVG = (l, z) => {
+      const [x1, y1] = l.a.xy, [x2, y2] = l.b.xy;
+      if (l.mode === "flight") {
+        const mx = (x1 + x2) / 2, my = (y1 + y2) / 2, dx = x2 - x1, dy = y2 - y1;
+        return `<path class="leg ${MODE[l.mode].cls}" d="M${x1.toFixed(1)} ${y1.toFixed(1)}Q${(mx - dy * 0.18).toFixed(1)} ${(my + dx * 0.18).toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}"/>`;
+      }
+      return `<path class="leg ${MODE[l.mode].cls}" d="M${x1.toFixed(1)} ${y1.toFixed(1)}L${x2.toFixed(1)} ${y2.toFixed(1)}"/>`;
+    };
+
+    // Flights to and from Sydney come in from off the map
+    let sydSVG = "";
+    if (fromSyd()) {
+      const S = mp(SYD_LL);
+      const entry = (to) => { for (let t = 0; t <= 1; t += 0.005) { const x = S[0] + (to[0] - S[0]) * t, y = S[1] + (to[1] - S[1]) * t; if (x > 14 && x < W - 14 && y > 14 && y < H - 14) return [x, y]; } return to; };
+      const a = places[plan.arriveId], d = places[plan.departId];
+      const ea = entry(a.xy);
+      sydSVG += `<path class="leg leg-flight leg-intl" d="M${ea[0].toFixed(1)} ${ea[1].toFixed(1)}L${a.xy[0].toFixed(1)} ${a.xy[1].toFixed(1)}"/>`;
+      let lbl = a === d ? "✈ to/from Sydney" : "✈ from Sydney";
+      sydSVG += `<text class="map-intl" x="${(ea[0] - 6).toFixed(1)}" y="${(ea[1] - 8).toFixed(1)}" text-anchor="end">${lbl}</text>`;
+      if (a !== d) {
+        const ed = entry(d.xy);
+        sydSVG += `<path class="leg leg-flight leg-intl" d="M${d.xy[0].toFixed(1)} ${d.xy[1].toFixed(1)}L${ed[0].toFixed(1)} ${ed[1].toFixed(1)}"/>`;
+        sydSVG += `<text class="map-intl" x="${(ed[0] - 6).toFixed(1)}" y="${(ed[1] + 16).toFixed(1)}" text-anchor="end">✈ to Sydney</text>`;
+      }
+    }
+
+    // Group stops that are too close to label separately; each group gets a zoomed inset
+    const near = 46;
+    const groups = [];
+    P.forEach((p) => {
+      const g = groups.find((gr) => gr.some((q) => Math.hypot(q.xy[0] - p.xy[0], q.xy[1] - p.xy[1]) < near));
+      if (g) g.push(p); else groups.push([p]);
+    });
+    // merge groups that now touch
+    for (let i = 0; i < groups.length; i++) for (let j = groups.length - 1; j > i; j--)
+      if (groups[i].some((p) => groups[j].some((q) => Math.hypot(q.xy[0] - p.xy[0], q.xy[1] - p.xy[1]) < near))) { groups[i] = groups[i].concat(groups[j]); groups.splice(j, 1); }
+    const IW = 300, IH = 225;
+    const corners = [[W - IW - 10, H - IH - 10], [W - IW - 10, 10], [10, H - IH - 10], [10, 10]];
+    const used = [];
+    const insets = [];
+    groups.filter((g) => g.length > 1).slice(0, 3).forEach((g) => {
+      const xs = g.map((p) => p.xy[0]), ys = g.map((p) => p.xy[1]);
+      const cx = (Math.min.apply(null, xs) + Math.max.apply(null, xs)) / 2, cy = (Math.min.apply(null, ys) + Math.max.apply(null, ys)) / 2;
+      // nearest free corner that doesn't cover any stop
+      const c = corners.filter((cn) => !used.includes(cn) && !P.some((p) => p.xy[0] > cn[0] - 15 && p.xy[0] < cn[0] + IW + 15 && p.xy[1] > cn[1] - 15 && p.xy[1] < cn[1] + IH + 15))
+        .sort((m, n) => Math.hypot(m[0] + IW / 2 - cx, m[1] + IH / 2 - cy) - Math.hypot(n[0] + IW / 2 - cx, n[1] + IH / 2 - cy))[0];
+      if (!c) return;
+      used.push(c);
+      let vw = Math.max(Math.max.apply(null, xs) - Math.min.apply(null, xs), (Math.max.apply(null, ys) - Math.min.apply(null, ys)) * IW / IH) + 46;
+      vw = Math.max(vw, 60);
+      const vh = vw * IH / IW;
+      insets.push({ g, frame: c, view: [cx - vw / 2, cy - vh / 2, vw, vh], z: IW / vw, c: [cx, cy] });
+      g.forEach((p) => (p.inInset = true));
+    });
+
+    // Labels, placed to avoid each other and the markers
+    const label = (p) => `${CITIES[p.id].name}${p.nights ? " · " + p.nights + "N" : ""}${p.air && !p.nums.length ? " ✈" : ""}`;
+    const placeLabels = (pts, z, bounds) => {
+      const boxes = pts.map((p) => [p.xy[0] - 11 / z, p.xy[1] - 11 / z, 22 / z, 22 / z]);
+      const hit = (b) => boxes.some((o) => b[0] < o[0] + o[2] && b[0] + b[2] > o[0] && b[1] < o[1] + o[3] && b[1] + b[3] > o[1]) ||
+        b[0] < bounds[0] || b[1] < bounds[1] || b[0] + b[2] > bounds[0] + bounds[2] || b[1] + b[3] > bounds[1] + bounds[3];
+      return pts.map((p) => {
+        const t = label(p), w = (t.length * 7.4 + 6) / z, h = 16 / z, [x, y] = p.xy, o = 14 / z;
+        const cand = [[x + o, y - h / 2, "start", x + o, y + 5 / z], [x - o - w, y - h / 2, "end", x - o, y + 5 / z],
+          [x - w / 2, y - o - h, "middle", x, y - o - 3 / z], [x - w / 2, y + o, "middle", x, y + o + 12 / z]];
+        const pick = cand.find((cd) => !hit([cd[0], cd[1], w, h])) || cand[0];
+        boxes.push([pick[0], pick[1], w, h]);
+        return `<text class="map-label" x="${pick[3].toFixed(1)}" y="${pick[4].toFixed(1)}" text-anchor="${pick[2]}" style="font-size:${(13 / z).toFixed(2)}px;stroke-width:${(3.5 / z).toFixed(2)}px">${esc(t)}</text>`;
+      }).join("");
+    };
+    const marker = (p, z) => {
+      const r = (p.nums.length > 1 ? 12 : 10) / z, [x, y] = p.xy;
+      if (!p.nums.length) return `<circle class="map-air" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(6 / z).toFixed(2)}" style="stroke-width:${(2 / z).toFixed(2)}px"/>`;
+      return `<circle class="map-stop" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r.toFixed(2)}" style="stroke-width:${(2 / z).toFixed(2)}px"/><text class="map-num" x="${x.toFixed(1)}" y="${(y + 4 / z).toFixed(1)}" style="font-size:${((p.nums.length > 1 ? 9 : 11) / z).toFixed(2)}px">${p.nums.join("·")}</text>`;
+    };
+    const base = `<path class="map-land" d="${MAP_GEO.land}"/><path class="map-border" d="${MAP_GEO.borders}"/>`;
+    const seas = [["Yellow Sea", 34.5, 123.2], ["East China Sea", 28.5, 125.5], ["South China Sea", 17.6, 114.5]]
+      .map(([t, la, lo]) => { const [x, y] = mp([la, lo]); return `<text class="map-sea" x="${x.toFixed(0)}" y="${y.toFixed(0)}">${t}</text>`; }).join("");
+    const china = (() => { const [x, y] = mp([37.5, 97]); return `<text class="map-country" x="${x.toFixed(0)}" y="${y.toFixed(0)}">CHINA</text>`; })();
+
+    let svg = `<svg class="tripmap" viewBox="0 0 ${W} ${H}" role="img" aria-label="Map of your route through ${esc(P.map((p) => CITIES[p.id].name).join(", "))}">
+      <rect class="map-sea-bg" width="${W}" height="${H}"/>${base}${seas}${china}
+      <g>${legs.map((l) => legSVG(l, 1)).join("")}</g>${sydSVG}
+      ${P.map((p) => marker(p, 1)).join("")}
+      ${placeLabels(P.filter((p) => !p.inInset), 1, [0, 0, W, H])}`;
+    insets.forEach((ins) => {
+      const [fx, fy] = ins.frame, [vx, vy, vw, vh] = ins.view;
+      // leader line from the cluster to its inset
+      const tx = Math.max(fx, Math.min(fx + IW, ins.c[0])), ty = Math.max(fy, Math.min(fy + IH, ins.c[1]));
+      svg += `<path class="map-leader" d="M${ins.c[0].toFixed(1)} ${ins.c[1].toFixed(1)}L${tx.toFixed(1)} ${ty.toFixed(1)}"/><circle class="map-zoomring" cx="${ins.c[0].toFixed(1)}" cy="${ins.c[1].toFixed(1)}" r="${Math.max(18, vw / 2).toFixed(1)}"/>
+        <rect class="map-inset-frame" x="${fx}" y="${fy}" width="${IW}" height="${IH}" rx="6"/>
+        <svg x="${fx}" y="${fy}" width="${IW}" height="${IH}" viewBox="${vx.toFixed(1)} ${vy.toFixed(1)} ${vw.toFixed(1)} ${vh.toFixed(1)}">
+          <rect class="map-sea-bg" x="${vx}" y="${vy}" width="${vw}" height="${vh}"/>${base}
+          ${legs.map((l) => legSVG(l, ins.z)).join("")}
+          ${P.map((p) => marker(p, ins.z)).join("")}
+          ${placeLabels(ins.g, ins.z, [vx, vy, vw, vh])}
+        </svg>
+        <rect class="map-inset-border" x="${fx}" y="${fy}" width="${IW}" height="${IH}" rx="6"/>
+        <text class="map-inset-title" x="${fx + 8}" y="${fy + 18}">Zoomed in</text>`;
+    });
+    svg += `</svg>`;
+    const legend = Object.keys(modes).concat(fromSyd() ? ["intl"] : []).map((m) => m === "intl"
+      ? `<span><svg width="34" height="10" aria-hidden="true"><path class="leg leg-flight leg-intl" d="M2 5H32"/></svg>Flight to/from Sydney</span>`
+      : `<span><svg width="34" height="10" aria-hidden="true"><path class="leg ${MODE[m].cls}" d="M2 5H32"/></svg>${MODE[m].label}</span>`).join("");
+    return { svg, legend, legs };
+  }
+
+  function googleTripLink(plan) {
+    const pts = (fromSyd() ? ["Sydney, Australia"] : []).concat(routeSequence(plan).map((p) => CITIES[p.id].name + (CITIES[p.id].region === "mainland" ? ", China" : "")), fromSyd() ? ["Sydney, Australia"] : []);
+    return "https://www.google.com/maps/dir/" + pts.map(encodeURIComponent).join("/");
+  }
+  function googleDayLink(day) {
+    const hotel = day.city.stay.ll;
+    const pts = [hotel].concat(day.slots.filter((s) => s.type === "act").map((s) => s.p.ll), day.kind === "depart" ? [] : [hotel]);
+    return pts.length > 1 ? "https://www.google.com/maps/dir/" + pts.map((ll) => ll[0] + "," + ll[1]).join("/") : "";
+  }
+
+  function mapPaneHTML(plan) {
+    const dayBtns = plan.days.map((d, i) => `<button type="button" class="btn small" data-mapday="${i}">Day ${i + 1}</button>`).join("");
+    return `<section class="panel">
+        <h3>Your route on the map</h3>
+        <div class="map-wrap">${plan.map.svg}</div>
+        <div class="map-legend">${plan.map.legend}<span><svg width="22" height="22" aria-hidden="true"><circle class="map-stop" cx="11" cy="11" r="9"/><text class="map-num" x="11" y="15" style="font-size:11px">1</text></svg>Stop number</span></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Leg</th><th>How</th><th>Details</th></tr></thead><tbody>
+          ${plan.map.legs.map((l) => `<tr><td><b>${esc(CITIES[l.a.id].name)} → ${esc(CITIES[l.b.id].name)}</b></td><td>${MODE[l.mode].label}</td><td>${esc(routeText(l.a.id, l.b.id))}</td></tr>`).join("")}
+        </tbody></table></div>
+        <p><a href="${googleTripLink(plan)}" target="_blank" rel="noopener">Open the whole route in Google Maps ↗</a></p>
+      </section>
+      <section class="panel lmap-wrap">
+        <h3>Street map — every stop, day by day</h3>
+        <p class="hint">Zoom in to see streets. Pick a day to see that day's stops in order (1 = morning). Use two fingers to move the map on a phone. Needs an internet connection.</p>
+        <div class="daypick"><button type="button" class="btn small" data-mapday="all" aria-pressed="true">Whole trip</button>${dayBtns}</div>
+        <div id="lmap" class="lmap" role="region" aria-label="Interactive map"></div>
+        <p class="hint" id="lmapNote">Map data © OpenStreetMap contributors.</p>
+      </section>`;
+  }
+
+  /* Interactive map: Leaflet from cdnjs, OpenStreetMap tiles. Loaded only when the Map tab opens. */
+  let lmap = null, lmapLayer = null, lmapDay = "all";
+  const DAY_COLORS = ["#B3302A", "#2B5C8A", "#1D7556", "#8C620E", "#6B3FA0", "#C2562D", "#2E7D8C", "#A0336B"];
+  function ensureLeaflet(cb) {
+    if (window.L) return cb();
+    ensureLeaflet.q = (ensureLeaflet.q || []).concat(cb);
+    if (ensureLeaflet.loading) return;
+    ensureLeaflet.loading = true;
+    const s = document.createElement("script");
+    s.src = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
+    s.onload = () => { const q = ensureLeaflet.q; ensureLeaflet.q = []; q.forEach((f) => f()); };
+    s.onerror = () => { ensureLeaflet.loading = false; const n = $("#lmapNote"); if (n) n.textContent = "The street map couldn't load — it needs an internet connection. The route map above works offline."; };
+    document.head.appendChild(s);
+  }
+  function showStreetMap() {
+    if (!$("#lmap") || !lastPlan) return;
+    ensureLeaflet(() => {
+      const el = $("#lmap");
+      if (!el) return;
+      if (!lmap || lmap.getContainer() !== el) {
+        if (lmap) { try { lmap.remove(); } catch (e) { /* container already gone */ } }
+        lmap = L.map(el, { scrollWheelZoom: false, dragging: !L.Browser.mobile, tap: false });
+        let errors = 0;
+        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18, attribution: "© OpenStreetMap contributors" })
+          .on("tileerror", () => { if (++errors === 4) { const n = $("#lmapNote"); if (n) n.textContent = "Map tiles aren't loading (no internet, or this viewer blocks them). The route map above works offline."; } })
+          .addTo(lmap);
+      }
+      drawStreetMap(lmapDay);
+      setTimeout(() => lmap && lmap.invalidateSize(), 50);
+    });
+  }
+  function drawStreetMap(which) {
+    if (!lmap || !lastPlan) return;
+    lmapDay = which;
+    document.querySelectorAll("[data-mapday]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.mapday === String(which))));
+    if (lmapLayer) lmapLayer.remove();
+    lmapLayer = L.layerGroup().addTo(lmap);
+    const pts = [];
+    const pin = (ll, color, text, tip, big) => {
+      pts.push(ll);
+      L.marker(ll, { icon: L.divIcon({ className: "lpin", html: `<span style="background:${color}">${esc(text)}</span>`, iconSize: big ? [26, 26] : [22, 22], iconAnchor: big ? [13, 13] : [11, 11] }) })
+        .bindTooltip(tip, { direction: "top", offset: [0, -10] }).addTo(lmapLayer);
+    };
+    if (which === "all") {
+      const seq = routeSequence(lastPlan);
+      L.polyline(seq.map((p) => CITIES[p.id].stay.ll), { color: "#B3302A", weight: 3, opacity: 0.85, dashArray: "6 6" }).addTo(lmapLayer);
+      lastPlan.days.forEach((d, i) => d.slots.forEach((s) => {
+        if (s.type !== "act") return;
+        L.circleMarker(s.p.ll, { radius: 5, color: "#fff", weight: 1, fillColor: DAY_COLORS[i % DAY_COLORS.length], fillOpacity: 0.95 })
+          .bindTooltip(`Day ${i + 1} · ${SLOT[s.part].label}: ${esc(s.p.n)}`).addTo(lmapLayer);
+        pts.push(s.p.ll);
+      }));
+      seq.forEach((p) => pin(CITIES[p.id].stay.ll, "#17202B", p.n ? String(p.n) : "✈", `${p.n ? p.n + ". " : ""}${esc(CITIES[p.id].name)}${p.nights ? " · " + p.nights + " nights" : " (airport)"}`, true));
+    } else {
+      const d = lastPlan.days[+which], color = DAY_COLORS[+which % DAY_COLORS.length];
+      const hotel = d.city.stay.ll;
+      const acts = d.slots.filter((s) => s.type === "act");
+      L.polyline([hotel].concat(acts.map((s) => s.p.ll), d.kind === "depart" ? [] : [hotel]), { color, weight: 4, opacity: 0.8 }).addTo(lmapLayer);
+      pin(hotel, "#17202B", "H", `Hotel area: ${esc(d.city.stay.area)}`, true);
+      acts.forEach((s, k) => pin(s.p.ll, color, String(k + 1), `${SLOT[s.part].label}: ${esc(s.p.n)}`));
+      if (d.slots.some((s) => s.type === "travel")) {
+        const t = d.slots.find((s) => s.type === "travel");
+        pts.push(t.from.stay.ll);
+        L.polyline([t.from.stay.ll, t.to.stay.ll], { color: "#555", weight: 2, dashArray: "4 6" }).addTo(lmapLayer);
+      }
+    }
+    if (pts.length === 1) lmap.setView(pts[0], 13);
+    else lmap.fitBounds(L.latLngBounds(pts), { padding: [30, 30], maxZoom: 15 });
+  }
+
   /* ---------- print view: overview, 1 page per day, info, checklist, phrases ---------- */
   // First sentence of a text (avoids regex lookbehind, which Safari only supports from iOS 16.4)
   const firstSentence = (t) => { const str = String(t), i = str.search(/\.\s/); return i < 0 ? str : str.slice(0, i + 1); };
@@ -984,6 +1241,12 @@
       <ul class="pv-notes">${c.notes.filter((n) => n[1] !== "Example").map(([, t, h]) => `<li><b>${t}:</b> ${plain(h)}</li>`).join("")}</ul>
       <table class="pv-tbl"><thead><tr><th>Day</th><th>City</th><th>Plan</th></tr></thead><tbody>
       ${plan.days.map((d, i) => `<tr><td>${i + 1}${d.date ? "<br>" + fmtDate(d.date) : ""}</td><td>${esc(d.city.name)}</td><td>${esc(dayTitle(d))}</td></tr>`).join("")}
+      </tbody></table>`);
+
+    // 1b. Route map
+    pages.push(`${head("Route map")}<div class="pv-map">${plan.map.svg}</div><div class="map-legend">${plan.map.legend}</div>
+      <table class="pv-tbl"><thead><tr><th>Leg</th><th>How</th><th>Details</th></tr></thead><tbody>
+      ${plan.map.legs.map((l) => `<tr><td><b>${esc(CITIES[l.a.id].name)} → ${esc(CITIES[l.b.id].name)}</b></td><td>${MODE[l.mode].label}</td><td>${esc(firstSentence(routeText(l.a.id, l.b.id)))}</td></tr>`).join("")}
       </tbody></table>`);
 
     // 2. One page per day
@@ -1067,7 +1330,7 @@
     if (!lastPlan) return;
     if (window.NO_PRINT) { toast("Saving files is blocked inside this preview. Use the standalone HTML file or the GitHub Pages version to save an offline copy."); return; }
     const out = $("#out").cloneNode(true);
-    out.querySelectorAll(".tabs, .actions, script, .maplinks").forEach((n) => n.parentNode.removeChild(n));
+    out.querySelectorAll(".tabs, .actions, script, .maplinks, .lmap-wrap, .map-legend .btn").forEach((n) => n.parentNode.removeChild(n));
     out.querySelectorAll("[hidden]").forEach((n) => n.removeAttribute("hidden"));
     out.querySelectorAll("input[type=checkbox]").forEach((n) => { if (n.checked) n.setAttribute("checked", ""); n.setAttribute("disabled", ""); });
     out.removeAttribute("id");
@@ -1162,11 +1425,17 @@ ${pv}
     $("#out").addEventListener("click", (e) => {
       const tab = e.target.closest("[data-tab]");
       if (tab) {
+        if (tab.tagName === "A") e.preventDefault();
+        if (tab.dataset.mapdayOpen != null) lmapDay = tab.dataset.mapdayOpen;
         currentTab = tab.dataset.tab; save("tab", currentTab);
-        document.querySelectorAll("[data-tab]").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === currentTab));
-        ["plan", "stay", "prep", "talk"].forEach((id) => ($("#pane-" + id).hidden = id !== currentTab));
+        document.querySelectorAll(".tabs [data-tab]").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === currentTab));
+        ["plan", "map", "stay", "prep", "talk"].forEach((id) => ($("#pane-" + id).hidden = id !== currentTab));
+        if (currentTab === "map") showStreetMap();
+        if (!tab.closest(".tabs")) $(".tabs").scrollIntoView({ behavior: "smooth", block: "start" });
         return;
       }
+      const md = e.target.closest("[data-mapday]");
+      if (md) { drawStreetMap(md.dataset.mapday); return; }
       if (e.target.id === "copyPlan") copy(planText(), "Itinerary copied — paste it into Notes or a message.");
       if (e.target.id === "copyCard") copy(HALAL_CARD, "Halal card copied.");
     });

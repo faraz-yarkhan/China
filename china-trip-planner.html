@@ -305,12 +305,8 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
 </head>
 <body>
 <div id="nojs" class="nojs" role="alert">
-  <b>The planner can't run in this viewer.</b> You're probably seeing a file preview (iPhone Files, Mail, WhatsApp or the Claude app), which doesn't run JavaScript, so the buttons won't work. To use it on iPhone:
-  <ol>
-    <li>Open the online version in Safari: <a href="https://claude.ai/artifact/EYAy1zPmQ4mTAHKWsCaDCK">claude.ai/artifact/EYAy1zPmQ4mTAHKWsCaDCK</a> (sign in to Claude), or</li>
-    <li>Open the web version in Safari: <a href="https://faraz-yarkhan.github.io/China/">faraz-yarkhan.github.io/China</a> (once GitHub Pages is switched on), or</li>
-    <li>Open the file on a computer in Chrome, Safari, Edge or Firefox.</li>
-  </ol>
+  <b>Tap here to use the planner:</b> <a href="https://faraz-yarkhan.github.io/China/">faraz-yarkhan.github.io/China</a>
+  <br>You're seeing a file preview (iPhone Files, Mail, WhatsApp…), which can't run the planner, so the fields won't respond. The link above opens the working version in Safari — no account needed. On a computer, open this file in Chrome, Safari, Edge or Firefox instead.
   <span id="jsError"></span>
 </div>
 <header class="mast">
@@ -407,7 +403,7 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
 <script>
   window.onerror = function (msg) {
     var n = document.getElementById("nojs"), e = document.getElementById("jsError");
-    if (n && e) { e.textContent = "Error: " + msg + " — please update iOS, or use the online version above."; }
+    if (n && e) { e.textContent = " Error: " + msg + " — please update your browser, or use the link above."; }
     else {
       var d = document.createElement("div"); d.className = "nojs"; d.setAttribute("role", "alert");
       d.textContent = "Something went wrong (" + msg + "). Try updating your browser or use the online version.";

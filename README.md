@@ -28,3 +28,6 @@ Plus pace (relaxed / balanced), hotel budget, passport (Australian / other) and 
 - `app.js` — form, itinerary engine and rendering
 
 Prices, opening hours and visa rules are typical for 2025–26 and change often: confirm on official sites before booking.
+
+## Using it on iPhone / iPad
+Tapping the .html file in Files, Mail, WhatsApp or the Claude app opens a **preview that doesn't run JavaScript**, so the planner can't work there (the page shows a notice when this happens). Instead, open it in Safari from a web address: the published Claude page, or host this repo with GitHub Pages (Settings → Pages → deploy from this branch) and open the Pages URL. The code avoids JavaScript features older iOS Safari lacks, so it runs on iOS 12 and later.

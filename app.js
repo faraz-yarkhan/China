@@ -1,9 +1,12 @@
 /* China & Hong Kong Trip Planner — form, itinerary engine and rendering. Depends on data.js. */
 (function () {
   "use strict";
+  // The script is running, so remove the "can't run" notice
+  const nojs = document.getElementById("nojs");
+  if (nojs) nojs.parentNode.removeChild(nojs);
 
   const $ = (s, r = document) => r.querySelector(s);
-  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const SLOT = {
     m: { label: "Morning", time: "08:30 – 12:30" },
     e: { label: "Evening", time: "13:30 – 18:30" },
@@ -934,7 +937,8 @@
   }
 
   /* ---------- print view: overview, 1 page per day, info, checklist, phrases ---------- */
-  const firstSentence = (t) => String(t).split(/(?<=\.)\s/)[0];
+  // First sentence of a text (avoids regex lookbehind, which Safari only supports from iOS 16.4)
+  const firstSentence = (t) => { const str = String(t), i = str.search(/\.\s/); return i < 0 ? str : str.slice(0, i + 1); };
   const plain = (h) => String(h).replace(/<[^>]+>/g, "");
 
   function pvSlot(s, day) {
@@ -1020,7 +1024,7 @@
       <h2>Bookings</h2><table class="pv-tbl pv-blank"><thead><tr><th>What</th><th>Date</th><th>Reference</th></tr></thead><tbody>${"<tr><td>&nbsp;</td><td></td><td></td></tr>".repeat(8)}</tbody></table>`);
 
     // 5. Phrases
-    const rows = PHRASES.flatMap(([t, r]) => [[t]].concat(r));
+    const rows = PHRASES.reduce((acc, [t, r]) => acc.concat([[t]], r), []);
     pages.push(`${head("Phrases")}
       <div class="pv-card"><span class="han">${HALAL_CARD}</span><br><span class="pv-meta">I am Muslim and only eat halal food. Please don't use pork, lard, pork-bone broth, alcohol or cooking wine. If this dish is not halal, please tell me. Thank you!</span></div>
       ${phraseTables(rows.concat(c.hasHK || c.hasMO ? [["Cantonese (Hong Kong & Macau)"]].concat(CANTONESE.map(([en, zh, , sl]) => [en, zh, sl])) : []))}`);

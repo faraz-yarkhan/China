@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>China & Hong Kong Trip Planner</title>
 <meta name="claude:viewport-fit-sides" content="cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="China Trip">
+<meta name="format-detection" content="telephone=no">
+<meta name="theme-color" content="#F3F4F2">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&family=Noto+Serif+SC:wght@600;700&display=swap">
@@ -108,7 +112,7 @@ select { flex: 1 1 160px; min-width: 0; max-width: 100%; }
 .chip button { border: 0; background: none; cursor: pointer; color: var(--muted); padding: 0 4px; font-size: 14px; }
 .types { display: flex; flex-wrap: wrap; gap: 6px; }
 .toggle { position: relative; }
-.toggle input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.toggle input { position: absolute; opacity: 0; top: 0; left: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
 .toggle span { display: inline-block; border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: 14px; background: var(--paper); }
 .toggle input:checked + span { background: var(--ink); color: var(--paper); border-color: var(--ink); }
 .toggle input:focus-visible + span { outline: 2px solid var(--seal); outline-offset: 2px; }
@@ -156,7 +160,7 @@ select { flex: 1 1 160px; min-width: 0; max-width: 100%; }
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--line); overflow-x: auto; position: sticky; top: env(safe-area-inset-top, 0px); background: var(--paper); z-index: 5; padding-top: 6px; }
 .tabs button { border: 0; background: none; padding: 10px 14px; cursor: pointer; font-weight: 600; color: var(--muted); border-bottom: 3px solid transparent; white-space: nowrap; }
 .tabs button[aria-selected=true] { color: var(--ink); border-bottom-color: var(--seal); }
-body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--paper); }
+body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--paper); }
 
 /* City divider */
 .city-band { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 18px 0 2px; border-bottom: 2px solid var(--ink); }
@@ -240,6 +244,13 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
 .toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--ink); color: var(--paper); padding: 10px 16px; border-radius: 8px; font-size: 14px; z-index: 20; }
 .foot { font-size: 12.5px; color: var(--muted); max-width: 80ch; }
 @media (prefers-reduced-motion: no-preference) { .day { animation: rise .35s ease both; } @keyframes rise { from { transform: translateY(6px); opacity: .6; } to { transform: none; opacity: 1; } } }
+/* iPhone: 16px+ text in form fields stops Safari zooming in when you tap them */
+@media (max-width: 820px) { input, select, textarea, .btn { font-size: 16px; } }
+.btn, .toggle, .seg label, .icon-btn, select { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.nojs { max-width: 1320px; margin: 12px auto 0; border: 2px solid var(--seal); background: var(--seal-soft); border-radius: 10px; padding: 12px 14px; font-size: 15px; line-height: 1.5; }
+.nojs b { color: var(--seal); }
+.nojs a { overflow-wrap: anywhere; word-break: break-word; }
+.nojs ol { margin: 6px 0 0; padding-left: 20px; }
 .print-only { display: none; }
 .print-btn { border-color: var(--ink); font-weight: 600; }
 #printView { display: none; }
@@ -284,6 +295,7 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
   body { margin: 0 !important; padding: 0 !important; }
   body::before { display: none !important; }
   body > *:not(#printView) { display: none !important; }
+  .nojs { display: none !important; }
   #printView { display: block !important; position: static !important; visibility: visible !important; }
   .pv-page { break-after: page; page-break-after: always; break-inside: avoid; }
   .pv-page:last-child { break-after: auto; page-break-after: auto; }
@@ -292,6 +304,15 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
 </style>
 </head>
 <body>
+<div id="nojs" class="nojs" role="alert">
+  <b>The planner can't run in this viewer.</b> You're probably seeing a file preview (iPhone Files, Mail, WhatsApp or the Claude app), which doesn't run JavaScript, so the buttons won't work. To use it on iPhone:
+  <ol>
+    <li>Open the online version in Safari: <a href="https://claude.ai/artifact/EYAy1zPmQ4mTAHKWsCaDCK">claude.ai/artifact/EYAy1zPmQ4mTAHKWsCaDCK</a> (sign in to Claude), or</li>
+    <li>Put this file on a website (e.g. GitHub Pages) and open that address in Safari, or</li>
+    <li>Open the file on a computer in Chrome, Safari, Edge or Firefox.</li>
+  </ol>
+  <span id="jsError"></span>
+</div>
 <header class="mast">
   <div>
     <h1>China & Hong Kong Trip Planner <span class="han">中国 · 香港</span></h1>
@@ -382,6 +403,17 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
   <section class="out" id="out" aria-live="polite"></section>
 </main>
 
+<script>
+  window.onerror = function (msg) {
+    var n = document.getElementById("nojs"), e = document.getElementById("jsError");
+    if (n && e) { e.textContent = "Error: " + msg + " — please update iOS, or use the online version above."; }
+    else {
+      var d = document.createElement("div"); d.className = "nojs"; d.setAttribute("role", "alert");
+      d.textContent = "Something went wrong (" + msg + "). Try updating your browser or use the online version.";
+      document.body.insertBefore(d, document.body.firstChild);
+    }
+  };
+</script>
 <script>
 /* Destination database for the China & Hong Kong Trip Planner.
    Prices are approximate (2025–26) and in local currency. Coordinates are approximate and
@@ -1270,9 +1302,12 @@ const SYD_FLIGHTS = {
 /* China & Hong Kong Trip Planner — form, itinerary engine and rendering. Depends on data.js. */
 (function () {
   "use strict";
+  // The script is running, so remove the "can't run" notice
+  const nojs = document.getElementById("nojs");
+  if (nojs) nojs.parentNode.removeChild(nojs);
 
   const $ = (s, r = document) => r.querySelector(s);
-  const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const SLOT = {
     m: { label: "Morning", time: "08:30 – 12:30" },
     e: { label: "Evening", time: "13:30 – 18:30" },
@@ -2203,7 +2238,8 @@ const SYD_FLIGHTS = {
   }
 
   /* ---------- print view: overview, 1 page per day, info, checklist, phrases ---------- */
-  const firstSentence = (t) => String(t).split(/(?<=\.)\s/)[0];
+  // First sentence of a text (avoids regex lookbehind, which Safari only supports from iOS 16.4)
+  const firstSentence = (t) => { const str = String(t), i = str.search(/\.\s/); return i < 0 ? str : str.slice(0, i + 1); };
   const plain = (h) => String(h).replace(/<[^>]+>/g, "");
 
   function pvSlot(s, day) {
@@ -2289,7 +2325,7 @@ const SYD_FLIGHTS = {
       <h2>Bookings</h2><table class="pv-tbl pv-blank"><thead><tr><th>What</th><th>Date</th><th>Reference</th></tr></thead><tbody>${"<tr><td>&nbsp;</td><td></td><td></td></tr>".repeat(8)}</tbody></table>`);
 
     // 5. Phrases
-    const rows = PHRASES.flatMap(([t, r]) => [[t]].concat(r));
+    const rows = PHRASES.reduce((acc, [t, r]) => acc.concat([[t]], r), []);
     pages.push(`${head("Phrases")}
       <div class="pv-card"><span class="han">${HALAL_CARD}</span><br><span class="pv-meta">I am Muslim and only eat halal food. Please don't use pork, lard, pork-bone broth, alcohol or cooking wine. If this dish is not halal, please tell me. Thank you!</span></div>
       ${phraseTables(rows.concat(c.hasHK || c.hasMO ? [["Cantonese (Hong Kong & Macau)"]].concat(CANTONESE.map(([en, zh, , sl]) => [en, zh, sl])) : []))}`);

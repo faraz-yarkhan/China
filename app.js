@@ -589,7 +589,7 @@
         <div class="fact"><b>${state.pace === "relaxed" ? "Relaxed" : "Balanced"}</b><span>Pace</span></div>
       </div>
       <div class="notes">${notes.map(([k, t, h]) => `<div class="note ${k}"><b class="tag">${t}</b><span>${h}</span></div>`).join("")}</div>
-      <div class="actions"><button type="button" class="btn print-btn" data-print>🖨 Print itinerary & info (${plan.days.length + 4} pages)</button><button type="button" class="btn" id="copyPlan">Copy itinerary as text</button></div>
+      <div class="actions"><button type="button" class="btn print-btn" data-print>🖨 Print itinerary & info (${plan.days.length + 4} pages)</button><button type="button" class="btn" data-save>⬇ Save offline copy</button><button type="button" class="btn" id="copyPlan">Copy itinerary as text</button></div>
     </div>`;
 
     const tabs = `<div class="tabs" role="tablist">
@@ -1061,6 +1061,46 @@
     try { window.print(); } catch (e) { /* print unavailable */ }
   }
 
+  /* Save the current plan as a script-free HTML file: it opens in any iPhone preview
+     (Files, Mail, WhatsApp) and works offline, including where claude.ai is blocked. */
+  function saveOffline() {
+    if (!lastPlan) return;
+    if (window.NO_PRINT) { toast("Saving files is blocked inside this preview. Use the standalone HTML file or the GitHub Pages version to save an offline copy."); return; }
+    const out = $("#out").cloneNode(true);
+    out.querySelectorAll(".tabs, .actions, script, .maplinks").forEach((n) => n.parentNode.removeChild(n));
+    out.querySelectorAll("[hidden]").forEach((n) => n.removeAttribute("hidden"));
+    out.querySelectorAll("input[type=checkbox]").forEach((n) => { if (n.checked) n.setAttribute("checked", ""); n.setAttribute("disabled", ""); });
+    out.removeAttribute("id");
+    const pv = $("#printView") ? $("#printView").outerHTML : "";
+    const css = Array.prototype.map.call(document.querySelectorAll("style"), (st) => st.textContent).join("\n");
+    const ids = state.stops.map((x) => CITIES[x.city].name).filter((v, i, a) => a.indexOf(v) === i);
+    const title = `China trip · ${state.days} days · ${ids.join(", ")}`;
+    const saved = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+    const doc = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>${esc(title)}</title>
+<style>${css}
+.static-wrap { display: block; max-width: 900px; margin: 0 auto; }
+.static-wrap .print-only { display: block; font-family: var(--display); font-size: 24px; margin: 24px 0 4px; padding-bottom: 4px; border-bottom: 3px solid var(--seal); }
+.static-wrap .out { display: grid; gap: 16px; }
+</style></head><body>
+<header class="mast"><div><h1>${esc(title)}</h1><p>Saved ${esc(saved)} from the China & Hong Kong Trip Planner. This copy works offline and in any phone preview.</p></div></header>
+<main class="static-wrap"><div class="out">${out.innerHTML}</div></main>
+${pv}
+</body></html>`;
+    const name = `China trip itinerary (${state.days} days).html`;
+    try {
+      const blob = new Blob([doc], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = name; a.rel = "noopener";
+      if (typeof a.download === "undefined") window.open(url, "_blank"); // very old Safari
+      else { document.body.appendChild(a); a.click(); a.parentNode.removeChild(a); }
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+      toast("Saved. On iPhone, tap the download arrow in Safari, then the file, and Share → Save to Files.");
+    } catch (e) {
+      toast("Couldn't save the file in this browser. Try Copy itinerary as text instead.");
+    }
+  }
+
   /* ---------- export & misc ---------- */
   function planText() {
     if (!lastPlan) return "";
@@ -1138,7 +1178,10 @@
     });
   }
 
-  document.addEventListener("click", (e) => { if (e.target.closest("[data-print]")) doPrint(); });
+  document.addEventListener("click", (e) => {
+    if (e.target.closest("[data-print]")) doPrint();
+    if (e.target.closest("[data-save]")) saveOffline();
+  });
   window.addEventListener("beforeprint", fitPrintPages);
 
   renderForm();

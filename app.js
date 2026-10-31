@@ -228,14 +228,9 @@
   const IMMIGRATION = 75; // landing → through immigration with bags
   const INTL_BUFFER = 180; // at the airport this long before an international take-off
   // Time to leave the hotel before a train/flight departs
-  const legLead = (a, b) => (legMode(a, b) === "flight" ? 150 : 75);
-  // Door-to-door estimate between two cities (hotel → station/airport, travel, into town)
-  function legMinutes(a, b) {
-    const d = km(CITIES[a].stay.ll, CITIES[b].stay.ll), mode = legMode(a, b);
-    if (mode === "flight") return Math.round(150 + (d / 700) * 60 + 70);
-    if (mode === "train") return Math.round(75 + ((d * 1.25) / 220) * 60 + 40);
-    return Math.round(45 + (d / 40) * 60 + 30);
-  }
+  const legLead = (a, b) => modeEstimate(legMode(a, b), a, b).lead;
+  // Door-to-door estimate between two cities for the chosen (or recommended) mode
+  const legMinutes = (a, b) => modeEstimate(legMode(a, b), a, b).door;
   // Which parts of the day are still usable after you're ready, or before you must leave
   const freeAfter = (ready) => ({ m: ready <= 9 * 60 + 30, e: ready <= 16 * 60, n: ready <= 20 * 60 + 30 });
   const freeBefore = (leave) => ({ m: leave >= 12 * 60 + 30, e: leave >= 18 * 60 + 30, n: leave >= 22 * 60 });
@@ -245,7 +240,8 @@
 
   function travelSlot(fromId, toId, extra) {
     const from = CITIES[fromId], to = CITIES[toId];
-    return Object.assign({ part: "m", type: "travel", from, to, fromId, toId, text: routeText(fromId, toId), border: crossesBorder(fromId, toId), arrive: to.arrive }, extra);
+    const li = legInfo(fromId, toId);
+    return Object.assign({ part: "m", type: "travel", from, to, fromId, toId, leg: li, text: li.text || routeText(fromId, toId), border: crossesBorder(fromId, toId), arrive: to.arrive }, extra);
   }
 
   function makeDay(ctx, kind, date, prevCtx, flyId, legTimes) {
@@ -268,7 +264,7 @@
         const lt = legTimes || {};
         let dep = toMin(lt.dep), arr = toMin(lt.arr);
         const est = dep == null && arr == null;
-        if (dep == null && land != null) dep = land + IMMIGRATION + 60 + (legMode(flyId, ctx.id) === "flight" ? 60 : 30);
+        if (dep == null && land != null) dep = land + IMMIGRATION + 60 + (legMode(flyId, ctx.id) === "flight" ? 60 : legMode(flyId, ctx.id) === "car" ? 0 : 30);
         if (arr == null && dep != null) arr = dep + legMinutes(flyId, ctx.id) - legLead(flyId, ctx.id) - 40;
         day.slots.push({ part: land == null ? "m" : partAt(land), type: "arrive", via: true, city: CITIES[flyId], flyIn: flyId, land, flightNo: F.inNo, when: land == null ? null : "Lands " + hhmm(land),
           text: `Clear immigration and customs in ${CITIES[flyId].name}, then continue straight to ${city.name}.` });
@@ -447,17 +443,34 @@
       </div>`;
     }).join("");
     renderTally();
+    renderOutLeg();
   }
 
-  // Optional times for the train/flight into this stop (from the previous stop, or from the arrival airport)
+  // How you get to this stop (from the previous stop, or from the arrival airport): mode + optional times
+  function modeSelect(id, fromId, toId, current, extraAttrs) {
+    const opts = modesFor(fromId, toId), rec = recommendedMode(fromId, toId);
+    return `<select id="${id}" ${extraAttrs} aria-label="How you'll travel from ${esc(CITIES[fromId].name)} to ${esc(CITIES[toId].name)}">
+      <option value="">How will you travel? (not chosen)</option>
+      ${opts.map((m) => `<option value="${m}" ${current === m ? "selected" : ""}>${MODE[m].icon} ${MODE[m].label}${m === rec ? " — usual choice" : ""}</option>`).join("")}</select>`;
+  }
   function legRow(st, i) {
     const fromId = i > 0 ? state.stops[i - 1].city : state.arrive && state.arrive !== st.city ? state.arrive : null;
     if (!fromId) return "";
     const lt = legTimesFor(st, fromId);
-    const mode = legMode(fromId, st.city) === "flight" ? "Flight" : legMode(fromId, st.city) === "train" ? "Train" : "Transfer";
-    return `<div class="row legrow"><span class="hint lbl">${mode} from ${esc(CITIES[fromId].name)} (optional):</span>
+    return `<div class="row legrow"><span class="hint lbl">Getting here from ${esc(CITIES[fromId].name)}:</span>
+      ${modeSelect("legmode-" + i, fromId, st.city, lt.mode, `data-act="legmode" data-i="${i}" data-from="${fromId}"`)}
       <span class="pair"><label class="hint" for="legdep-${i}">leaves</label><input type="time" id="legdep-${i}" data-act="legdep" data-i="${i}" data-from="${fromId}" value="${esc(lt.dep || "")}"></span>
       <span class="pair"><label class="hint" for="legarr-${i}">arrives</label><input type="time" id="legarr-${i}" data-act="legarr" data-i="${i}" data-from="${fromId}" value="${esc(lt.arr || "")}"></span></div>`;
+  }
+  // Last leg, when you fly home from a city that isn't your last stop
+  function renderOutLeg() {
+    const el = $("#outLegRow");
+    if (!el) return;
+    const last = state.stops.length ? state.stops[state.stops.length - 1].city : null;
+    if (!last || !state.depart || state.depart === last) { el.innerHTML = ""; return; }
+    const ol = state.outLeg && state.outLeg.from === last ? state.outLeg : {};
+    el.innerHTML = `<div class="row legrow"><span class="hint lbl">Getting from ${esc(CITIES[last].name)} to ${esc(CITIES[state.depart].name)} for your flight:</span>
+      ${modeSelect("outLegMode", last, state.depart, ol.mode, `data-act="outlegmode" data-from="${last}"`)}</div>`;
   }
 
   function renderTally() {
@@ -530,12 +543,13 @@
     $("#planner").addEventListener("change", (e) => {
       const t = e.target;
       if (t.dataset.act === "place" && t.value) { state.stops[+t.dataset.i].places.push(t.value); persist(); renderStops(); return; }
-      if (t.dataset.act === "legdep" || t.dataset.act === "legarr") {
+      if (t.dataset.act === "legdep" || t.dataset.act === "legarr" || t.dataset.act === "legmode") {
         const st = state.stops[+t.dataset.i];
         if (!st.leg || st.leg.from !== t.dataset.from) st.leg = { from: t.dataset.from };
-        st.leg[t.dataset.act === "legdep" ? "dep" : "arr"] = t.value;
+        st.leg[t.dataset.act === "legdep" ? "dep" : t.dataset.act === "legarr" ? "arr" : "mode"] = t.value;
         persist(); return;
       }
+      if (t.dataset.act === "outlegmode") { state.outLeg = { from: t.dataset.from, mode: t.value }; persist(); return; }
       if (t.dataset.act === "nights") { state.stops[+t.dataset.i].nights = Math.max(1, Math.min(30, parseInt(t.value, 10) || 1)); persist(); renderTally(); return; }
       if (t.id === "arriveSel" || t.id === "departSel" || t.id === "optimise") {
         readForm();
@@ -577,6 +591,14 @@
     return `<div class="eat"><b>${esc(eat.label)}</b><ul>${items.join("")}</ul></div>`;
   }
 
+  // Side-by-side options for a leg with no mode chosen
+  function legOptionsHTML(a, b) {
+    const rec = recommendedMode(a, b);
+    return `<div class="opts"><table><thead><tr><th>Option</th><th>Door to door</th><th>Approx. cost</th></tr></thead><tbody>
+      ${modesFor(a, b).map((m) => { const e = modeEstimate(m, a, b); return `<tr><td>${MODE[m].icon} ${MODE[m].label}${m === rec ? ' <span class="badge top">usual choice</span>' : ""}</td><td>${dur(e.door)}</td><td>${esc(e.cost)}</td></tr>`; }).join("")}
+    </tbody></table></div>`;
+  }
+
   function slotHTML(s, day) {
     const city = day.city;
     const when = SLOT[s.part];
@@ -606,10 +628,13 @@
         : `<div class="travel"><b class="k">Arrive & check in</b>${timing}${fromSyd() ? `<span>${sydLine(s.flyIn, "in")}</span>` : ""}<span>${esc(s.text)}</span><span>Check in to your hotel in <b>${esc(city.stay.area)}</b>, rest, and change money/test Alipay if you haven't.</span></div>`;
     } else if (s.type === "travel") {
       body = `<div class="travel"><b class="k">${s.toFlight ? "To your flight" : s.sameDay ? "Onward the same day" : "Travel day"} · ${esc(s.from.name)} → ${esc(s.to.name)}</b>
-        ${s.dep != null ? `<span class="timing">${s.est ? "Estimated: departs" : "Departs"} <b>${hhmm(s.dep)}</b>, arrives <b>${hhmm(s.arr)}</b>${s.est ? " — add your booked times in the form for an exact plan" : ""}.${s.leaveBy != null && !s.toFlight ? ` Leave the hotel by <b>${hhmm(s.leaveBy)}</b>.` : ""}</span>` : !s.toFlight ? `<span class="timing">No times entered — add the train or flight times in the form (on the ${esc(s.to.name)} card) for an exact plan.</span>` : ""}
+        ${s.dep != null ? `<span class="timing">${s.est ? `Estimated${s.leg && !s.leg.chosen ? " (assuming " + MODE[s.leg.rec].label.toLowerCase() + ")" : ""}: departs` : "Departs"} <b>${hhmm(s.dep)}</b>, arrives <b>${hhmm(s.arr)}</b>${s.est ? " — add your booked times in the form for an exact plan" : ""}.${s.leaveBy != null && !s.toFlight ? ` Leave the hotel by <b>${hhmm(s.leaveBy)}</b>.` : ""}</span>` : !s.toFlight ? `<span class="timing">No times entered — add your departure and arrival times on the ${esc(s.to.name)} card in the form for an exact plan.</span>` : ""}
         ${s.toFlight && s.leaveBy != null ? `<span class="timing">To make your flight home, leave ${esc(s.from.name)} by <b>${hhmm(s.leaveBy)}</b> (estimated door to door, with ${INTL_BUFFER / 60} h at the airport).</span>` : ""}
         ${s.collect ? `<span><b>Collect your bags first:</b> ${s.collect}</span>` : ""}
-        <span>${s.sameDay ? "From the airport or station: " : s.toFlight ? "Check out early and allow a buffer of at least 3 h before your international flight. " : s.collect ? "" : "Check out after breakfast. "}${esc(s.text)}</span>
+        ${s.toFlight ? `<span>Check out early and leave at least 3 h at the airport before your international flight.</span>` : !s.collect && !s.sameDay ? `<span>Check out after breakfast.</span>` : ""}
+        ${s.leg && s.leg.chosen
+          ? `<span><b>${MODE[s.leg.chosen].icon} ${MODE[s.leg.chosen].label}:</b> ${esc(s.text)}</span>`
+          : `<span><b>How you'll travel isn't chosen yet.</b> Pick it on the ${esc(s.toFlight ? "“Fly home from” section" : s.to.name + " card")} in the form. Until then, timings assume the usual choice (${MODE[(s.leg || {}).rec || "train"].label.toLowerCase()}).</span>${legOptionsHTML(s.fromId, s.toId)}`}
         ${s.border ? `<span><b>Border crossing:</b> passport out. ${isAU() ? (s.to.region === "mainland" ? "Australians: entering the mainland starts a fresh visa-free stay of up to 30 days." : s.to.region === "hk" ? "Australians: visa-free in Hong Kong for up to 90 days." : "Australians: visa-free entry to Macau.") : "Leaving or entering the mainland uses one visa entry — see Before you go."}</span>` : ""}
         ${s.toFlight ? "" : `<span><b>On arrival:</b> ${esc(s.arrive)}</span>
         <span>Check in to your hotel in <b>${esc(s.to.stay.area)}</b>.</span>`}</div>
@@ -707,6 +732,10 @@
       if (touches(4, 1, 5)) notes.push(["warn", "Holiday", "Your dates overlap the May Day holiday (around 1–5 May): expect crowds and book trains as soon as sales open."]);
       if ([6, 7].includes(m)) notes.push(["info", "Weather", "July–August is hot, humid and rainy across most of China. Plan outdoor sights for early morning."]);
       if ([11, 0, 1].includes(m) && ids.includes("bj")) notes.push(["info", "Weather", "Beijing in winter is dry and often below 0 °C. Pack thermals for the Great Wall."]);
+    }
+    {
+      const open = plan.map.legs.filter((l) => l.mode === "unset");
+      if (open.length) notes.push(["info", "Transport", `${open.length} of ${plan.map.legs.length} journeys between cities have no transport chosen yet (${open.map((l) => esc(CITIES[l.a.id].name) + " → " + esc(CITIES[l.b.id].name)).join(", ")}). Pick train, flight, coach, car or ferry on each city card; until then each travel day lists the options with times and costs.`]);
     }
     notes.push(["good", "Halal", "Every activity lists the nearest halal food we know of. Always confirm the green <span class=\"han\">清真</span> sign or certificate at the door — ownership changes."]);
 
@@ -1076,20 +1105,90 @@
   /* ---------- maps: route map (built-in SVG) and interactive street map (Leaflet + OpenStreetMap) ---------- */
   const mp = (ll) => [(ll[1] - MAP_GEO.lon0) * MAP_GEO.cos * MAP_GEO.k, (MAP_GEO.lat1 - ll[0]) * MAP_GEO.k];
   const SYD_LL = [-33.94, 151.18];
+  /* ---------- transport modes between cities ---------- */
   const MODE = {
-    train: { label: "High-speed train", cls: "leg-train" },
-    flight: { label: "Flight", cls: "leg-flight" },
-    road: { label: "Bus / ferry", cls: "leg-road" },
-    boat: { label: "River cruise", cls: "leg-boat" },
+    train: { label: "High-speed train", cls: "leg-train", icon: "🚄" },
+    flight: { label: "Flight", cls: "leg-flight", icon: "✈" },
+    bus: { label: "Coach / bus", cls: "leg-road", icon: "🚌" },
+    car: { label: "Private car & driver", cls: "leg-road", icon: "🚗" },
+    boat: { label: "Ferry / river cruise", cls: "leg-boat", icon: "⛴" },
+    unset: { label: "Not chosen yet", cls: "leg-unset", icon: "?" },
   };
+  // Routes where a boat is a real option, with what it is
+  const BOATS = {
+    "hk|mo": { text: "TurboJET or Cotai ferry Hong Kong (Sheung Wan or Kowloon) ↔ Macau, about 1 h, approx. HK$175–200.", min: 60, cost: "HK$175–200" },
+    "mo|sz": { text: "Ferry Shekou ↔ Macau, about 1 h, approx. ¥175–220.", min: 60, cost: "¥175–220" },
+    "gl|ys": { text: "Li River cruise Guilin → Yangshuo, about 4–5 h with lunch on board (not halal), approx. ¥215–450; most tickets include hotel pick-up and the bus back.", min: 270, cost: "¥215–450" },
+  };
+  const pairKey = (a, b) => [a, b].sort().join("|");
 
-  // How a leg is travelled, read from the first sentence of the route advice
-  function legMode(a, b) {
+  // The mode the route advice recommends (from the first sentence of the curated text)
+  function recommendedMode(a, b) {
     const first = routeText(a, b).toLowerCase().split(/\.\s|;/)[0];
     if (/cruise/.test(first)) return "boat";
-    if (/(bridge|ferry)/.test(first) && !/train/.test(first)) return "road";
+    if (/(bridge|ferry)/.test(first) && !/train/.test(first)) return /ferry/.test(first) && !/bus/.test(first) ? "boat" : "bus";
     if (/fly/.test(first) && !/train/.test(first)) return "flight";
     return "train";
+  }
+
+  // Modes that make sense for this pair of cities
+  function modesFor(a, b) {
+    const d = km(CITIES[a].stay.ll, CITIES[b].stay.ll), key = pairKey(a, b);
+    const out = [];
+    if (key !== "hk|mo") out.push("train");
+    if (d > 350 && key !== "hk|mo") out.push("flight");
+    if (d < 1000) out.push("bus");
+    if (d < 900) out.push("car");
+    if (BOATS[key]) out.push("boat");
+    return out;
+  }
+
+  // The mode chosen on the form for the leg a → b (null = not chosen)
+  function chosenMode(a, b) {
+    for (let i = 0; i < state.stops.length; i++) {
+      const fromId = i > 0 ? state.stops[i - 1].city : state.arrive || null;
+      const st = state.stops[i];
+      if (st.city === b && fromId === a && st.leg && st.leg.from === a && st.leg.mode) return st.leg.mode;
+    }
+    const ol = state.outLeg;
+    if (ol && ol.from === a && b === (state.depart || "") && ol.mode) return ol.mode;
+    return null;
+  }
+  // Mode used for time estimates: the chosen one, else the recommended one
+  const legMode = (a, b) => chosenMode(a, b) || recommendedMode(a, b);
+
+  // Rough door-to-door minutes and cost for each mode
+  function modeEstimate(mode, a, b) {
+    const d = km(CITIES[a].stay.ll, CITIES[b].stay.ll), road = d * 1.3;
+    const r10 = (n) => (Math.round(n / 10) * 10).toLocaleString("en-US");
+    const boat = BOATS[pairKey(a, b)];
+    switch (mode) {
+      case "flight": return { door: Math.round(150 + (d / 700) * 60 + 70), ride: Math.round((d / 700) * 60 + 25), cost: d < 1200 ? "¥400–1,200" : "¥600–1,800", lead: 150 };
+      case "bus": return { door: Math.round(45 + (road / 60) * 60 + 30), ride: Math.round((road / 60) * 60), cost: "¥" + r10(road * 0.35) + "–" + r10(road * 0.5), lead: 45 };
+      case "car": return { door: Math.round((road / 75) * 60 + 20), ride: Math.round((road / 75) * 60), cost: "¥" + r10(road * 3) + "–" + r10(road * 4.5) + " per car", lead: 0 };
+      case "boat": return { door: Math.round(60 + (boat ? boat.min : (d / 30) * 60) + 30), ride: boat ? boat.min : Math.round((d / 30) * 60), cost: boat ? boat.cost : "varies", lead: 60 };
+      default: return { door: Math.round(75 + ((d * 1.25) / 220) * 60 + 40), ride: Math.round(((d * 1.25) / 220) * 60), cost: "¥" + r10(d * 1.25 * 0.42) + "–" + r10(d * 1.25 * 0.5) + " (2nd class)", lead: 75 };
+    }
+  }
+  const dur = (m) => (m < 90 ? m + " min" : (Math.round(m / 30) / 2).toString().replace(".5", "½") + " h");
+
+  // Advice text for a chosen mode
+  function modeText(mode, a, b) {
+    if (mode === recommendedMode(a, b)) return routeText(a, b);
+    const A = CITIES[a], B = CITIES[b], e = modeEstimate(mode, a, b), cross = crossesBorder(a, b);
+    const ap = (id) => (SYD_FLIGHTS[id] ? SYD_FLIGHTS[id].airport : CITIES[id].name + " airport");
+    switch (mode) {
+      case "flight": return `Flight ${ap(a)} → ${ap(b)}: about ${dur(e.ride)} in the air, around ${dur(e.door)} door to door with airport time, approx. ${e.cost} economy. Book on Trip.com; check the baggage allowance on budget fares.`;
+      case "bus": return `Long-distance coach ${A.name} → ${B.name}: about ${dur(e.ride)}, approx. ${e.cost}. Buy at the bus station or on Trip.com with your passport. Slower and less comfortable than the train${cross ? "; cross-border coaches stop at the border for immigration" : ""}.`;
+      case "car": return `Private car with driver ${A.name} → ${B.name}: about ${dur(e.ride)}, approx. ${e.cost} plus tolls. Book through your hotel or Trip.com (DiDi works for shorter trips). Tourists can't drive themselves in mainland China on an international licence${cross ? "; crossing the border needs a licensed cross-border car" : ""}.`;
+      case "boat": return (BOATS[pairKey(a, b)] || {}).text || "Ferry: check schedules locally.";
+      default: return `High-speed train ${A.name} → ${B.name}: about ${dur(e.ride)} on the train (there may be a change), approx. ${e.cost}. Book on 12306 or Trip.com with your passport; arrive 45–60 min early.`;
+    }
+  }
+  // Everything the plan needs to know about one leg
+  function legInfo(a, b) {
+    const chosen = chosenMode(a, b);
+    return { chosen, mode: chosen || "unset", assumed: legMode(a, b), rec: recommendedMode(a, b), text: chosen ? modeText(chosen, a, b) : null, options: modesFor(a, b) };
   }
 
   // Stops in travel order, including arrival/departure airports that aren't stops
@@ -1112,7 +1211,7 @@
     });
     const P = Object.keys(places).map((k) => places[k]);
     const legs = [];
-    for (let i = 1; i < seq.length; i++) if (seq[i].id !== seq[i - 1].id) legs.push({ a: places[seq[i - 1].id], b: places[seq[i].id], mode: legMode(seq[i - 1].id, seq[i].id) });
+    for (let i = 1; i < seq.length; i++) if (seq[i].id !== seq[i - 1].id) legs.push({ a: places[seq[i - 1].id], b: places[seq[i].id], mode: legInfo(seq[i - 1].id, seq[i].id).mode });
     const modes = {};
     legs.forEach((l) => (modes[l.mode] = 1));
 
@@ -1240,7 +1339,7 @@
         <div class="map-wrap">${plan.map.svg}</div>
         <div class="map-legend">${plan.map.legend}<span><svg width="22" height="22" aria-hidden="true"><circle class="map-stop" cx="11" cy="11" r="9"/><text class="map-num" x="11" y="15" style="font-size:11px">1</text></svg>Stop number</span></div>
         <div class="tbl-wrap"><table><thead><tr><th>Leg</th><th>How</th><th>Details</th></tr></thead><tbody>
-          ${plan.map.legs.map((l) => `<tr><td><b>${esc(CITIES[l.a.id].name)} → ${esc(CITIES[l.b.id].name)}</b></td><td>${MODE[l.mode].label}</td><td>${esc(routeText(l.a.id, l.b.id))}</td></tr>`).join("")}
+          ${plan.map.legs.map((l) => `<tr><td><b>${esc(CITIES[l.a.id].name)} → ${esc(CITIES[l.b.id].name)}</b></td><td>${l.mode === "unset" ? `Not chosen<br><span class="hint">usual: ${MODE[recommendedMode(l.a.id, l.b.id)].label}</span>` : MODE[l.mode].icon + " " + MODE[l.mode].label}</td><td>${l.mode === "unset" ? legOptionsHTML(l.a.id, l.b.id) : esc(modeText(l.mode, l.a.id, l.b.id))}</td></tr>`).join("")}
         </tbody></table></div>
         <p><a href="${googleTripLink(plan)}" target="_blank" rel="noopener">Open the whole route in Google Maps ↗</a></p>
       </section>
@@ -1349,7 +1448,7 @@
         ${s.dep != null ? `<div><b>${s.est ? "Est. " : ""}departs ${hhmm(s.dep)} → arrives ${hhmm(s.arr)}</b>${s.leaveBy != null && !s.toFlight ? ` · leave hotel by ${hhmm(s.leaveBy)}` : ""}</div>` : ""}
         ${s.toFlight && s.leaveBy != null ? `<div><b>Leave ${esc(s.from.name)} by ${hhmm(s.leaveBy)}</b></div>` : ""}
         ${s.collect ? `<div>Collect bags from the hotel first.</div>` : ""}
-        <div>${esc(s.text)}</div>
+        ${s.leg && s.leg.chosen ? `<div><b>${MODE[s.leg.chosen].label}:</b> ${esc(s.text)}</div>` : `<div><b>Mode not chosen.</b> Options: ${esc(modesFor(s.fromId, s.toId).map((m) => MODE[m].label + " ~" + dur(modeEstimate(m, s.fromId, s.toId).door) + ", " + modeEstimate(m, s.fromId, s.toId).cost).join(" · "))}</div>`}
         ${s.border ? `<div>Border crossing — passport ready.</div>` : ""}
         ${s.toFlight ? "" : `<div><b>On arrival:</b> ${esc(firstSentence(s.arrive))} Check in at ${esc(s.to.stay.area)}.</div>`}`;
     } else if (s.type === "depart") {
@@ -1380,7 +1479,7 @@
     // 1b. Route map
     pages.push(`${head("Route map")}<div class="pv-map">${plan.map.svg}</div><div class="map-legend">${plan.map.legend}</div>
       <table class="pv-tbl"><thead><tr><th>Leg</th><th>How</th><th>Details</th></tr></thead><tbody>
-      ${plan.map.legs.map((l) => `<tr><td><b>${esc(CITIES[l.a.id].name)} → ${esc(CITIES[l.b.id].name)}</b></td><td>${MODE[l.mode].label}</td><td>${esc(firstSentence(routeText(l.a.id, l.b.id)))}</td></tr>`).join("")}
+      ${plan.map.legs.map((l) => `<tr><td><b>${esc(CITIES[l.a.id].name)} → ${esc(CITIES[l.b.id].name)}</b></td><td>${MODE[l.mode].label}</td><td>${l.mode === "unset" ? esc(modesFor(l.a.id, l.b.id).map((m) => MODE[m].label + " ~" + dur(modeEstimate(m, l.a.id, l.b.id).door)).join(" · ")) : esc(firstSentence(modeText(l.mode, l.a.id, l.b.id)))}</td></tr>`).join("")}
       </tbody></table>`);
 
     // 2. One page per day
@@ -1516,7 +1615,7 @@ ${pv}
           L.push(`    ${s.p.d}`);
           if (s.p.tip) L.push(`    Tip: ${s.p.tip}`);
           if (s.eat && s.eat.located.length) L.push(`    ${s.eat.label}: ${s.eat.located.map((h) => h.n).join("; ")}`);
-        } else if (s.type === "travel") L.push(`  ${w}: Travel ${s.from.name} → ${s.to.name}.${s.dep != null ? ` ${s.est ? "Est. " : ""}Departs ${hhmm(s.dep)}, arrives ${hhmm(s.arr)}.` : ""}${s.toFlight && s.leaveBy != null ? ` Leave by ${hhmm(s.leaveBy)}.` : ""} ${s.text}`);
+        } else if (s.type === "travel") L.push(`  ${w}: Travel ${s.from.name} → ${s.to.name} by ${s.leg && s.leg.chosen ? MODE[s.leg.chosen].label.toLowerCase() : "(mode not chosen — options: " + modesFor(s.fromId, s.toId).map((m) => MODE[m].label.toLowerCase()).join(", ") + ")"}.${s.dep != null ? ` ${s.est ? "Est. " : ""}Departs ${hhmm(s.dep)}, arrives ${hhmm(s.arr)}.` : ""}${s.toFlight && s.leaveBy != null ? ` Leave by ${hhmm(s.leaveBy)}.` : ""} ${s.text}`);
         else if (s.type === "arrive") L.push(`  ARRIVE${s.land != null ? " " + hhmm(s.land) + (s.flightNo ? " (" + s.flightNo + ")" : "") : ""}: ${fromSyd() ? strip(sydLine(s.flyIn, "in")) + " " : ""}${s.text}`);
         else if (s.type === "depart") L.push(`  DEPART${s.off != null ? " " + hhmm(s.off) + (s.flightNo ? " (" + s.flightNo + ")" : "") + (s.leaveBy != null ? ", leave hotel " + hhmm(s.leaveBy) : "") : ""}: ${s.text}${fromSyd() ? " " + strip(sydLine(s.flyOut, "out")) : ""}`);
         else if (s.type === "rest") L.push(`  ${w}: Free time & rest`);

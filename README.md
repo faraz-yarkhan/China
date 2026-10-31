@@ -4,7 +4,7 @@ A single-page travel planner for mainland China, Hong Kong and Macau. Open `inde
 
 ## What you enter
 1. Number of days (and an optional start date)
-2. Arrival city and the city you fly home from — cities are arranged into the shortest route between them (optional), and day 1 / the last day include the transfer if those cities aren't stops
+2. Arrival city and the city you fly home from, with optional landing/take-off times and flight numbers (plus optional train/flight times on each city card) — cities are arranged into the shortest route between them (optional), and day 1 / the last day include the transfer if those cities aren't stops
 3. Cities, in travel order, and the places you want to see in each (from drop-down lists)
 4. Trip style: sightseeing, culture & history, food, adventure, nature, relaxing, shopping, nightlife, family — or "Other" with your own description
 5. Nights in each city (the planner checks they add up to days − 1, with a one-click fix)
@@ -12,6 +12,7 @@ A single-page travel planner for mainland China, Hong Kong and Macau. Open `inde
 Plus pace (relaxed / balanced), hotel budget, passport (Australian / other) and home airport (Sydney / elsewhere). With an Australian passport and Sydney selected, visa notes, flights, consular contacts, insurance and return-customs advice are tailored for Australians.
 
 ## What you get
+- **Times-aware days**: with flight and train times, day 1 starts once you've landed and reached the hotel, travel days fit a morning stop before a late departure, and the last day works back from take-off (3 h airport buffer plus the ride to the airport)
 - **Top-rated recommendations** when you don't pick places: each activity is labelled Your pick, ★ Top rated or Recommended for your style, and each city lists its must-sees
 - **Maps**: a built-in route map of China (works offline, in print and in the offline copy) with numbered stops, train/flight/ferry legs and zoomed insets for close-together cities; a Map tab with a zoomable OpenStreetMap street map of every stop, filterable by day; and Google Maps links for the whole route and each day
 - **Day-by-day itinerary** split into Morning, Evening and Night, with an alternative option for each slot

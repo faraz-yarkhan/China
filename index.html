@@ -798,6 +798,18 @@ select { flex: 1 1 160px; min-width: 0; max-width: 100%; }
 .badge.top { background: var(--gold-soft); color: var(--gold); }
 .badge.pick { background: var(--seal-soft); color: var(--seal); }
 .badge.rec { background: var(--sky-soft); color: var(--sky); }
+.timerow { flex-wrap: nowrap; gap: 8px; }
+.timerow .hint { width: 84px !important; flex: none; }
+.timerow input[type=time] { width: 112px; flex: none; }
+.timerow input[type=text] { width: 0; flex: 1 1 80px; max-width: 130px; text-transform: uppercase; }
+.timerow input[type=text]::placeholder { text-transform: none; }
+.legrow { font-size: 13px; gap: 6px 10px; }
+.legrow .lbl { flex-basis: 100%; }
+.legrow .pair { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.legrow input[type=time] { width: 92px; min-height: 34px; padding: 4px 6px; flex: none; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.timing { color: var(--ink); }
+p.timing { margin: 0; font-size: 13.5px; padding: 6px 10px; background: var(--gold-soft); border-radius: 6px; }
 .tally { font-family: var(--mono); font-size: 13px; padding: 8px 10px; border-radius: 8px; background: var(--paper); border: 1px dashed var(--line); display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; align-items: center; }
 .tally.bad { border-color: var(--seal); color: var(--seal); background: var(--seal-soft); }
 .tally.ok { border-color: var(--jade); color: var(--jade); background: var(--jade-soft); }
@@ -1038,8 +1050,11 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
     <div class="field">
       <span class="label"><span class="step">2</span> Where you fly in and out</span>
       <div class="row"><label class="hint" for="arriveSel" style="width:92px">Arrive in</label><select id="arriveSel"></select></div>
+      <div class="row timerow"><label class="hint" for="inTime" style="width:92px">Lands at</label><input type="time" id="inTime"><label class="hint sr" for="inNo">Flight number</label><input type="text" id="inNo" placeholder="Flight no." maxlength="12" autocapitalize="characters" autocomplete="off"></div>
       <div class="row"><label class="hint" for="departSel" style="width:92px">Fly home from</label><select id="departSel"></select></div>
+      <div class="row timerow"><label class="hint" for="outTime" style="width:92px">Takes off at</label><input type="time" id="outTime"><label class="hint sr" for="outNo">Flight number</label><input type="text" id="outNo" placeholder="Flight no." maxlength="12" autocapitalize="characters" autocomplete="off"></div>
       <label class="check" for="optimise"><input type="checkbox" id="optimise" checked> Arrange my cities in the best order for these airports</label>
+      <p class="hint">Times are optional, in local time. With them, day 1 starts after you've landed and reached the hotel, and the last day works back from your take-off. Train or flight times between cities go on each city card below.</p>
       <p class="hint">The trip starts in your arrival city and ends in your departure city. If either isn't one of your stops, day 1 or the last day includes the transfer.</p>
     </div>
 

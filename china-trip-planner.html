@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>China & Hong Kong Trip Planner</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="China Trip">
 <meta name="format-detection" content="telephone=no">
 <meta name="theme-color" content="#F3F4F2">
@@ -977,6 +976,13 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
 .print-only { display: none; }
 .print-btn { border-color: var(--ink); font-weight: 600; }
 #printView { display: none; }
+.printhelp { position: fixed; inset: 0; top: 0; left: 0; right: 0; bottom: 0; z-index: 50; background: rgba(0,0,0,.45); display: grid; place-items: center; padding: 16px; }
+.printhelp-card { background: var(--card); color: var(--ink); border-radius: 12px; padding: 18px; max-width: 520px; width: 100%; display: grid; gap: 12px; font-size: 15px; box-shadow: 0 10px 40px rgba(0,0,0,.3); }
+.printhelp-card ul { margin: 6px 0; padding-left: 20px; display: grid; gap: 4px; }
+.pvbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: space-between; background: var(--paper); padding: 8px 0; border-bottom: 1px solid var(--line); }
+body.pv-screen > *:not(#printView):not(#pvBar):not(.toast) { display: none !important; }
+body.pv-screen #printView { display: block; position: static; visibility: visible; width: auto; }
+body.pv-screen .pv-page { margin: 12px auto; padding: 10mm; box-shadow: 0 2px 12px rgba(0,0,0,.18); box-sizing: content-box; }
 /* Off-screen copy used to measure page heights at A4 width */
 #printView.measuring { display: block; position: absolute; left: -10000px; top: 0; width: 190mm; visibility: hidden; }
 .pv-page { width: 190mm; color: #111; background: #fff; font-family: var(--body); line-height: 1.35; }
@@ -1019,7 +1025,8 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
   body::before { display: none !important; }
   body > *:not(#printView) { display: none !important; }
   .nojs { display: none !important; }
-  #printView { display: block !important; position: static !important; visibility: visible !important; }
+  #printView { display: block !important; position: static !important; visibility: visible !important; zoom: 1 !important; }
+  body.pv-screen .pv-page { margin: 0 !important; padding: 0 !important; box-shadow: none !important; }
   .pv-page { break-after: page; page-break-after: always; break-inside: avoid; }
   .pv-page:last-child { break-after: auto; page-break-after: auto; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; animation: none !important; }
@@ -3584,10 +3591,55 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     pv.classList.remove("measuring");
   }
 
+  // Print, and never fail silently: if no print window opens, explain why and offer alternatives
   function doPrint() {
-    if (window.NO_PRINT) toast("Printing is blocked inside this preview. Download the standalone HTML file, open it in Chrome or Safari, and print from there.");
     fitPrintPages();
+    if (window.NO_PRINT) { showPrintHelp("blocked"); return; }
+    const standalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+    if (standalone) { showPrintHelp("standalone"); return; }
+    let opened = false;
+    const mark = () => { opened = true; };
+    window.addEventListener("beforeprint", mark);
     try { window.print(); } catch (e) { /* print unavailable */ }
+    setTimeout(() => { window.removeEventListener("beforeprint", mark); if (!opened) showPrintHelp("nodialog"); }, 1500);
+  }
+
+  const WEB_URL = "https://faraz-yarkhan.github.io/China/";
+  function showPrintHelp(reason) {
+    const msg = {
+      blocked: `<b>Printing is switched off inside the Claude preview.</b> Open the planner at <a href="${WEB_URL}">faraz-yarkhan.github.io/China</a> (or the downloaded HTML file on a computer) and press Print there.`,
+      standalone: `<b>iPhone doesn't allow printing from a Home Screen app.</b> Open <a href="${WEB_URL}">faraz-yarkhan.github.io/China</a> in Safari, then press Print — or tap <b>Show print layout</b> below and use Share → Print.`,
+      nodialog: `<b>No print window opened?</b> Some browsers block it, especially inside apps like WhatsApp, Gmail or Outlook.
+        <ul><li><b>iPhone / iPad (Safari):</b> tap Share <span aria-hidden="true">⬆</span> → <b>Print</b>. To save a PDF, pinch outwards on the preview, then Share → Save to Files.</li>
+        <li><b>Android (Chrome):</b> ⋮ menu → Share → <b>Print</b>.</li>
+        <li><b>Inside another app:</b> open the page in Safari or Chrome first (⋯ → Open in browser).</li></ul>
+        Tap <b>Show print layout</b> first so the browser prints the compact version.`,
+    }[reason];
+    let el = $("#printHelp");
+    if (!el) { el = document.createElement("div"); el.id = "printHelp"; el.className = "printhelp"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "Printing help"); document.body.appendChild(el); }
+    el.innerHTML = `<div class="printhelp-card"><div>${msg}</div>
+      <div class="actions"><button type="button" class="btn print-btn" data-pvscreen>Show print layout</button>${window.NO_PRINT ? "" : '<button type="button" class="btn" data-save>⬇ Save offline copy</button>'}<button type="button" class="btn" data-closehelp>Close</button></div></div>`;
+    el.hidden = false;
+    const first = el.querySelector("[data-pvscreen]");
+    if (first) first.focus();
+  }
+
+  // Show the compact print pages on screen, so the browser's own Print / Share menu prints them
+  function showPrintLayout(on) {
+    // Measure the screen before the wide A4 pages appear (they would stretch a phone's layout width)
+    const w = Math.min(document.documentElement.clientWidth || window.innerWidth, window.screen && window.screen.width ? window.screen.width : Infinity);
+    document.body.classList.toggle("pv-screen", on);
+    let bar = $("#pvBar");
+    if (on && !bar) {
+      bar = document.createElement("div"); bar.id = "pvBar"; bar.className = "pvbar";
+      bar.innerHTML = `<button type="button" class="btn" data-pvexit>← Back to planner</button><span class="hint">Print layout — use your browser's Print or Share → Print</span><button type="button" class="btn print-btn" data-pvprint>Print</button>`;
+      document.body.insertBefore(bar, document.body.firstChild);
+    }
+    if (bar) bar.hidden = !on;
+    const pv = $("#printView");
+    // A4 page = 190 mm content + 2 × 10 mm padding
+    if (pv) pv.style.zoom = on ? String(Math.min(1, (w - 16) / (210 * 3.7795 + 6)).toFixed(3)) : "";
+    window.scrollTo(0, 0);
   }
 
   /* Save the current plan as a script-free HTML file: it opens in any iPhone preview
@@ -3716,6 +3768,10 @@ ${pv}
   document.addEventListener("click", (e) => {
     if (e.target.closest("[data-print]")) doPrint();
     if (e.target.closest("[data-save]")) saveOffline();
+    if (e.target.closest("[data-closehelp]")) { const h = $("#printHelp"); if (h) h.hidden = true; }
+    if (e.target.closest("[data-pvscreen]")) { const h = $("#printHelp"); if (h) h.hidden = true; showPrintLayout(true); }
+    if (e.target.closest("[data-pvexit]")) showPrintLayout(false);
+    if (e.target.closest("[data-pvprint]")) { if (window.NO_PRINT) toast("Printing is blocked in this preview — use your browser's Share → Print, or open the web version."); else try { window.print(); } catch (err) { /* ignore */ } }
   });
   window.addEventListener("beforeprint", fitPrintPages);
 

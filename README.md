@@ -22,7 +22,7 @@ Plus pace (relaxed / balanced), hotel budget, passport (Australian / other) and 
 - **Intercity transfers** (high-speed rail, flights, border crossings to Hong Kong/Macau)
 - **Hotels and best areas to stay** for every city, matched to your budget
 - **Before you go**: visas and entry forms, insurance, apps, payments, internet, tips, and a saved checklist
-- **Print**: a compact print layout — overview page, one page per day, a key-information page, a checklist page and a phrases page; text shrinks automatically so each fits on one A4 page
+- **Print**: a compact print layout — overview page, one page per day, a key-information page, a checklist page and a phrases page; text shrinks automatically so each fits on one A4 page. If the browser blocks printing (the Claude preview, an iPhone Home Screen app, or browsers inside WhatsApp/Gmail), the button explains why and offers **Show print layout**, which puts the print pages on screen for the browser's own Print or Share → Print
 - **Phrases**: Mandarin and Cantonese with pinyin/Jyutping, plus a halal dietary card to show restaurant staff
 
 ## Files

@@ -1551,10 +1551,55 @@
     pv.classList.remove("measuring");
   }
 
+  // Print, and never fail silently: if no print window opens, explain why and offer alternatives
   function doPrint() {
-    if (window.NO_PRINT) toast("Printing is blocked inside this preview. Download the standalone HTML file, open it in Chrome or Safari, and print from there.");
     fitPrintPages();
+    if (window.NO_PRINT) { showPrintHelp("blocked"); return; }
+    const standalone = window.navigator.standalone === true || (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches);
+    if (standalone) { showPrintHelp("standalone"); return; }
+    let opened = false;
+    const mark = () => { opened = true; };
+    window.addEventListener("beforeprint", mark);
     try { window.print(); } catch (e) { /* print unavailable */ }
+    setTimeout(() => { window.removeEventListener("beforeprint", mark); if (!opened) showPrintHelp("nodialog"); }, 1500);
+  }
+
+  const WEB_URL = "https://faraz-yarkhan.github.io/China/";
+  function showPrintHelp(reason) {
+    const msg = {
+      blocked: `<b>Printing is switched off inside the Claude preview.</b> Open the planner at <a href="${WEB_URL}">faraz-yarkhan.github.io/China</a> (or the downloaded HTML file on a computer) and press Print there.`,
+      standalone: `<b>iPhone doesn't allow printing from a Home Screen app.</b> Open <a href="${WEB_URL}">faraz-yarkhan.github.io/China</a> in Safari, then press Print — or tap <b>Show print layout</b> below and use Share → Print.`,
+      nodialog: `<b>No print window opened?</b> Some browsers block it, especially inside apps like WhatsApp, Gmail or Outlook.
+        <ul><li><b>iPhone / iPad (Safari):</b> tap Share <span aria-hidden="true">⬆</span> → <b>Print</b>. To save a PDF, pinch outwards on the preview, then Share → Save to Files.</li>
+        <li><b>Android (Chrome):</b> ⋮ menu → Share → <b>Print</b>.</li>
+        <li><b>Inside another app:</b> open the page in Safari or Chrome first (⋯ → Open in browser).</li></ul>
+        Tap <b>Show print layout</b> first so the browser prints the compact version.`,
+    }[reason];
+    let el = $("#printHelp");
+    if (!el) { el = document.createElement("div"); el.id = "printHelp"; el.className = "printhelp"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "Printing help"); document.body.appendChild(el); }
+    el.innerHTML = `<div class="printhelp-card"><div>${msg}</div>
+      <div class="actions"><button type="button" class="btn print-btn" data-pvscreen>Show print layout</button>${window.NO_PRINT ? "" : '<button type="button" class="btn" data-save>⬇ Save offline copy</button>'}<button type="button" class="btn" data-closehelp>Close</button></div></div>`;
+    el.hidden = false;
+    const first = el.querySelector("[data-pvscreen]");
+    if (first) first.focus();
+  }
+
+  // Show the compact print pages on screen, so the browser's own Print / Share menu prints them
+  function showPrintLayout(on) {
+    // Measure the screen before the wide A4 pages appear (they would stretch a phone's layout width)
+    const w = Math.min(document.documentElement.clientWidth || window.innerWidth, window.screen && window.screen.width ? window.screen.width : Infinity);
+    document.body.classList.toggle("pv-screen", on);
+    let bar = $("#pvBar");
+    if (on && !bar) {
+      bar = document.createElement("div"); bar.id = "pvBar"; bar.className = "pvbar";
+      bar.innerHTML = `<button type="button" class="btn" data-pvexit>← Back to planner</button><span class="hint">Print layout — use your browser's Print or Share → Print</span><button type="button" class="btn print-btn" data-pvprint>Print</button>`;
+      document.body.insertBefore(bar, document.body.firstChild);
+    }
+    if (bar) bar.hidden = !on;
+    const pv = $("#printView");
+    // A4 page = 190 mm content + 2 × 10 mm padding
+    if (pv) pv.style.zoom = on ? String(Math.min(1, (w - 16) / (210 * 3.7795 + 6)).toFixed(3)) : "";
+    window.scrollTo(0, 0);
   }
 
   /* Save the current plan as a script-free HTML file: it opens in any iPhone preview
@@ -1683,6 +1728,10 @@ ${pv}
   document.addEventListener("click", (e) => {
     if (e.target.closest("[data-print]")) doPrint();
     if (e.target.closest("[data-save]")) saveOffline();
+    if (e.target.closest("[data-closehelp]")) { const h = $("#printHelp"); if (h) h.hidden = true; }
+    if (e.target.closest("[data-pvscreen]")) { const h = $("#printHelp"); if (h) h.hidden = true; showPrintLayout(true); }
+    if (e.target.closest("[data-pvexit]")) showPrintLayout(false);
+    if (e.target.closest("[data-pvprint]")) { if (window.NO_PRINT) toast("Printing is blocked in this preview — use your browser's Share → Print, or open the web version."); else try { window.print(); } catch (err) { /* ignore */ } }
   });
   window.addEventListener("beforeprint", fitPrintPages);
 

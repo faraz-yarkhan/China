@@ -61,12 +61,13 @@
   /* How to get from A to B inside a city */
   function getThere(from, to, city) {
     const d = km(from.ll, to.ll);
-    if (d < 0.15) return { mode: "Walk", text: "You're already here." };
-    if (to.x && d > 12) return { mode: "Trip", text: esc(to.x) };
+    const farMins = Math.round(((d * 1.35) / 45) * 60 + 15);
+    if (d < 0.15) return { mode: "Walk", mins: 0, text: "You're already here." };
+    if (to.x && d > 12) return { mode: "Trip", mins: farMins, text: esc(to.x) };
     if (from.x && d > 12) {
-      if (to.hotel) return { mode: "Return", text: "Head back the way you came: " + esc(from.x) };
+      if (to.hotel) return { mode: "Return", mins: farMins, text: "Head back the way you came: " + esc(from.x) };
       const onward = getThere(hotelPoint(city), to, city);
-      return { mode: "Return", text: "Head back to the city the way you came, then: " + onward.text };
+      return { mode: "Return", mins: farMins, text: "Head back to the city the way you came, then: " + onward.text };
     }
     const road = d * 1.35;
     const walk = Math.round((road / 4.5) * 60);
@@ -75,13 +76,13 @@
     const car = Math.round((road / (d > 15 ? 40 : 22)) * 60 + 5);
     const show = to.zh ? ` Show the driver: <span class="han">${esc(to.zh)}</span>.` : "";
     const ride = city.ride;
-    if (d < 1) return { mode: "Walk", text: `Walk about ${walk} min (${d.toFixed(1)} km).` };
-    if (d < 2) return { mode: "Walk", text: `Walk about ${walk} min, or a short ${ride} (~${city.cur}${fare}).` + show };
+    if (d < 1) return { mode: "Walk", mins: walk, text: `Walk about ${walk} min (${d.toFixed(1)} km).` };
+    if (d < 2) return { mode: "Walk", mins: Math.min(walk, car), text: `Walk about ${walk} min, or a short ${ride} (~${city.cur}${fare}).` + show };
     if (city.metro && from.m && to.m) {
       const mm = Math.round((road / 30) * 60 + 12);
-      return { mode: "Metro", text: `Metro from <b>${esc(from.m)}</b> to <b>${esc(to.m)}</b>, about ${mm} min door to door (Apple Maps or Amap will show the exact transfer). Or ${ride} ~${car} min, approx. ${city.cur}${fare}.` + show };
+      return { mode: "Metro", mins: mm, text: `Metro from <b>${esc(from.m)}</b> to <b>${esc(to.m)}</b>, about ${mm} min door to door (Apple Maps or Amap will show the exact transfer). Or ${ride} ~${car} min, approx. ${city.cur}${fare}.` + show };
     }
-    return { mode: ride === "DiDi" ? "DiDi" : "Taxi", text: `${ride[0].toUpperCase() + ride.slice(1)} ~${car} min, approx. ${city.cur}${fare}.` + show };
+    return { mode: ride === "DiDi" ? "DiDi" : "Taxi", mins: car, text: `${ride[0].toUpperCase() + ride.slice(1)} ~${car} min, approx. ${city.cur}${fare}.` + show };
   }
 
   /* Intercity route */
@@ -326,7 +327,8 @@
       const off = toMin(F.outTime);
       const via = flyId !== ctx.id;
       const leave = off == null ? null : via ? off - INTL_BUFFER - legMinutes(ctx.id, flyId) : off - INTL_BUFFER - (AIRPORT_MIN[flyId] || 60);
-      const fb = leave == null ? { m: !via, e: false, n: false } : freeBefore(leave);
+      // last day: an afternoon activity fits if you leave the hotel after 16:30
+      const fb = leave == null ? { m: !via, e: false, n: false } : { m: leave >= 12 * 60 + 30, e: leave >= 16 * 60 + 30, n: leave >= 22 * 60 };
       ["m", "e", "n"].forEach((part) => {
         if (!fb[part]) return;
         const [a, alt] = pick(ctx, part, prev, { near: true });
@@ -655,7 +657,7 @@
     } else if (s.type === "free") {
       body = `<p class="act-name">${s.late ? "Late arrival" : "Easy evening"}</p><p class="act-desc">${esc(s.text)}</p>${eatHTML(s.eat)}`;
     }
-    return `<div class="slot">${head}<div class="slot-what">${body}</div></div>`;
+    return `<div class="slot"${s.type === "act" ? ` data-pid="${s.p.id}"` : ""}>${head}<div class="slot-what">${body}</div></div>`;
   }
 
   function jumuah(city, ll) {
@@ -677,38 +679,317 @@
     return acts.join(" · ") || `${day.city.name} at your own pace`;
   }
 
-  // "At a glance": one row per day with date, city, what's on in each part of the day, travel and where you sleep
+  /* ---------- the day's timeline: timed, balanced, and editable by the traveller ---------- */
+  const TL_ICON = { breakfast: "🍳", sight: "📍", meal: "🍽", cafe: "☕", shop: "🛍", travel: "🚄", flight: "✈", hotel: "🏨", rest: "🛌", free: "🌙", prayer: "🕌", custom: "✳️" };
+  const TL_ADD = [["custom:cafe", "☕ Café / coffee / tea"], ["custom:meal", "🍽 Restaurant or meal (type a name)"], ["custom:shop", "🛍 Shopping"], ["custom:rest", "🛌 Rest / free time"], ["custom:custom", "✳️ Something else"]];
+  const r5 = (m) => Math.round(m / 5) * 5;
+  // "3–4 h" → 3.5, "45 min" → 0.75, "Full day" → 8
+  function hoursOf(h) {
+    const t = String(h || "").toLowerCase();
+    if (/full day/.test(t)) return 8;
+    const nums = (t.match(/\d+(\.\d+)?/g) || []).map(Number);
+    if (!nums.length) return 1.5;
+    const v = nums.length > 1 && /[–-]/.test(t) ? (nums[0] + nums[1]) / 2 : nums[0];
+    return /min/.test(t) && !/\bh\b/.test(t) ? v / 60 : v;
+  }
+  function cafeTip(city) {
+    if (city.region === "hk") return "Pacific Coffee, a cha chaan teng for milk tea, or a café near the sight.";
+    if (city.region === "mo") return "A Portuguese-style café for an egg tart (ask about lard) and coffee.";
+    return "Luckin or Manner coffee, a local tea house, or a 清真 bakery for snacks.";
+  }
+  const dayKey = (day, i) => `${i}|${day.cityId}|${day.kind}`;
+
+  // Build the suggested timeline for a day from its planned slots
+  function buildTimeline(day) {
+    const items = [], city = day.city;
+    let t = null, ateDinner = false, lastLL = null;
+    const push = (o) => { o.id = "a" + items.length; items.push(o); if (o.ll) lastLL = o.ll; return o; };
+    const firstEat = (eat) => (eat && eat.located && eat.located[0]) || null;
+    const dinner = (eat) => {
+      if (ateDinner) return;
+      const ds = r5(Math.max(t || 18 * 60 + 30, 18 * 60 + 15));
+      if (t != null && ds - t >= 75) push({ k: "shop", title: "Free time — shopping or a stroll nearby", start: r5(t + 10), end: r5(ds - 15), note: "Or head back to the hotel to rest before dinner." });
+      const e = firstEat(eat);
+      push({ k: "meal", title: e ? "Dinner — " + e.n : "Dinner (halal)", start: ds, end: ds + 60, note: e ? e.note : city.halalTip, ll: e && e.ll });
+      t = ds + 60; ateDinner = true;
+    };
+    day.slots.forEach((s) => {
+      if (s.type === "arrive") {
+        if (s.land != null) {
+          push({ k: "flight", title: `${s.flightNo ? s.flightNo + " lands" : "Flight lands"} in ${s.city.name}`, start: s.land, end: s.land + IMMIGRATION, note: "Immigration, bags and customs." });
+          if (!s.via) { push({ k: "hotel", title: `To the hotel (${city.stay.area})`, start: s.land + IMMIGRATION, end: s.ready, note: s.ready < 14 * 60 ? "Check-in is usually from 14:00 — leave your bags at reception." : "Check in." }); t = s.ready; }
+          else t = s.land + IMMIGRATION;
+        } else { push({ k: "hotel", title: "Arrive, check in and rest", start: 9 * 60, end: 12 * 60 + 30, note: "Add your landing time in step 2 to plan this exactly." }); t = 13 * 60 + 15; }
+        return;
+      }
+      if (s.type === "travel") {
+        const mode = (s.leg && (s.leg.chosen || s.leg.assumed)) || "train";
+        const e = modeEstimate(mode, s.fromId, s.toId);
+        let dep = s.dep, arr = s.arr;
+        if (s.toFlight) {
+          dep = s.leaveBy != null ? s.leaveBy : r5(Math.max(t || 9 * 60, 9 * 60));
+          push({ k: "travel", icon: MODE[mode].icon, title: `${MODE[mode].label}: ${s.from.name} → ${s.to.name} for your flight`, start: dep, end: dep + e.door - 30, note: s.collect ? "Collect your bags from the hotel first." : "" });
+          t = dep + e.door - 30;
+          return;
+        }
+        if (dep == null) { dep = r5(Math.max(t || 9 * 60, 8 * 60 + 30) + e.lead); arr = dep + e.door - e.lead - 40; }
+        else if (arr == null) arr = dep + e.door - e.lead - 40;
+        const leave = s.leaveBy != null ? s.leaveBy : dep - e.lead;
+        if (!s.sameDay && e.lead > 0) push({ k: "hotel", title: `Check out${s.collect ? " (collect your bags)" : ""} and go to the ${mode === "flight" ? "airport" : mode === "train" ? "station" : mode === "boat" ? "pier" : "pick-up point"}`, start: leave, end: dep });
+        push({ k: "travel", icon: MODE[mode].icon, title: `${MODE[mode].label}: ${s.from.name} → ${s.to.name}`, start: dep, end: arr, note: s.dep == null || s.est ? "Estimated — add your booked times on the " + s.to.name + " card." : "" });
+        push({ k: "hotel", title: `Check in — ${s.to.stay.area}`, start: arr + 20, end: arr + 60 });
+        t = arr + 60;
+        return;
+      }
+      if (s.type === "act") {
+        const p = s.p, actCity = s.inCity || city, hotel = hotelPoint(actCity);
+        const durH = Math.min(hoursOf(p.h), s.part === "full" ? 9 : s.part === "n" ? 2.5 : 4);
+        const base = s.inCity ? 9 * 60 : s.part === "full" ? 8 * 60 : s.part === "m" ? 9 * 60 : s.part === "e" ? 13 * 60 + 30 : 19 * 60 + 30;
+        if (s.part === "n") dinner(s.eat);
+        // travel time from wherever you actually are (hotel, lunch spot, last sight)
+        const here = { ll: lastLL || hotel.ll, m: lastLL ? null : hotel.m };
+        const g = getThere(here, p, actCity);
+        let mins = g.mins != null ? g.mins : 20;
+        const far = p.x && km(here.ll, p.ll) > 12;
+        if (far) {
+          // day trips out of town get their own travel blocks there and back
+          const dep = r5(Math.max(t == null ? (s.part === "full" ? 7 * 60 + 30 : base - mins) : t + 5, s.part === "full" ? 7 * 60 + 30 : 0));
+          push({ k: "travel", icon: "🚐", title: "Travel to " + p.n.split(/[:(]/)[0].trim(), start: dep, end: dep + mins, note: firstSentence(p.x) });
+          t = dep + mins; mins = 0;
+        }
+        const start = r5(Math.max(base, (t == null ? base : t) + mins));
+        const end = r5(start + durH * 60);
+        push({ k: "sight", title: p.n, start, end, pid: p.id, ll: p.ll, note: far ? (s.part === "full" ? "Bring lunch and water — halal food is rare out here." : "") : `${g.mode} ~${mins} min from the previous stop.`, why: s.why ? s.why[1] : "" });
+        t = end;
+        if (far) {
+          const back = getThere(p, hotel, actCity).mins || mins;
+          push({ k: "travel", icon: "🚐", title: "Back to " + actCity.name, start: r5(t + 10), end: r5(t + 10 + back), ll: hotel.ll });
+          t = r5(t + 10 + back);
+        }
+        if (s.part === "m") {
+          if (day.friday) {
+            const mq = (city.mosques.filter((x) => x.ll).map((x) => ({ x, d: km(p.ll, x.ll) })).sort((a, b) => a.d - b.d)[0] || {}).x || city.mosques[0];
+            if (mq) { const ps = r5(Math.max(t + 20, 12 * 60 + 30)); push({ k: "prayer", title: "Jumu'ah — " + mq.n, start: ps, end: ps + 60, note: "Check the khutbah time locally.", ll: mq.ll }); t = ps + 60; }
+          }
+          const e = firstEat(s.eat);
+          const ls = r5(Math.max(t + 10, 11 * 60 + 45));
+          push({ k: "meal", title: e ? "Lunch — " + e.n : "Lunch (halal)", start: ls, end: ls + 60, note: e ? e.note : "Look for a 清真 noodle shop nearby.", ll: e && e.ll });
+          t = ls + 60;
+        }
+        if (s.part === "e" && t <= 17 * 60) { push({ k: "cafe", title: "Coffee or tea break", start: r5(t + 10), end: r5(t + 40), note: cafeTip(city) }); t = r5(t + 40); }
+        return;
+      }
+      if (s.type === "rest") { const st = r5(Math.max(t || 14 * 60, 13 * 60 + 30)); push({ k: "rest", title: "Free time & rest", start: st, end: st + 150, note: "Nap, pray, do laundry or revisit somewhere you liked." }); t = st + 150; return; }
+      if (s.type === "free") {
+        if (!s.late) dinner(s.eat);
+        const st = r5(Math.max(t || 19 * 60 + 30, s.late ? (t || 21 * 60) : 19 * 60 + 30));
+        push({ k: s.late ? "hotel" : "free", title: s.late ? "Check in, a late meal and rest" : "Easy evening", start: st, end: st + 90, note: s.text });
+        t = st + 90;
+        return;
+      }
+      if (s.type === "depart") {
+        if (s.off != null) {
+          if (s.leaveBy != null) push({ k: "hotel", title: "Collect your bags and leave for the airport", start: s.leaveBy, end: s.leaveBy + s.airportMin, note: s.collect ? "Back to the hotel first: " + String(s.collect).replace(/<[^>]+>/g, "") : "" });
+          push({ k: "flight", title: "At the airport: check in, security and immigration", start: s.off - INTL_BUFFER, end: s.off - 30 });
+          push({ k: "flight", title: `${s.flightNo ? s.flightNo + " takes" : "Take"} off — ${CITIES[s.flyOut].name} → home`, start: s.off, end: s.off });
+        } else {
+          const st = r5(Math.max(t || 12 * 60, 12 * 60));
+          push({ k: "hotel", title: "Check out and head to the airport", start: st, end: st + (AIRPORT_MIN[s.flyOut] || 60), note: "Add your take-off time in step 2 to plan this exactly." });
+        }
+      }
+    });
+    if (day.back && t != null && !items.some((x) => x.k === "flight" && /off/.test(x.title))) push({ k: "hotel", title: "Back to the hotel", start: r5(t + 5), end: r5(t + 5 + (day.back.mins || 20)), note: String(day.back.text).replace(/<[^>]+>/g, "") });
+    // Breakfast before the first planned item (not on arrival day)
+    if (day.kind !== "arrival" && items.length) {
+      const first = Math.min.apply(null, items.map((x) => x.start));
+      if (first >= 7 * 60 + 15) {
+        const bs = r5(Math.max(first - 60, 7 * 60));
+        push({ k: "breakfast", title: "Breakfast", start: bs, end: Math.max(bs + 30, r5(first - 15)), note: city.region === "mainland" ? "Hotel breakfasts are rarely halal-certified: stick to eggs, bread, fruit and congee, or find a 清真 noodle or bun shop." : "Plenty of cafés nearby; ask about halal options." });
+      }
+    }
+    items.forEach((x) => { x.start = Math.round(x.start); x.end = Math.round(Math.max(x.end, x.start)); });
+    return items.sort((a, b) => a.start - b.start || a.end - b.end);
+  }
+
+  // The day's timeline: the traveller's edited version if there is one, else the suggestion
+  function timelineFor(day, i) {
+    const ed = state.edits && state.edits[dayKey(day, i)];
+    return ed ? ed.map((x) => Object.assign({}, x)) : buildTimeline(day);
+  }
+  const isEdited = (day, i) => !!(state.edits && state.edits[dayKey(day, i)]);
+  function saveTimeline(i, items) {
+    const day = lastPlan.days[i];
+    state.edits = state.edits || {};
+    state.edits[dayKey(day, i)] = items.sort((a, b) => a.start - b.start || a.end - b.end);
+    persist();
+  }
+
+  let editingDay = null;
+  let lastPrintArgs = null;
+
+  function timelineHTML(i) {
+    const day = lastPlan.days[i], items = timelineFor(day, i), city = day.city;
+    const slotPids = new Set(day.slots.filter((s) => s.type === "act").map((s) => s.p.id));
+    const head = `<div class="tl-head"><h5>Your day, hour by hour</h5>${isEdited(day, i) ? '<span class="badge pick">edited by you</span>' : '<span class="hint">suggested — edit anything</span>'}
+      ${editingDay === i ? "" : `<button type="button" class="btn small" data-tledit="${i}">✏️ Edit this day</button>`}</div>`;
+    if (editingDay === i) return head + timelineEditor(i, items, city);
+    let prevEnd = null, prevLL = null;
+    const rows = items.map((x) => {
+      let pre = "";
+      if (prevEnd != null && x.start - prevEnd >= 60) pre = `<li class="tl-gap">Free time · ${dur(x.start - prevEnd)}</li>`;
+      const overlap = prevEnd != null && x.start < prevEnd - 1;
+      const p = x.pid ? findPlace(city, x.pid) : null;
+      const extra = p && !slotPids.has(p.id) ? `<div class="tl-more">${esc(firstSentence(p.d))} <span class="hint">${esc(p.h)} · ${esc(p.c)}${p.m ? " · Metro " + esc(p.m) : ""}</span>${mapLinks(p, city)}</div>` : "";
+      const hop = x.ll && prevLL && x.k !== "sight" ? (() => { const g = getThere({ ll: prevLL }, { ll: x.ll }, city); return g.mins ? ` <span class="hint">· ${esc(g.mode)} ~${g.mins} min</span>` : ""; })() : "";
+      prevEnd = Math.max(prevEnd || 0, x.end);
+      if (x.ll) prevLL = x.ll;
+      return pre + `<li class="tl-item k-${x.k}${overlap ? " overlap" : ""}"><span class="tl-time">${hhmm(x.start)}${x.end > x.start ? "–" + hhmm(x.end) : ""}</span><span class="tl-icon" aria-hidden="true">${x.icon || TL_ICON[x.k] || "•"}</span>
+        <span class="tl-body"><b>${esc(x.title)}</b>${x.why ? ` <span class="badge ${/pick/i.test(x.why) ? "pick" : /top/i.test(x.why) ? "top" : "rec"}">${esc(x.why)}</span>` : ""}${hop}${overlap ? ' <span class="badge pick">overlaps the previous item</span>' : ""}
+        ${x.note ? `<span class="tl-note">${esc(x.note)}</span>` : ""}${extra}</span></li>`;
+    }).join("");
+    return head + `<ol class="tl-list">${rows}</ol>`;
+  }
+  const findPlace = (city, pid) => city.places.find((p) => p.id === pid);
+
+  function timelineEditor(i, items, city) {
+    const day = lastPlan.days[i];
+    const used = new Set(items.map((x) => x.pid).filter(Boolean));
+    const sights = city.places.filter((p) => !used.has(p.id)).map((p) => `<option value="place:${p.id}">📍 ${esc(p.n.length > 38 ? p.n.split(/[:(]/)[0].trim() : p.n)}${p.r === 3 ? " ★" : ""}</option>`).join("");
+    const halal = city.halal.map((h, k) => `<option value="halal:${k}">🍽 ${esc(h.n)}</option>`).join("");
+    const rows = items.map((x) => `<div class="tl-row" data-day="${i}" data-id="${x.id}">
+        <input type="time" step="300" value="${hhmm(x.start)}" data-tl="start" aria-label="Start time">
+        <span aria-hidden="true">–</span>
+        <input type="time" step="300" value="${hhmm(x.end)}" data-tl="end" aria-label="End time">
+        <span class="tl-icon" aria-hidden="true">${x.icon || TL_ICON[x.k] || "•"}</span>
+        <input type="text" value="${esc(x.title)}" data-tl="title" aria-label="What">
+        <button type="button" class="icon-btn" data-tldel="${x.id}" aria-label="Remove ${esc(x.title)}">✕</button>
+        <input type="text" class="tl-notein" value="${esc(x.note || "")}" data-tl="note" placeholder="Note (optional)" aria-label="Note">
+      </div>`).join("");
+    const lastEnd = items.length ? Math.max.apply(null, items.map((x) => x.end)) : 9 * 60;
+    return `<div class="tl-edit" data-day="${i}">
+      <p class="hint">Change times, rename or remove anything, or add your own. Items sort by start time. “Fix overlaps” moves anything that clashes to start after the item before it, keeping each item's length.</p>
+      ${rows}
+      <div class="tl-add">
+        <b>Add to ${esc(city.name)} · ${day.date ? fmtDate(day.date) : "day " + (i + 1)}</b>
+        <select id="tlAddWhat-${i}" aria-label="What to add">
+          <optgroup label="Sights in ${esc(city.name)}">${sights}</optgroup>
+          <optgroup label="Halal food in ${esc(city.name)}">${halal}</optgroup>
+          <optgroup label="Your own">${TL_ADD.map(([v, l]) => `<option value="${v}">${l}</option>`).join("")}</optgroup>
+        </select>
+        <input type="text" id="tlAddName-${i}" placeholder="Name (for your own items)" aria-label="Name">
+        <span class="pair"><label class="hint" for="tlAddStart-${i}">from</label><input type="time" step="300" id="tlAddStart-${i}" value="${hhmm(Math.min(lastEnd + 15, 22 * 60))}"></span>
+        <span class="pair"><label class="hint" for="tlAddEnd-${i}">to</label><input type="time" step="300" id="tlAddEnd-${i}" value=""></span>
+        <button type="button" class="btn small" data-tladd="${i}">+ Add</button>
+      </div>
+      <div class="actions"><button type="button" class="btn small" data-tlflow="${i}">↧ Fix overlaps</button><button type="button" class="btn small" data-tlreset="${i}">↺ Reset day</button><button type="button" class="btn small print-btn" data-tldone="${i}">✓ Done</button></div>
+    </div>`;
+  }
+
+  // Redraw one day after an edit, plus everything that summarises it
+  function refreshDay(i) {
+    const el = document.getElementById("tl-" + i);
+    if (el) el.innerHTML = timelineHTML(i);
+    const day = lastPlan.days[i];
+    const pids = new Set(timelineFor(day, i).map((x) => x.pid).filter(Boolean));
+    document.querySelectorAll(`#day-${i + 1} .slot[data-pid]`).forEach((sl) => (sl.hidden = !pids.has(sl.dataset.pid)));
+    const g = $("#glanceBox");
+    if (g) g.innerHTML = glanceHTML(lastPlan);
+    if (lastPrintArgs) buildPrintView(lastPlan, lastPrintArgs);
+  }
+
+  function editTimeline(e) {
+    const t = e.target;
+    const row = t.closest(".tl-row");
+    if (row && t.dataset.tl) {
+      const i = +row.dataset.day, items = timelineFor(lastPlan.days[i], i), it = items.find((x) => x.id === row.dataset.id);
+      if (!it) return false;
+      const f = t.dataset.tl;
+      if (f === "start" || f === "end") {
+        const m = toMin(t.value);
+        if (m == null) return true;
+        const len = it.end - it.start;
+        if (f === "start") { it.start = m; it.end = m + Math.max(len, 0); } // moving the start moves the whole item
+        else it.end = Math.max(m, it.start);
+      } else it[f] = t.value;
+      if (f === "title") delete it.why;
+      saveTimeline(i, items);
+      if (f === "start" || f === "end") refreshDay(i);
+      else { const g = $("#glanceBox"); if (g) g.innerHTML = glanceHTML(lastPlan); if (lastPrintArgs) buildPrintView(lastPlan, lastPrintArgs); }
+      return true;
+    }
+    return false;
+  }
+
+  function clickTimeline(e) {
+    const b = e.target.closest("[data-tledit],[data-tldone],[data-tldel],[data-tladd],[data-tlflow],[data-tlreset]");
+    if (!b) return false;
+    if (b.dataset.tledit != null) { editingDay = +b.dataset.tledit; refreshDay(editingDay); return true; }
+    if (b.dataset.tldone != null) { const i = +b.dataset.tldone; editingDay = null; refreshDay(i); toast("Saved. Your changes appear in the summary, printout and offline copy."); return true; }
+    const i = +(b.dataset.tladd || b.dataset.tlflow || b.dataset.tlreset || b.closest(".tl-row, .tl-edit").dataset.day);
+    const day = lastPlan.days[i], city = day.city;
+    let items = timelineFor(day, i);
+    if (b.dataset.tldel != null) items = items.filter((x) => x.id !== b.dataset.tldel);
+    if (b.dataset.tlflow != null) {
+      // keep the order, each item's length and any gaps you left; just push overlapping items later
+      let tt = null;
+      items.sort((a, b) => a.start - b.start || a.end - b.end).forEach((x) => { const len = x.end - x.start; if (tt != null && x.start < tt && x.k !== "flight") x.start = tt; x.end = x.start + len; tt = Math.max(tt || 0, x.end); });
+    }
+    if (b.dataset.tlreset != null) {
+      delete state.edits[dayKey(day, i)]; persist(); refreshDay(i); toast("Day reset to the suggested plan."); return true;
+    }
+    if (b.dataset.tladd != null) {
+      const what = $("#tlAddWhat-" + i).value, name = $("#tlAddName-" + i).value.trim();
+      const start = toMin($("#tlAddStart-" + i).value);
+      if (start == null) { toast("Pick a start time for the new item."); return true; }
+      let it;
+      if (what.indexOf("place:") === 0) {
+        const p = findPlace(city, what.slice(6));
+        it = { k: "sight", title: p.n, pid: p.id, ll: p.ll, start, end: start + Math.round(Math.min(hoursOf(p.h), 4) * 60), note: p.tip ? firstSentence(p.tip) : "" };
+      } else if (what.indexOf("halal:") === 0) {
+        const h = city.halal[+what.slice(6)];
+        it = { k: "meal", title: (start < 11 * 60 ? "Breakfast — " : start < 16 * 60 ? "Lunch — " : "Dinner — ") + h.n, ll: h.ll, start, end: start + 60, note: h.note };
+      } else {
+        const k = what.split(":")[1];
+        const lens = { cafe: 30, meal: 60, shop: 60, rest: 60, custom: 60 };
+        const names = { cafe: "Coffee or tea break", meal: "Meal", shop: "Shopping", rest: "Rest / free time", custom: "My plan" };
+        it = { k, title: name || names[k], start, end: start + lens[k], note: name && k !== "custom" ? "" : "" };
+      }
+      const endIn = toMin($("#tlAddEnd-" + i).value);
+      if (endIn != null && endIn > start) it.end = endIn;
+      it.id = "u" + Date.now().toString(36);
+      items.push(it);
+    }
+    saveTimeline(i, items);
+    refreshDay(i);
+    return true;
+  }
+
+  // "At a glance": one row per day, built from each day's (possibly edited) timeline
   function glanceHTML(plan) {
-    const short = (t) => esc(String(t).split(/[:(]/)[0].trim());
-    const cell = (day, part) => {
-      const items = day.slots.filter((x) => x.part === part || (part === "e" && x.part === "full")).map((x) => {
-        if (x.type === "act") return short(x.p.n);
-        if (x.type === "arrive") return `✈ ${x.via ? "Land in " + esc(x.city.name) : "Arrive"}${x.land != null ? " " + hhmm(x.land) : ""}`;
-        if (x.type === "travel") { const m = x.leg && x.leg.chosen ? MODE[x.leg.chosen].icon : "→"; return `${m} ${esc(x.from.name)} → ${esc(x.to.name)}${x.dep != null ? " " + hhmm(x.dep) : ""}`; }
-        if (x.type === "depart") return `✈ Fly home${x.off != null ? " " + hhmm(x.off) : ""}`;
-        if (x.type === "rest") return "Free time";
-        if (x.type === "free") return x.late ? "Check in & rest" : "Easy evening";
-        return "";
-      }).filter(Boolean);
-      return items.join(" · ") || "—";
+    const show = { sight: 1, travel: 1, flight: 1, custom: 1, shop: 0, rest: 1, free: 1, prayer: 0, meal: 0, cafe: 0, breakfast: 0, hotel: 0 };
+    const label = (x) => {
+      if (x.k === "flight") return "✈ " + esc(x.title.replace(/^At the airport.*$/, "Airport"));
+      if (x.k === "travel") return (x.icon || "→") + " " + esc(x.title.split(": ").pop());
+      return esc(String(x.title).split(/[:(]/)[0].trim());
     };
     const rows = plan.days.map((d, i) => {
-      const full = d.slots.find((x) => x.part === "full");
-      const sleep = d.kind === "depart" ? "✈ Home" : esc(d.city.name);
+      const items = timelineFor(d, i).filter((x) => show[x.k] && !(x.k === "flight" && /^At the airport/.test(x.title)));
+      const part = (lo, hi) => items.filter((x) => x.start >= lo && x.start < hi).map(label);
+      const cont = (lo, hi) => items.filter((x) => x.start < lo && x.end > lo + 120 && x.k === "sight").map((x) => "↳ " + label(x));
+      const cell = (arr) => (arr.length ? arr.join(" · ") : "—");
       const kind = KIND[d.kind] ? `<span class="kind-chip">${KIND[d.kind]}</span>` : "";
       return `<tr data-goto="day-${i + 1}" tabindex="0" role="link" aria-label="Go to day ${i + 1}">
         <td class="g-day"><b>${i + 1}</b></td>
         <td class="g-date">${d.date ? fmtDate(d.date) : "—"}</td>
-        <td><b>${esc(d.city.name)}</b>${kind}</td>
-        ${full ? `<td colspan="2">${short(full.p.n)} <span class="hint">(full day)</span></td>` : `<td>${cell(d, "m")}</td><td>${cell(d, "e")}</td>`}
-        <td>${cell(d, "n")}</td>
-        <td class="g-sleep">${sleep}</td></tr>`;
+        <td><b>${esc(d.city.name)}</b>${kind}${isEdited(d, i) ? '<span class="kind-chip edited">edited</span>' : ""}</td>
+        <td>${cell(part(0, 12 * 60 + 30))}</td><td>${cell(cont(12 * 60 + 30).concat(part(12 * 60 + 30, 18 * 60 + 30)))}</td><td>${cell(part(18 * 60 + 30, 24 * 60))}</td>
+        <td class="g-sleep">${d.kind === "depart" ? "✈ Home" : esc(d.city.name)}</td></tr>`;
     }).join("");
     return `<section class="panel glance">
       <h3>At a glance</h3>
       ${state.start ? "" : `<p class="hint">Add a start date (step 1) to see the dates and weekdays here.</p>`}
-      <div class="tbl-wrap"><table><thead><tr><th>Day</th><th>Date</th><th>City</th><th>Morning</th><th>Evening</th><th>Night</th><th>Sleep in</th></tr></thead><tbody>${rows}</tbody></table></div>
-      <p class="hint">Tap a day to jump to its full plan.</p>
+      <div class="tbl-wrap"><table><thead><tr><th>Day</th><th>Date</th><th>City</th><th>Morning</th><th>Afternoon / evening</th><th>Night</th><th>Sleep in</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="hint">Tap a day to jump to its hour-by-hour plan, where you can edit times and add or remove anything.</p>
     </section>`;
   }
 
@@ -716,6 +997,7 @@
     readForm();
     const plan = buildPlan(state);
     lastPlan = plan;
+    editingDay = null;
     plan.map = routeMapSVG(plan);
     lmap = null;
     const ids = state.stops.map((s) => s.city);
@@ -779,6 +1061,10 @@
       if (auto.length) notes.push(["good", "Transport", `Recommended for you: ${auto.map((l) => esc(CITIES[l.a.id].name) + " → " + esc(CITIES[l.b.id].name) + " by " + MODE[l.mode].label.toLowerCase()).join("; ")}. Each travel day explains why and compares the alternatives; change any of them with “Getting here” on the city cards.`]);
       if (open.length) notes.push(["info", "Transport", `${open.length} of ${plan.map.legs.length} journeys between cities have no transport chosen yet (${open.map((l) => esc(CITIES[l.a.id].name) + " → " + esc(CITIES[l.b.id].name)).join(", ")}). Pick train, flight, coach, car or ferry on each city card — or tick “Recommend the best city order and transport” in step 2 and the planner will choose — until then each travel day lists the options with times and costs.`]);
     }
+    {
+      const ed = plan.days.filter((d, i) => isEdited(d, i)).length;
+      if (ed) notes.push(["info", "Your edits", `${ed} day${ed > 1 ? "s have" : " has"} your own changes, kept even if you rebuild. Use “Reset day” on a day to go back to the suggestion.`]);
+    }
     notes.push(["good", "Halal", "Every activity lists the nearest halal food we know of. Always confirm the green <span class=\"han\">清真</span> sign or certificate at the door — ownership changes."]);
 
     const hdr = `<div class="summary">
@@ -802,7 +1088,7 @@
     </div>`;
 
     // Day by day
-    let html = glanceHTML(plan), n = 0;
+    let html = `<div id="glanceBox">${glanceHTML(plan)}</div>`, n = 0;
     plan.days.forEach((day, i) => {
       if (day.kind !== "full" && day.kind !== "depart") {
         const st = state.stops[n];
@@ -814,6 +1100,8 @@
       html += `<article class="day" id="day-${i + 1}">
         <div class="day-num"><div class="stamp">${i + 1}</div><small>Day ${i + 1}${day.date ? "<br>" + fmtDate(day.date) : ""}</small></div>
         <div class="day-body"><h4 class="day-title">${esc(dayTitle(day))}${KIND[day.kind] ? `<span class="kind">${KIND[day.kind]}</span>` : ""}</h4>
+          <div class="tl" id="tl-${i}">${timelineHTML(i)}</div>
+          <h5 class="details-h">Details, directions & halal food</h5>
           ${day.slots.map((s) => slotHTML(s, day)).join("")}
           ${day.back && day.kind !== "depart" ? `<div class="back"><b>Back to the hotel:</b> ${day.back.text}</div>` : ""}
           ${googleDayLink(day) ? `<div class="maplinks"><a href="${googleDayLink(day)}" target="_blank" rel="noopener">🗺 Open this day's route in Google Maps ↗</a><a href="#" data-tab="map" data-mapday-open="${i}">See it on the map</a></div>` : ""}
@@ -829,8 +1117,10 @@
        <div id="pane-talk" role="tabpanel" aria-labelledby="tab-talk" class="out" ${currentTab !== "talk" ? "hidden" : ""}><h2 class="print-only">Phrases</h2>${phrasesHTML(hasHK || hasMO)}</div>
        <p class="foot">Prices, opening hours and visa rules change. Figures here are typical for 2025–26 and meant for planning; confirm bookings and entry rules on official sites before you travel. Directions are estimates from map distance — use Apple Maps or Amap on the day for live routes.</p>`;
     restoreChecks();
+    plan.days.forEach((d, i) => { if (isEdited(d, i)) { const pids = new Set(timelineFor(d, i).map((x) => x.pid).filter(Boolean)); document.querySelectorAll(`#day-${i + 1} .slot[data-pid]`).forEach((sl) => (sl.hidden = !pids.has(sl.dataset.pid))); } });
     if (currentTab === "map") showStreetMap();
-    buildPrintView(plan, { ids, routeIds, arrId, depId, hasMainland, hasHK, hasMO, startD, endD, notes });
+    lastPrintArgs = { ids, routeIds, arrId, depId, hasMainland, hasHK, hasMO, startD, endD, notes };
+    buildPrintView(plan, lastPrintArgs);
     if (scroll) out.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
@@ -1569,7 +1859,9 @@
       pages.push(`${head(`Day ${i + 1} · ${esc(d.city.name)} <span class="han">${d.city.zh}</span>`, (d.date ? fmtDate(d.date) + " · " : "") + (KIND[d.kind] || "Sightseeing"))}
         <p class="pv-sub">${esc(dayTitle(d))}</p>
         ${firstInCity ? `<p class="pv-stay"><b>Stay:</b> ${esc(d.city.stay.area)} — e.g. ${esc(hotel.n)}. <b>Halal near hotel:</b> ${esc(eatNear(d.city, d.city.stay.ll, 2).located.map((h) => h.n).join("; ") || d.city.halalTip)}</p>` : ""}
-        <table class="pv-day"><tbody>${d.slots.map((s) => pvSlot(s, d)).join("")}</tbody></table>
+        <table class="pv-tl"><tbody>${timelineFor(d, i).map((x) => `<tr class="k-${x.k}"><td class="pv-t">${hhmm(x.start)}${x.end > x.start ? "–" + hhmm(x.end) : ""}</td><td>${x.icon || TL_ICON[x.k] || ""} <b>${esc(x.title)}</b>${x.note ? ` <span class="pv-meta">— ${esc(x.note)}</span>` : ""}</td></tr>`).join("")}</tbody></table>
+        <h2>Details & directions</h2>
+        <table class="pv-day"><tbody>${d.slots.filter((s) => s.type !== "act" || !isEdited(d, i) || timelineFor(d, i).some((x) => x.pid === s.p.id)).map((s) => pvSlot(s, d)).join("")}</tbody></table>
         ${d.back && d.kind !== "depart" ? `<p class="pv-meta"><b>Back to the hotel:</b> ${plain(d.back.text)}</p>` : ""}`);
     });
 
@@ -1687,7 +1979,9 @@
   function saveOffline() {
     if (!lastPlan) return;
     if (window.NO_PRINT) { toast("Saving files is blocked inside this preview. Use the standalone HTML file or the GitHub Pages version to save an offline copy."); return; }
+    if (editingDay != null) { const d = editingDay; editingDay = null; refreshDay(d); }
     const out = $("#out").cloneNode(true);
+    out.querySelectorAll("[data-tledit]").forEach((n) => n.parentNode.removeChild(n));
     out.querySelectorAll(".tabs, .actions, script, .maplinks, .lmap-wrap, .map-legend .btn").forEach((n) => n.parentNode.removeChild(n));
     out.querySelectorAll("[hidden]").forEach((n) => n.removeAttribute("hidden"));
     out.querySelectorAll("input[type=checkbox]").forEach((n) => { if (n.checked) n.setAttribute("checked", ""); n.setAttribute("disabled", ""); });
@@ -1732,6 +2026,8 @@ ${pv}
     L.push("");
     lastPlan.days.forEach((d, i) => {
       L.push(`DAY ${i + 1}${d.date ? " — " + fmtDate(d.date) : ""} · ${d.city.name} · ${dayTitle(d)}`);
+      timelineFor(d, i).forEach((x) => L.push(`  ${hhmm(x.start)}${x.end > x.start ? "–" + hhmm(x.end) : ""}  ${x.title}${x.note ? " — " + x.note : ""}`));
+      L.push("  Details:");
       d.slots.forEach((s) => {
         const w = SLOT[s.part].label.toUpperCase();
         if (s.type === "act") {
@@ -1781,6 +2077,7 @@ ${pv}
 
   function bindOutput() {
     $("#out").addEventListener("click", (e) => {
+      if (clickTimeline(e)) return;
       const tab = e.target.closest("[data-tab]");
       if (tab) {
         if (tab.tagName === "A") e.preventDefault();
@@ -1804,6 +2101,7 @@ ${pv}
       if (go && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); go.click(); }
     });
     $("#out").addEventListener("change", (e) => {
+      if (editTimeline(e)) return;
       if (!e.target.dataset.chk) return;
       const saved = load("checks") || {};
       saved[e.target.dataset.chk] = e.target.checked;

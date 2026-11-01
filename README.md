@@ -18,6 +18,7 @@ Plus pace (relaxed / balanced), hotel budget, passport (Australian / other) and 
 - **Top-rated recommendations** when you don't pick places: each activity is labelled Your pick, ★ Top rated or Recommended for your style, and each city lists its must-sees
 - **Maps**: a built-in route map of China (works offline, in print and in the offline copy) with numbered stops, train/flight/ferry legs and zoomed insets for close-together cities; a Map tab with a zoomable OpenStreetMap street map of every stop, filterable by day; and Google Maps links for the whole route and each day
 - **At a glance** table at the top of the Day by day tab: day, date, city, morning / evening / night, travel and where you sleep; tap a row to jump to that day
+- **Hour-by-hour plan you can edit**: each day is laid out as a balanced timeline (breakfast, sights, halal lunch, coffee break, free time, dinner, evening, back to the hotel, plus travel, flights and Friday Jumu'ah at their real times). “Edit this day” lets you change any time, rename or remove items, and add sights, halal restaurants, cafés, shopping or anything of your own; edits are saved in the browser and flow into the summary, printout, offline copy and text export
 - **Day-by-day itinerary** split into Morning, Evening and Night, with an alternative option for each slot
 - **Directions between every stop**: walk, metro (with station and line) or DiDi/taxi with time and fare estimates, and the Chinese name to show drivers
 - **Halal food** nearest each activity, plus mosques and Jumu'ah reminders on Fridays

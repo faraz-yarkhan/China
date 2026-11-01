@@ -975,6 +975,16 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
 .pv-map .tripmap { width: 100%; }
 /* The print copy always uses the light map palette */
 #printView { --sea: #D9E6EF; --land: #F7F6F2; --coast: #98A6B3; --mapborder: #B4BEC8; --ink: #111; --muted: #555; --card: #fff; --seal: #A3241E; --sky: #24527D; --gold: #7A560C; --jade: #1D6B4F; }
+/* At a glance */
+.glance table { font-size: 13.5px; }
+.glance td, .glance th { padding: 7px 8px; }
+.glance tbody tr { cursor: pointer; }
+.glance tbody tr:hover, .glance tbody tr:focus-visible { background: var(--sky-soft); outline: none; }
+.glance .g-day b { display: inline-grid; place-items: center; width: 26px; height: 26px; border: 2px solid var(--seal); color: var(--seal); border-radius: 5px; font-family: var(--display); }
+.glance .g-date { white-space: nowrap; font-family: var(--mono); font-size: 12.5px; }
+.glance .g-sleep { white-space: nowrap; color: var(--muted); }
+.glance .kind-chip { display: block; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gold); }
+.day { scroll-margin-top: 64px; }
 .print-only { display: none; }
 .print-btn { border-color: var(--ink); font-weight: 600; }
 #printView { display: none; }

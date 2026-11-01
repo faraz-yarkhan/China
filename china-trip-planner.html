@@ -975,6 +975,16 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
 .pv-map .tripmap { width: 100%; }
 /* The print copy always uses the light map palette */
 #printView { --sea: #D9E6EF; --land: #F7F6F2; --coast: #98A6B3; --mapborder: #B4BEC8; --ink: #111; --muted: #555; --card: #fff; --seal: #A3241E; --sky: #24527D; --gold: #7A560C; --jade: #1D6B4F; }
+/* At a glance */
+.glance table { font-size: 13.5px; }
+.glance td, .glance th { padding: 7px 8px; }
+.glance tbody tr { cursor: pointer; }
+.glance tbody tr:hover, .glance tbody tr:focus-visible { background: var(--sky-soft); outline: none; }
+.glance .g-day b { display: inline-grid; place-items: center; width: 26px; height: 26px; border: 2px solid var(--seal); color: var(--seal); border-radius: 5px; font-family: var(--display); }
+.glance .g-date { white-space: nowrap; font-family: var(--mono); font-size: 12.5px; }
+.glance .g-sleep { white-space: nowrap; color: var(--muted); }
+.glance .kind-chip { display: block; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gold); }
+.day { scroll-margin-top: 64px; }
 .print-only { display: none; }
 .print-btn { border-color: var(--ink); font-weight: 600; }
 #printView { display: none; }
@@ -2719,6 +2729,41 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     return acts.join(" · ") || `${day.city.name} at your own pace`;
   }
 
+  // "At a glance": one row per day with date, city, what's on in each part of the day, travel and where you sleep
+  function glanceHTML(plan) {
+    const short = (t) => esc(String(t).split(/[:(]/)[0].trim());
+    const cell = (day, part) => {
+      const items = day.slots.filter((x) => x.part === part || (part === "e" && x.part === "full")).map((x) => {
+        if (x.type === "act") return short(x.p.n);
+        if (x.type === "arrive") return `✈ ${x.via ? "Land in " + esc(x.city.name) : "Arrive"}${x.land != null ? " " + hhmm(x.land) : ""}`;
+        if (x.type === "travel") { const m = x.leg && x.leg.chosen ? MODE[x.leg.chosen].icon : "→"; return `${m} ${esc(x.from.name)} → ${esc(x.to.name)}${x.dep != null ? " " + hhmm(x.dep) : ""}`; }
+        if (x.type === "depart") return `✈ Fly home${x.off != null ? " " + hhmm(x.off) : ""}`;
+        if (x.type === "rest") return "Free time";
+        if (x.type === "free") return x.late ? "Check in & rest" : "Easy evening";
+        return "";
+      }).filter(Boolean);
+      return items.join(" · ") || "—";
+    };
+    const rows = plan.days.map((d, i) => {
+      const full = d.slots.find((x) => x.part === "full");
+      const sleep = d.kind === "depart" ? "✈ Home" : esc(d.city.name);
+      const kind = KIND[d.kind] ? `<span class="kind-chip">${KIND[d.kind]}</span>` : "";
+      return `<tr data-goto="day-${i + 1}" tabindex="0" role="link" aria-label="Go to day ${i + 1}">
+        <td class="g-day"><b>${i + 1}</b></td>
+        <td class="g-date">${d.date ? fmtDate(d.date) : "—"}</td>
+        <td><b>${esc(d.city.name)}</b>${kind}</td>
+        ${full ? `<td colspan="2">${short(full.p.n)} <span class="hint">(full day)</span></td>` : `<td>${cell(d, "m")}</td><td>${cell(d, "e")}</td>`}
+        <td>${cell(d, "n")}</td>
+        <td class="g-sleep">${sleep}</td></tr>`;
+    }).join("");
+    return `<section class="panel glance">
+      <h3>At a glance</h3>
+      ${state.start ? "" : `<p class="hint">Add a start date (step 1) to see the dates and weekdays here.</p>`}
+      <div class="tbl-wrap"><table><thead><tr><th>Day</th><th>Date</th><th>City</th><th>Morning</th><th>Evening</th><th>Night</th><th>Sleep in</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <p class="hint">Tap a day to jump to its full plan.</p>
+    </section>`;
+  }
+
   function generate(scroll) {
     readForm();
     const plan = buildPlan(state);
@@ -2809,7 +2854,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     </div>`;
 
     // Day by day
-    let html = "", n = 0;
+    let html = glanceHTML(plan), n = 0;
     plan.days.forEach((day, i) => {
       if (day.kind !== "full" && day.kind !== "depart") {
         const st = state.stops[n];
@@ -2818,7 +2863,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
           <p class="city-stay"><b>Top rated here:</b> ${day.city.places.filter((p) => p.r === 3).map((p) => plan.stops[n].used.has(p.id) ? `${esc(p.n)} <span style="color:var(--jade)">✓ in your plan</span>` : `${esc(p.n)} <i>(not in this plan — add a night)</i>`).join(" · ")}</p>`;
         n++;
       }
-      html += `<article class="day">
+      html += `<article class="day" id="day-${i + 1}">
         <div class="day-num"><div class="stamp">${i + 1}</div><small>Day ${i + 1}${day.date ? "<br>" + fmtDate(day.date) : ""}</small></div>
         <div class="day-body"><h4 class="day-title">${esc(dayTitle(day))}${KIND[day.kind] ? `<span class="kind">${KIND[day.kind]}</span>` : ""}</h4>
           ${day.slots.map((s) => slotHTML(s, day)).join("")}
@@ -3799,10 +3844,16 @@ ${pv}
         if (!tab.closest(".tabs")) $(".tabs").scrollIntoView({ behavior: "smooth", block: "start" });
         return;
       }
+      const go = e.target.closest("[data-goto]");
+      if (go) { const t = document.getElementById(go.dataset.goto); if (t) t.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
       const md = e.target.closest("[data-mapday]");
       if (md) { drawStreetMap(md.dataset.mapday); return; }
       if (e.target.id === "copyPlan") copy(planText(), "Itinerary copied — paste it into Notes or a message.");
       if (e.target.id === "copyCard") copy(HALAL_CARD, "Halal card copied.");
+    });
+    $("#out").addEventListener("keydown", (e) => {
+      const go = e.target.closest && e.target.closest("[data-goto]");
+      if (go && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); go.click(); }
     });
     $("#out").addEventListener("change", (e) => {
       if (!e.target.dataset.chk) return;

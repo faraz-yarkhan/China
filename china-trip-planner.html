@@ -947,6 +947,8 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
 .leg-road { stroke: var(--gold); stroke-width: 3; stroke-dasharray: 1 5; }
 .leg-unset { stroke: var(--muted); stroke-width: 2; stroke-dasharray: 2 6; opacity: 0.9; }
 .opts { overflow-x: auto; }
+.opts-more summary { cursor: pointer; font-size: 13.5px; color: var(--sky); font-weight: 500; padding: 2px 0; }
+.opts-more[open] summary { margin-bottom: 6px; }
 .opts table { font-size: 13px; background: var(--card); border-radius: 6px; }
 .opts th, .opts td { padding: 5px 8px; }
 .leg-boat { stroke: var(--jade); stroke-width: 3; stroke-dasharray: 2 4; }
@@ -1066,7 +1068,7 @@ body.pv-screen .pv-page { margin: 12px auto; padding: 10mm; box-shadow: 0 2px 12
       <div class="row"><label class="hint" for="departSel" style="width:92px">Fly home from</label><select id="departSel"></select></div>
       <div class="row timerow"><label class="hint" for="outTime" style="width:92px">Takes off at</label><input type="time" id="outTime"><label class="hint sr" for="outNo">Flight number</label><input type="text" id="outNo" placeholder="Flight no." maxlength="12" autocapitalize="characters" autocomplete="off"></div>
       <div id="outLegRow"></div>
-      <label class="check" for="optimise"><input type="checkbox" id="optimise" checked> Arrange my cities in the best order for these airports</label>
+      <label class="check" for="optimise"><input type="checkbox" id="optimise" checked> <span><b>Recommend the best city order and transport for me</b><br><span class="hint">Orders your cities into the shortest route between your airports, and picks train, flight, ferry or coach for any journey you leave unchosen.</span></span></label>
       <p class="hint">Times are optional, in local time. With them, day 1 starts after you've landed and reached the hotel, and the last day works back from your take-off. Train or flight times between cities go on each city card below.</p>
       <p class="hint">The trip starts in your arrival city and ends in your departure city. If either isn't one of your stops, day 1 or the last day includes the transfer.</p>
     </div>
@@ -2130,12 +2132,13 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     const k1 = a + "|" + b, k2 = b + "|" + a;
     if (ROUTES[k1]) return ROUTES[k1];
     if (ROUTES[k2]) return ROUTES[k2];
+    const macau = a === "mo" || b === "mo" ? " Macau has no high-speed rail station: trains run to Zhuhai, then you walk across the Gongbei–Border Gate crossing (allow 30–60 min)." : "";
     const A = CITIES[a], B = CITIES[b];
     const d = km(A.stay.ll, B.stay.ll);
     const name = `${A.name} → ${B.name}`;
-    if (d < 400) return `${name}: high-speed train, roughly ${(d * 1.2 / 220 + 0.4).toFixed(1)} h. Search on Trip.com or 12306.`;
-    if (d < 1000) return `${name}: high-speed train ~${(d * 1.25 / 250 + 0.5).toFixed(0)} h, or fly ~${(d / 650 + 0.6).toFixed(1)} h plus airport time. Compare on Trip.com.`;
-    return `${name}: fly (~${(d / 700 + 0.6).toFixed(1)} h in the air). Trains exist but take most of a day.`;
+    if (d < 400) return `${name}: high-speed train, roughly ${(d * 1.2 / 220 + 0.4).toFixed(1)} h. Search on Trip.com or 12306.` + macau;
+    if (d < 1000) return `${name}: high-speed train ~${(d * 1.25 / 250 + 0.5).toFixed(0)} h, or fly ~${(d / 650 + 0.6).toFixed(1)} h plus airport time. Compare on Trip.com.` + macau;
+    return `${name}: fly (~${(d / 700 + 0.6).toFixed(1)} h in the air). Trains exist but take most of a day.` + macau;
   }
   const crossesBorder = (a, b) => CITIES[a].region !== CITIES[b].region;
 
@@ -2405,7 +2408,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
 
   /* Put the arrival city first, the departure city last, and order the rest by shortest hops */
   function arrangeStops() {
-    if (!state.optimise || state.stops.length < 2) return false;
+    if (!state.optimise || state.keepOrder || state.stops.length < 2) return false;
     const before = state.stops.map((x) => x.city).join();
     const rest = state.stops.slice();
     const take = (id, fromEnd) => {
@@ -2418,7 +2421,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     // Each crossing between the mainland and Hong Kong/Macau costs an extra 800 km so those stay together.
     const startId = head ? head.city : state.arrive || null;
     const endId = tail ? tail.city : state.depart || null;
-    const leg = (a, b) => (a && b ? km(CITIES[a].stay.ll, CITIES[b].stay.ll) + (CITIES[a].region !== CITIES[b].region ? 800 : 0) : 0);
+    const leg = (a, b) => (a && b ? km(CITIES[a].stay.ll, CITIES[b].stay.ll) + (CITIES[a].region !== CITIES[b].region ? 800 : 0) + (a === "ys" && b === "gl" ? 300 : 0) : 0);
     const cost = (seq) => { let c = 0, prevId = startId; seq.forEach((x) => { c += leg(prevId, x.city); prevId = x.city; }); return c + leg(prevId, endId); };
     let best = rest.slice();
     if (rest.length <= 8) {
@@ -2490,8 +2493,8 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
   function modeSelect(id, fromId, toId, current, extraAttrs) {
     const opts = modesFor(fromId, toId), rec = recommendedMode(fromId, toId);
     return `<select id="${id}" ${extraAttrs} aria-label="How you'll travel from ${esc(CITIES[fromId].name)} to ${esc(CITIES[toId].name)}">
-      <option value="">How will you travel? (not chosen)</option>
-      ${opts.map((m) => `<option value="${m}" ${current === m ? "selected" : ""}>${MODE[m].icon} ${MODE[m].label}${m === rec ? " — usual choice" : ""}</option>`).join("")}</select>`;
+      <option value="">${state.optimise ? `★ Recommend for me (${MODE[rec].label.toLowerCase()})` : "How will you travel? (not chosen)"}</option>
+      ${opts.map((m) => `<option value="${m}" ${current === m ? "selected" : ""}>${MODE[m].icon} ${MODE[m].label}${m === rec ? " — recommended" : ""}</option>`).join("")}</select>`;
   }
   function legRow(st, i) {
     const fromId = i > 0 ? state.stops[i - 1].city : state.arrive && state.arrive !== st.city ? state.arrive : null;
@@ -2570,7 +2573,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
       const b = e.target.closest("[data-act]");
       if (!b || b.tagName === "SELECT" || b.tagName === "INPUT") return;
       const i = +b.dataset.i, act = b.dataset.act;
-      if ((act === "up" || act === "down") && state.optimise) { state.optimise = false; $("#optimise").checked = false; toast("Automatic ordering turned off so your manual order is kept."); }
+      if ((act === "up" || act === "down") && state.optimise && !state.keepOrder) { state.keepOrder = true; toast("Your city order is kept; transport is still recommended. Tick the box again to re-sort the cities."); }
       if (act === "up" && i > 0) [state.stops[i - 1], state.stops[i]] = [state.stops[i], state.stops[i - 1]];
       else if (act === "down" && i < state.stops.length - 1) [state.stops[i + 1], state.stops[i]] = [state.stops[i], state.stops[i + 1]];
       else if (act === "addtop") { const st = state.stops[i]; st.places = topPicks(st.city, Math.min(2 + st.nights, 5)).filter((p) => !p.s.includes("full") || st.nights > 1).map((p) => p.id); }
@@ -2593,6 +2596,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
       if (t.dataset.act === "nights") { state.stops[+t.dataset.i].nights = Math.max(1, Math.min(30, parseInt(t.value, 10) || 1)); persist(); renderTally(); return; }
       if (t.id === "arriveSel" || t.id === "departSel" || t.id === "optimise") {
         readForm();
+        if (t.id === "optimise") state.keepOrder = false;
         if (arrangeStops()) toast("Cities re-ordered to start and end at your airports.");
         persist(); renderStops(); return;
       }
@@ -2635,7 +2639,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
   function legOptionsHTML(a, b) {
     const rec = recommendedMode(a, b);
     return `<div class="opts"><table><thead><tr><th>Option</th><th>Door to door</th><th>Approx. cost</th></tr></thead><tbody>
-      ${modesFor(a, b).map((m) => { const e = modeEstimate(m, a, b); return `<tr><td>${MODE[m].icon} ${MODE[m].label}${m === rec ? ' <span class="badge top">usual choice</span>' : ""}</td><td>${dur(e.door)}</td><td>${esc(e.cost)}</td></tr>`; }).join("")}
+      ${modesFor(a, b).map((m) => { const e = modeEstimate(m, a, b); return `<tr><td>${MODE[m].icon} ${MODE[m].label}${m === rec ? ' <span class="badge top">recommended</span>' : ""}</td><td>${dur(e.door)}</td><td>${esc(e.cost)}</td></tr>`; }).join("")}
     </tbody></table></div>`;
   }
 
@@ -2672,7 +2676,10 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
         ${s.toFlight && s.leaveBy != null ? `<span class="timing">To make your flight home, leave ${esc(s.from.name)} by <b>${hhmm(s.leaveBy)}</b> (estimated door to door, with ${INTL_BUFFER / 60} h at the airport).</span>` : ""}
         ${s.collect ? `<span><b>Collect your bags first:</b> ${s.collect}</span>` : ""}
         ${s.toFlight ? `<span>Check out early and leave at least 3 h at the airport before your international flight.</span>` : !s.collect && !s.sameDay ? `<span>Check out after breakfast.</span>` : ""}
-        ${s.leg && s.leg.chosen
+        ${s.leg && s.leg.auto
+          ? `<span><b>★ Recommended for you: ${MODE[s.leg.chosen].icon} ${MODE[s.leg.chosen].label}.</b> ${esc(s.leg.reason)}</span><span>${esc(s.text)}</span>
+             <details class="opts-more"><summary>Compare other options</summary>${legOptionsHTML(s.fromId, s.toId)}<span class="hint">Change it with “Getting here” on the ${esc(s.toFlight ? "“Fly home from” section" : s.to.name + " card")}.</span></details>`
+          : s.leg && s.leg.chosen
           ? `<span><b>${MODE[s.leg.chosen].icon} ${MODE[s.leg.chosen].label}:</b> ${esc(s.text)}</span>`
           : `<span><b>How you'll travel isn't chosen yet.</b> Pick it on the ${esc(s.toFlight ? "“Fly home from” section" : s.to.name + " card")} in the form. Until then, timings assume the usual choice (${MODE[(s.leg || {}).rec || "train"].label.toLowerCase()}).</span>${legOptionsHTML(s.fromId, s.toId)}`}
         ${s.border ? `<span><b>Border crossing:</b> passport out. ${isAU() ? (s.to.region === "mainland" ? "Australians: entering the mainland starts a fresh visa-free stay of up to 30 days." : s.to.region === "hk" ? "Australians: visa-free in Hong Kong for up to 90 days." : "Australians: visa-free entry to Macau.") : "Leaving or entering the mainland uses one visa entry — see Before you go."}</span>` : ""}
@@ -2735,7 +2742,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
 
     const notes = [];
     if (isExample) notes.push(["info", "Example", "This is a sample 10-day trip. Change anything on the left and press <b>Build my itinerary</b>."]);
-    if (reordered) notes.push(["info", "Route", `Cities re-ordered so you start in ${esc(CITIES[arrId].name)}, finish near ${esc(CITIES[depId].name)} and travel the shortest way between them. Untick “Arrange my cities” to keep your own order.`]);
+    if (reordered) notes.push(["info", "Route", `Cities re-ordered so you start in ${esc(CITIES[arrId].name)}, finish near ${esc(CITIES[depId].name)} and travel the shortest way between them. Untick “Recommend the best city order and transport” to keep your own order.`]);
     reordered = false;
     plan.warnings.forEach((w) => notes.push(["warn", "Check", esc(w)]));
     if (isAU() && hasMainland) {
@@ -2775,7 +2782,9 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     }
     {
       const open = plan.map.legs.filter((l) => l.mode === "unset");
-      if (open.length) notes.push(["info", "Transport", `${open.length} of ${plan.map.legs.length} journeys between cities have no transport chosen yet (${open.map((l) => esc(CITIES[l.a.id].name) + " → " + esc(CITIES[l.b.id].name)).join(", ")}). Pick train, flight, coach, car or ferry on each city card; until then each travel day lists the options with times and costs.`]);
+      const auto = plan.map.legs.filter((l) => legInfo(l.a.id, l.b.id).auto);
+      if (auto.length) notes.push(["good", "Transport", `Recommended for you: ${auto.map((l) => esc(CITIES[l.a.id].name) + " → " + esc(CITIES[l.b.id].name) + " by " + MODE[l.mode].label.toLowerCase()).join("; ")}. Each travel day explains why and compares the alternatives; change any of them with “Getting here” on the city cards.`]);
+      if (open.length) notes.push(["info", "Transport", `${open.length} of ${plan.map.legs.length} journeys between cities have no transport chosen yet (${open.map((l) => esc(CITIES[l.a.id].name) + " → " + esc(CITIES[l.b.id].name)).join(", ")}). Pick train, flight, coach, car or ferry on each city card — or tick “Recommend the best city order and transport” in step 2 and the planner will choose — until then each travel day lists the options with times and costs.`]);
     }
     notes.push(["good", "Halal", "Every activity lists the nearest halal food we know of. Always confirm the green <span class=\"han\">清真</span> sign or certificate at the door — ownership changes."]);
 
@@ -3162,14 +3171,49 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
   };
   const pairKey = (a, b) => [a, b].sort().join("|");
 
-  // The mode the route advice recommends (from the first sentence of the curated text)
+  // Best choice where local knowledge beats a time comparison
+  const BEST = { "gl|ys": "boat", "hk|mo": "boat" };
+  const hasCuratedRoute = (a, b) => !!(ROUTES[a + "|" + b] || ROUTES[b + "|" + a]);
+
+  // The planner's recommendation: local knowledge, then the researched route advice, then a time comparison
   function recommendedMode(a, b) {
+    const key = pairKey(a, b), opts = modesFor(a, b);
+    if (BEST[key] && opts.includes(BEST[key])) return BEST[key];
+    if (key === "gl|ys") return "train"; // upstream: no cruise, the train is quickest
+    const cur = curatedMode(a, b);
+    if (hasCuratedRoute(a, b) || !opts.includes("train") || !opts.includes("flight")) return opts.includes(cur) ? cur : opts[0];
+    const t = modeEstimate("train", a, b), f = modeEstimate("flight", a, b);
+    return t.ride > 330 && t.door - f.door >= 90 ? "flight" : "train";
+  }
+
+  // Why the planner recommends this mode
+  function recReason(mode, a, b) {
+    const key = pairKey(a, b), opts = modesFor(a, b);
+    if (key === "gl|ys" && mode === "boat") return "The Li River cruise is the highlight of this region, and it gets you to Yangshuo anyway — your transfer doubles as sightseeing.";
+    if (key === "hk|mo" && mode === "boat") return "The ferries leave from Sheung Wan and Tsim Sha Tsui, close to the recommended hotels, and take about an hour. The bridge bus is cheaper but starts out at Tung Chung near the airport.";
+    const t = opts.includes("train") ? modeEstimate("train", a, b) : null, f = opts.includes("flight") ? modeEstimate("flight", a, b) : null;
+    switch (mode) {
+      case "train":
+        if (t && f && t.door > f.door + 60) return `Flying is quicker door to door here (about ${dur(f.door)} vs ${dur(t.door)} by train), but the train runs city centre to city centre with no check-in queues, baggage limits or weather delays, and the ride itself is comfortable. If time matters most, choose Flight on the city card.`;
+        return `High-speed rail runs city centre to city centre, with no check-in queues or baggage limits, and is rarely delayed${f ? ` — about ${dur(t.door)} door to door, vs about ${dur(f.door)} flying once airport time is counted` : ""}.`;
+      case "flight": return t ? `The train would take about ${dur(t.ride)}; flying saves around ${dur(Math.max(30, t.door - f.door))} door to door.` : "There's no practical train on this route.";
+      case "bus": return "The most direct, frequent and affordable option on this route.";
+      case "boat": return "The ferry is the most direct option here.";
+      default: return "The most practical option on this route.";
+    }
+  }
+
+  // The mode the curated route advice describes (from its first sentence)
+  function curatedMode(a, b) {
     const first = routeText(a, b).toLowerCase().split(/\.\s|;/)[0];
     if (/cruise/.test(first)) return "boat";
-    if (/(bridge|ferry)/.test(first) && !/train/.test(first)) return /ferry/.test(first) && !/bus/.test(first) ? "boat" : "bus";
-    if (/fly/.test(first) && !/train/.test(first)) return "flight";
-    return "train";
+    // whichever mode the advice names first is the one it leads with
+    const at = (re) => { const m = first.search(re); return m < 0 ? Infinity : m; };
+    const pos = { flight: at(/\bfl(y|ying|ight)/), train: at(/train/), bus: at(/bridge|coach|\bbus\b/), boat: at(/ferry/) };
+    const best = Object.keys(pos).sort((x, y) => pos[x] - pos[y])[0];
+    return pos[best] === Infinity ? "train" : best;
   }
+
 
   // Modes that make sense for this pair of cities
   function modesFor(a, b) {
@@ -3179,7 +3223,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     if (d > 350 && key !== "hk|mo") out.push("flight");
     if (d < 1000) out.push("bus");
     if (d < 900) out.push("car");
-    if (BOATS[key]) out.push("boat");
+    if (BOATS[key] && !(key === "gl|ys" && a !== "gl")) out.push("boat"); // Li River cruises only run downstream, Guilin → Yangshuo
     return out;
   }
 
@@ -3214,7 +3258,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
 
   // Advice text for a chosen mode
   function modeText(mode, a, b) {
-    if (mode === recommendedMode(a, b)) return routeText(a, b);
+    if (mode === curatedMode(a, b)) return routeText(a, b);
     const A = CITIES[a], B = CITIES[b], e = modeEstimate(mode, a, b), cross = crossesBorder(a, b);
     const ap = (id) => (SYD_FLIGHTS[id] ? SYD_FLIGHTS[id].airport : CITIES[id].name + " airport");
     switch (mode) {
@@ -3222,13 +3266,16 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
       case "bus": return `Long-distance coach ${A.name} → ${B.name}: about ${dur(e.ride)}, approx. ${e.cost}. Buy at the bus station or on Trip.com with your passport. Slower and less comfortable than the train${cross ? "; cross-border coaches stop at the border for immigration" : ""}.`;
       case "car": return `Private car with driver ${A.name} → ${B.name}: about ${dur(e.ride)}, approx. ${e.cost} plus tolls. Book through your hotel or Trip.com (DiDi works for shorter trips). Tourists can't drive themselves in mainland China on an international licence${cross ? "; crossing the border needs a licensed cross-border car" : ""}.`;
       case "boat": return (BOATS[pairKey(a, b)] || {}).text || "Ferry: check schedules locally.";
-      default: return `High-speed train ${A.name} → ${B.name}: about ${dur(e.ride)} on the train (there may be a change), approx. ${e.cost}. Book on 12306 or Trip.com with your passport; arrive 45–60 min early.`;
+      default: return `High-speed train ${A.name} → ${B.name}: about ${dur(e.ride)} on the train (there may be a change), approx. ${e.cost}. Book on 12306 or Trip.com with your passport; arrive 45–60 min early.${a === "mo" || b === "mo" ? " Macau has no high-speed rail station: trains run to Zhuhai, then you walk across the Gongbei–Border Gate crossing." : ""}`;
     }
   }
   // Everything the plan needs to know about one leg
+  // chosen = the mode the traveller picked, or the planner's recommendation when "Recommend…" is ticked (auto)
   function legInfo(a, b) {
-    const chosen = chosenMode(a, b);
-    return { chosen, mode: chosen || "unset", assumed: legMode(a, b), rec: recommendedMode(a, b), text: chosen ? modeText(chosen, a, b) : null, options: modesFor(a, b) };
+    const picked = chosenMode(a, b), rec = recommendedMode(a, b);
+    const auto = !picked && !!state.optimise;
+    const use = picked || (auto ? rec : null);
+    return { chosen: use, auto, mode: use || "unset", assumed: legMode(a, b), rec, reason: auto ? recReason(rec, a, b) : null, text: use ? modeText(use, a, b) : null, options: modesFor(a, b) };
   }
 
   // Stops in travel order, including arrival/departure airports that aren't stops
@@ -3379,7 +3426,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
         <div class="map-wrap">${plan.map.svg}</div>
         <div class="map-legend">${plan.map.legend}<span><svg width="22" height="22" aria-hidden="true"><circle class="map-stop" cx="11" cy="11" r="9"/><text class="map-num" x="11" y="15" style="font-size:11px">1</text></svg>Stop number</span></div>
         <div class="tbl-wrap"><table><thead><tr><th>Leg</th><th>How</th><th>Details</th></tr></thead><tbody>
-          ${plan.map.legs.map((l) => `<tr><td><b>${esc(CITIES[l.a.id].name)} → ${esc(CITIES[l.b.id].name)}</b></td><td>${l.mode === "unset" ? `Not chosen<br><span class="hint">usual: ${MODE[recommendedMode(l.a.id, l.b.id)].label}</span>` : MODE[l.mode].icon + " " + MODE[l.mode].label}</td><td>${l.mode === "unset" ? legOptionsHTML(l.a.id, l.b.id) : esc(modeText(l.mode, l.a.id, l.b.id))}</td></tr>`).join("")}
+          ${plan.map.legs.map((l) => `<tr><td><b>${esc(CITIES[l.a.id].name)} → ${esc(CITIES[l.b.id].name)}</b></td><td>${l.mode === "unset" ? `Not chosen<br><span class="hint">recommended: ${MODE[recommendedMode(l.a.id, l.b.id)].label}</span>` : MODE[l.mode].icon + " " + MODE[l.mode].label + (legInfo(l.a.id, l.b.id).auto ? '<br><span class="badge top">recommended</span>' : "")}</td><td>${l.mode === "unset" ? legOptionsHTML(l.a.id, l.b.id) : esc(modeText(l.mode, l.a.id, l.b.id))}</td></tr>`).join("")}
         </tbody></table></div>
         <p><a href="${googleTripLink(plan)}" target="_blank" rel="noopener">Open the whole route in Google Maps ↗</a></p>
       </section>

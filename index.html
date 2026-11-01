@@ -947,6 +947,8 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
 .leg-road { stroke: var(--gold); stroke-width: 3; stroke-dasharray: 1 5; }
 .leg-unset { stroke: var(--muted); stroke-width: 2; stroke-dasharray: 2 6; opacity: 0.9; }
 .opts { overflow-x: auto; }
+.opts-more summary { cursor: pointer; font-size: 13.5px; color: var(--sky); font-weight: 500; padding: 2px 0; }
+.opts-more[open] summary { margin-bottom: 6px; }
 .opts table { font-size: 13px; background: var(--card); border-radius: 6px; }
 .opts th, .opts td { padding: 5px 8px; }
 .leg-boat { stroke: var(--jade); stroke-width: 3; stroke-dasharray: 2 4; }
@@ -1066,7 +1068,7 @@ body.pv-screen .pv-page { margin: 12px auto; padding: 10mm; box-shadow: 0 2px 12
       <div class="row"><label class="hint" for="departSel" style="width:92px">Fly home from</label><select id="departSel"></select></div>
       <div class="row timerow"><label class="hint" for="outTime" style="width:92px">Takes off at</label><input type="time" id="outTime"><label class="hint sr" for="outNo">Flight number</label><input type="text" id="outNo" placeholder="Flight no." maxlength="12" autocapitalize="characters" autocomplete="off"></div>
       <div id="outLegRow"></div>
-      <label class="check" for="optimise"><input type="checkbox" id="optimise" checked> Arrange my cities in the best order for these airports</label>
+      <label class="check" for="optimise"><input type="checkbox" id="optimise" checked> <span><b>Recommend the best city order and transport for me</b><br><span class="hint">Orders your cities into the shortest route between your airports, and picks train, flight, ferry or coach for any journey you leave unchosen.</span></span></label>
       <p class="hint">Times are optional, in local time. With them, day 1 starts after you've landed and reached the hotel, and the last day works back from your take-off. Train or flight times between cities go on each city card below.</p>
       <p class="hint">The trip starts in your arrival city and ends in your departure city. If either isn't one of your stops, day 1 or the last day includes the transfer.</p>
     </div>

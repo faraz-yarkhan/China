@@ -12,7 +12,8 @@ A single-page travel planner for mainland China, Hong Kong and Macau. Open `inde
 Plus pace (relaxed / balanced), hotel budget, passport (Australian / other) and home airport (Sydney / elsewhere). With an Australian passport and Sydney selected, visa notes, flights, consular contacts, insurance and return-customs advice are tailored for Australians.
 
 ## What you get
-- **Transport choice per journey**: nothing is assumed; until you choose, each travel day compares the sensible options with door-to-door time and approximate cost, and the map shows that leg as not chosen
+- **Recommended route and transport** (checkbox, on by default): orders your cities into the shortest route between your airports and recommends a mode for every journey you leave unchosen — researched route advice first, local knowledge (Li River cruise Guilin → Yangshuo, ferries Hong Kong ↔ Macau), then a door-to-door time comparison — with the reason shown and alternatives one tap away
+- **Transport choice per journey**: with the checkbox off nothing is assumed; until you choose, each travel day compares the sensible options with door-to-door time and approximate cost, and the map shows that leg as not chosen
 - **Times-aware days**: with flight and train times, day 1 starts once you've landed and reached the hotel, travel days fit a morning stop before a late departure, and the last day works back from take-off (3 h airport buffer plus the ride to the airport)
 - **Top-rated recommendations** when you don't pick places: each activity is labelled Your pick, ★ Top rated or Recommended for your style, and each city lists its must-sees
 - **Maps**: a built-in route map of China (works offline, in print and in the offline copy) with numbered stops, train/flight/ferry legs and zoomed insets for close-together cities; a Map tab with a zoomable OpenStreetMap street map of every stop, filterable by day; and Google Maps links for the whole route and each day

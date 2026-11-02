@@ -54,6 +54,35 @@
   }
   const round5 = (n) => Math.round(n / 5) * 5;
 
+  /* ---------- prices in Australian dollars (approximate, mid-market) ---------- */
+  // Checked 2 Nov 2026: 1 CNY ≈ A$0.214 (XE, Wise, Ria). HK$ and MOP from recent quotes; the pataca is pegged at MOP 1.03 = HK$1.
+  const AUD_RATE = { "¥": 0.214, "HK$": 0.179, "MOP": 0.174 };
+  const AUD_NOTE = "1 CNY ≈ A$0.214 · HK$1 ≈ A$0.179 · MOP 1 ≈ A$0.174 (mid-market, early Nov 2026)";
+  const audFmt = (v) => (v < 1 ? String(Math.max(0.5, Math.round(v * 2) / 2)) : v < 10 ? String(Math.round(v * 2) / 2) : v < 100 ? String(Math.round(v)) : (v < 1000 ? Math.round(v / 5) * 5 : Math.round(v / 10) * 10).toLocaleString("en-US"));
+  // Adds "(≈A$…)" after every ¥ / HK$ / MOP amount or range in a piece of text
+  const PRICE_RE = /(¥|HK\$|MOP\$?\s?)(\d[\d,]*(?:\.\d+)?)(\s?[–-]\s?(?:¥|HK\$|MOP\$?\s?)?(\d[\d,]*(?:\.\d+)?))?(?![\d,]*\.?\d)(?!\s*\(?≈\s?A\$)/g;
+  function withAUD(text) {
+    return String(text).replace(PRICE_RE, (all, cur, a, rangePart, b) => {
+      const rate = AUD_RATE[cur.indexOf("HK") === 0 ? "HK$" : cur.indexOf("MOP") === 0 ? "MOP" : "¥"];
+      const n = (x) => parseFloat(String(x).replace(/,/g, ""));
+      const lo = n(a) * rate, hi = b ? n(b) * rate : null;
+      return `${all} (≈A$${audFmt(lo)}${hi != null ? "–" + audFmt(hi) : ""})`;
+    });
+  }
+  // Apply to every text node under an element (skips form fields and scripts); safe to run twice
+  function addAUD(root) {
+    if (!root || !document.createTreeWalker) return;
+    const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false), nodes = [];
+    while (w.nextNode()) nodes.push(w.currentNode);
+    nodes.forEach((t) => {
+      const pe = t.parentNode && t.parentNode.nodeName;
+      if (pe === "SCRIPT" || pe === "STYLE" || pe === "TEXTAREA" || pe === "OPTION") return;
+      if (!/(¥|HK\$|MOP)\s?\d/.test(t.nodeValue)) return;
+      const v = withAUD(t.nodeValue);
+      if (v !== t.nodeValue) t.nodeValue = v;
+    });
+  }
+
   /* ---------- the traveller's own hotel (optional), else the recommended area ---------- */
   const userHotel = (city) => (state.hotels && state.hotels[city.id] && state.hotels[city.id].ll ? state.hotels[city.id] : null);
   const stayLL = (city) => (userHotel(city) ? userHotel(city).ll : city.stay.ll);
@@ -977,6 +1006,7 @@
     const g = $("#glanceBox");
     if (g) g.innerHTML = glanceHTML(lastPlan);
     if (lastPrintArgs) buildPrintView(lastPlan, lastPrintArgs);
+    addAUD(el);
   }
 
   function editTimeline(e) {
@@ -1147,6 +1177,7 @@
       const ed = plan.days.filter((d, i) => isEdited(d, i)).length;
       if (ed) notes.push(["info", "Your edits", `${ed} day${ed > 1 ? "s have" : " has"} your own changes, kept even if you rebuild. Use “Reset day” on a day to go back to the suggestion.`]);
     }
+    notes.push(["info", "Prices", `Local prices are followed by an approximate Australian-dollar amount, e.g. ¥100 ≈ A$${audFmt(100 * AUD_RATE["¥"])}. Rates: ${AUD_NOTE}. Card and Alipay rates include small fees, so budget a few percent more.`]);
     notes.push(["good", "Halal", "Every activity lists the nearest halal food we know of. Always confirm the green <span class=\"han\">清真</span> sign or certificate at the door — ownership changes."]);
 
     const hdr = `<div class="summary">
@@ -1201,6 +1232,7 @@
     restoreChecks();
     plan.days.forEach((d, i) => { if (isEdited(d, i)) { const pids = new Set(timelineFor(d, i).map((x) => x.pid).filter(Boolean)); document.querySelectorAll(`#day-${i + 1} .slot[data-pid]`).forEach((sl) => (sl.hidden = !pids.has(sl.dataset.pid))); } });
     if (currentTab === "map") showStreetMap();
+    addAUD($("#out"));
     lastPrintArgs = { ids, routeIds, arrId, depId, hasMainland, hasHK, hasMO, startD, endD, notes };
     buildPrintView(plan, lastPrintArgs);
     if (scroll) out.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -1980,6 +2012,7 @@
       ${phraseTables(rows.concat(c.hasHK || c.hasMO ? [["Cantonese (Hong Kong & Macau)"]].concat(CANTONESE.map(([en, zh, , sl]) => [en, zh, sl])) : []))}`);
 
     pv.innerHTML = pages.map((p) => `<section class="pv-page">${p}</section>`).join("");
+    addAUD(pv);
     fitPrintPages();
   }
 
@@ -2127,7 +2160,7 @@ ${pv}
       if (d.back && d.kind !== "depart") L.push(`  Back to hotel: ${strip(d.back.text)}`);
       L.push("");
     });
-    return L.join("\n");
+    return withAUD(L.join("\n")) + "\n\nPrices: " + AUD_NOTE + ".";
   }
 
   function copy(text, okMsg) {

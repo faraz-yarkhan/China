@@ -1051,6 +1051,11 @@ body.pv-screen > *:not(#printView):not(#pvBar):not(.toast) { display: none !impo
 body.pv-screen #printView { display: block; position: static; visibility: visible; width: auto; }
 body.pv-screen .pv-page { margin: 12px auto; padding: 10mm; box-shadow: 0 2px 12px rgba(0,0,0,.18); box-sizing: content-box; }
 /* Off-screen copy used to measure page heights at A4 width */
+/* Visible but off-screen while the PDF is drawn */
+#printView.capturing { display: block; position: absolute; left: -10000px; top: 0; width: 190mm; }
+#printView.capturing .pv-page { margin: 0 0 20px; }
+a.btn { display: inline-flex; align-items: center; text-decoration: none; color: inherit; }
+.filetips { margin: 0; padding-left: 18px; display: grid; gap: 3px; font-size: 13px; }
 #printView.measuring { display: block; position: absolute; left: -10000px; top: 0; width: 190mm; visibility: hidden; }
 .pv-page { width: 190mm; color: #111; background: #fff; font-family: var(--body); line-height: 1.35; }
 .pv-page h1 { font-family: var(--display); font-size: 1.9em; line-height: 1.1; margin: 0.2em 0 0.3em; }
@@ -1195,7 +1200,8 @@ body.pv-screen .pv-page { margin: 12px auto; padding: 10mm; box-shadow: 0 2px 12
 
     <button type="submit" class="btn primary" id="go">Build my itinerary</button>
     <button type="button" class="btn print-btn" data-print>🖨 Print itinerary & info</button>
-    <button type="button" class="btn" data-save>⬇ Save offline copy (works on iPhone)</button>
+    <button type="button" class="btn print-btn" data-pdf>📄 Download itinerary as PDF</button>
+    <button type="button" class="btn" data-save>⬇ Save offline copy (iPhone &amp; Android)</button>
   </form>
 
   <section class="out" id="out" aria-live="polite"></section>
@@ -2591,7 +2597,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
         ${legRow(st, i)}
         ${hotelRow(st, i)}
         <div class="row"><select id="place-${i}" data-act="place" data-i="${i}" aria-label="Add a place in ${esc(c.name)}"><option value="">Add a place to see…</option>${opts}</select></div>
-        ${chips ? `<div class="chips">${chips}</div>` : `<p class="hint suggest">No places chosen, so we'll plan the top-rated ones for your trip style, e.g. ${topPicks(st.city, 3).map((p) => esc(p.n.split(/[:(]/)[0].trim())).join(", ")}. <button type="button" class="btn small" data-act="addtop" data-i="${i}">Add top picks</button></p>`}
+        ${chips ? `<div class="chips">${chips}</div><div><button type="button" class="btn small" data-act="addtop" data-i="${i}">＋ Add top picks</button></div>` : `<p class="hint suggest">No places chosen, so we'll plan the top-rated ones for your trip style, e.g. ${topPicks(st.city, 3).map((p) => esc(p.n.split(/[:(]/)[0].trim())).join(", ")}. <button type="button" class="btn small" data-act="addtop" data-i="${i}">Add top picks</button></p>`}
       </div>`;
     }).join("");
     renderTally();
@@ -2744,7 +2750,15 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
       if ((act === "up" || act === "down") && state.optimise && !state.keepOrder) { state.keepOrder = true; toast("Your city order is kept; transport is still recommended. Tick the box again to re-sort the cities."); }
       if (act === "up" && i > 0) [state.stops[i - 1], state.stops[i]] = [state.stops[i], state.stops[i - 1]];
       else if (act === "down" && i < state.stops.length - 1) [state.stops[i + 1], state.stops[i]] = [state.stops[i], state.stops[i + 1]];
-      else if (act === "addtop") { const st = state.stops[i]; st.places = topPicks(st.city, Math.min(2 + st.nights, 5)).filter((p) => !p.s.includes("full") || st.nights > 1).map((p) => p.id); }
+      else if (act === "addtop") {
+        const st = state.stops[i];
+        const want = Math.min(2 + st.nights, 6);
+        const picks = topPicks(st.city, 20).filter((p) => !st.places.includes(p.id) && (!p.s.includes("full") || st.nights > 1));
+        const add = picks.slice(0, Math.max(1, want - st.places.length)).map((p) => p.id);
+        if (!add.length) { toast("All the top picks for " + CITIES[st.city].name + " are already in your list."); return; }
+        st.places = st.places.concat(add);
+        toast("Added: " + add.map((id) => CITIES[st.city].places.find((p) => p.id === id).n.split(/[:(]/)[0].trim()).join(", "));
+      }
       else if (act === "remove") state.stops.splice(i, 1);
       else if (act === "unplace") state.stops[i].places = state.stops[i].places.filter((x) => x !== b.dataset.id);
       else if (act === "fit") { fitNights(); return; }
@@ -3300,7 +3314,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
         <div class="fact"><b>${state.pace === "relaxed" ? "Relaxed" : "Balanced"}</b><span>Pace</span></div>
       </div>
       <div class="notes">${notes.map(([k, t, h]) => `<div class="note ${k}"><b class="tag">${t}</b><span>${h}</span></div>`).join("")}</div>
-      <div class="actions"><button type="button" class="btn print-btn" data-print>🖨 Print itinerary & info (${plan.days.length + 5} pages)</button><button type="button" class="btn" data-save>⬇ Save offline copy</button><button type="button" class="btn" id="copyPlan">Copy itinerary as text</button></div>
+      <div class="actions"><button type="button" class="btn print-btn" data-print>🖨 Print itinerary & info (${plan.days.length + 5} pages)</button><button type="button" class="btn print-btn" data-pdf>📄 Download PDF</button><button type="button" class="btn" data-save>⬇ Save offline copy</button><button type="button" class="btn" id="copyPlan">Copy itinerary as text</button></div>
     </div>`;
 
     const tabs = `<div class="tabs" role="tablist">
@@ -4224,18 +4238,87 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
 ${pv}
 </body></html>`;
     const name = `China trip itinerary (${state.days} days).html`;
-    try {
-      const blob = new Blob([doc], { type: "text/html" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = name; a.rel = "noopener";
-      if (typeof a.download === "undefined") window.open(url, "_blank"); // very old Safari
-      else { document.body.appendChild(a); a.click(); a.parentNode.removeChild(a); }
-      setTimeout(() => URL.revokeObjectURL(url), 60000);
-      toast("Saved. On iPhone, tap the download arrow in Safari, then the file, and Share → Save to Files.");
-    } catch (e) {
-      toast("Couldn't save the file in this browser. Try Copy itinerary as text instead.");
+    try { deliverFile(new Blob([doc], { type: "text/html" }), name, "Offline copy", "Opens in any browser or phone preview, no internet needed."); }
+    catch (e) { toast("Couldn't make the file in this browser. Try Copy itinerary as text instead."); }
+  }
+
+  /* Hand a finished file to the traveller. Downloads started by code are blocked on many phones
+     (Android in-app browsers, iOS), so show a box with a real link and a Share button they tap themselves. */
+  let lastFileURL = null;
+  function deliverFile(blob, name, label, hint) {
+    if (lastFileURL) { try { URL.revokeObjectURL(lastFileURL); } catch (e) { /* ignore */ } }
+    const url = (lastFileURL = URL.createObjectURL(blob));
+    let file = null;
+    try { file = new File([blob], name, { type: blob.type }); } catch (e) { file = null; }
+    const canShare = !!(file && navigator.canShare && navigator.share && navigator.canShare({ files: [file] }));
+    let el = $("#fileReady");
+    if (!el) { el = document.createElement("div"); el.id = "fileReady"; el.className = "printhelp"; el.setAttribute("role", "dialog"); el.setAttribute("aria-label", "Your file is ready"); document.body.appendChild(el); }
+    const sizeKB = Math.max(1, Math.round(blob.size / 1024));
+    el.innerHTML = `<div class="printhelp-card"><div><b>${esc(label)} ready</b> · ${esc(name)} (${sizeKB > 1024 ? (sizeKB / 1024).toFixed(1) + " MB" : sizeKB + " KB"})<br><span class="hint">${esc(hint || "")}</span></div>
+      <div class="actions">
+        <a class="btn print-btn" href="${url}" download="${esc(name)}" data-filedl>⬇ Download</a>
+        ${canShare ? '<button type="button" class="btn" data-fileshare>↗ Share or save to Files / Drive</button>' : ""}
+        <a class="btn" href="${url}" target="_blank" rel="noopener">Open</a>
+        <button type="button" class="btn" data-fileclose>Close</button>
+      </div>
+      <ul class="hint filetips">
+        <li><b>iPhone:</b> tap Download, then the ⬇ in Safari's address bar → the file → Share → Save to Files.${canShare ? " Or tap Share." : ""}</li>
+        <li><b>Android:</b> tap Download — it goes to your Downloads folder (Files app).${canShare ? " Or tap Share to send it to Drive, WhatsApp or email." : ""}</li>
+        <li><b>Inside WhatsApp, Gmail or other apps:</b> if nothing happens, open this page in Chrome or Safari first.</li>
+      </ul></div>`;
+    el.hidden = false;
+    el._file = file;
+    const dl = el.querySelector("[data-filedl]");
+    if (dl) dl.focus();
+  }
+  document.addEventListener("click", (e) => {
+    if (e.target.closest("[data-fileclose]")) { const el = $("#fileReady"); if (el) el.hidden = true; }
+    if (e.target.closest("[data-fileshare]")) {
+      const el = $("#fileReady");
+      if (el && el._file) navigator.share({ files: [el._file], title: el._file.name }).catch((err) => { if (err && err.name !== "AbortError") toast("Sharing didn't work here — use Download instead."); });
     }
+  });
+
+  /* ---------- PDF: the compact print layout, rendered page by page (html2canvas + jsPDF from cdnjs) ---------- */
+  const PDF_LIBS = ["https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js", "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"];
+  function loadScript(src) {
+    return new Promise((res, rej) => {
+      if (document.querySelector('script[src="' + src + '"]')) { res(); return; }
+      const sc = document.createElement("script"); sc.src = src; sc.onload = () => res(); sc.onerror = () => rej(new Error("load " + src));
+      document.head.appendChild(sc);
+    });
+  }
+  let pdfBusy = false;
+  async function makePDF() {
+    if (pdfBusy) return;
+    if (window.NO_PRINT) { showPrintHelp("blocked"); return; }
+    if (!lastPlan) return;
+    pdfBusy = true;
+    const pv = $("#printView");
+    try {
+      toast("Making your PDF… (needs internet the first time)");
+      for (const src of PDF_LIBS) await loadScript(src);
+      if (!window.html2canvas || !window.jspdf) throw new Error("libs");
+      fitPrintPages();
+      pv.classList.add("capturing");
+      const pages = Array.prototype.slice.call(pv.querySelectorAll(".pv-page"));
+      const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", compress: true });
+      for (let k = 0; k < pages.length; k++) {
+        toast(`Making your PDF… page ${k + 1} of ${pages.length}`);
+        const canvas = await window.html2canvas(pages[k], { scale: 1.6, backgroundColor: "#ffffff", useCORS: true, logging: false, windowWidth: 900 });
+        const w = 190, h = Math.min(277, (canvas.height / canvas.width) * w);
+        if (k) pdf.addPage();
+        pdf.addImage(canvas.toDataURL("image/jpeg", 0.8), "JPEG", 10, 10, w, h, undefined, "FAST");
+      }
+      pv.classList.remove("capturing");
+      const ids = state.stops.map((x) => CITIES[x.city].name).filter((v, i, a) => a.indexOf(v) === i);
+      const blob = pdf.output("blob");
+      const t = $(".toast"); if (t) t.hidden = true;
+      deliverFile(blob, `China trip itinerary (${state.days} days).pdf`, "PDF", `${pages.length} A4 pages: overview, route map, one page per day, key information, checklist and phrases (${ids.join(", ")}).`);
+    } catch (e) {
+      pv.classList.remove("capturing");
+      toast("Couldn't make the PDF — it needs an internet connection the first time. You can also use Print → Save as PDF.");
+    } finally { pdfBusy = false; }
   }
 
   /* ---------- export & misc ---------- */
@@ -4334,6 +4417,7 @@ ${pv}
   document.addEventListener("click", (e) => {
     if (e.target.closest("[data-print]")) doPrint();
     if (e.target.closest("[data-save]")) saveOffline();
+    if (e.target.closest("[data-pdf]")) makePDF();
     if (e.target.closest("[data-closehelp]")) { const h = $("#printHelp"); if (h) h.hidden = true; }
     if (e.target.closest("[data-pvscreen]")) { const h = $("#printHelp"); if (h) h.hidden = true; showPrintLayout(true); }
     if (e.target.closest("[data-pvexit]")) showPrintLayout(false);

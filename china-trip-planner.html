@@ -802,6 +802,13 @@ select { flex: 1 1 160px; min-width: 0; max-width: 100%; }
 .timerow input[type=time] { width: 122px; flex: none; }
 .timerow input[type=text] { width: 0; flex: 1 1 80px; max-width: 130px; text-transform: uppercase; }
 .timerow input[type=text]::placeholder { text-transform: none; }
+.hotelrow { display: grid; gap: 6px; font-size: 13px; }
+.hotelrow select { min-height: 36px; padding: 5px 8px; width: 100%; max-width: 100%; }
+.hotelfind { display: flex; gap: 6px; }
+.hotelfind input { flex: 1 1 auto; min-width: 0; min-height: 36px; padding: 5px 8px; }
+.hotelres { display: grid; gap: 6px; }
+.hotelpick { text-align: left; white-space: normal; line-height: 1.35; padding: 6px 10px; }
+.hotelset { margin: 0; }
 .legrow { font-size: 13px; gap: 6px 10px; }
 .legrow .lbl { flex-basis: 100%; }
 .legrow select { flex: 1 1 100%; min-height: 36px; padding: 5px 8px; }
@@ -1234,10 +1241,10 @@ const CITIES = {
     stay: { area: "Wangfujing / Dongcheng", ll: [39.9139, 116.4108], m: "Wangfujing · Line 1",
       why: "Walkable to the Forbidden City and Tiananmen, on Line 1, and Donglaishun halal hotpot is on the doorstep. Niujie (halal food street) is 20 min away by metro or DiDi." },
     hotels: [
-      { tier: "lux", n: "The Peninsula Beijing", area: "Wangfujing", note: "Classic luxury, 10 min walk to the Forbidden City's east side." },
-      { tier: "lux", n: "Waldorf Astoria Beijing", area: "Wangfujing", note: "Modern, quiet rooms, excellent service." },
-      { tier: "mid", n: "Hotel Kapok Beijing", area: "Donghuamen", note: "Design hotel a few minutes' walk from the Forbidden City." },
-      { tier: "mid", n: "Novotel Beijing Peace", area: "Wangfujing", note: "Reliable international chain right on Wangfujing." },
+      { tier: "lux", n: "The Peninsula Beijing", ll: [39.9152, 116.4135], area: "Wangfujing", note: "Classic luxury, 10 min walk to the Forbidden City's east side." },
+      { tier: "lux", n: "Waldorf Astoria Beijing", ll: [39.9163, 116.4138], area: "Wangfujing", note: "Modern, quiet rooms, excellent service." },
+      { tier: "mid", n: "Hotel Kapok Beijing", ll: [39.9148, 116.4048], area: "Donghuamen", note: "Design hotel a few minutes' walk from the Forbidden City." },
+      { tier: "mid", n: "Novotel Beijing Peace", ll: [39.9128, 116.4128], area: "Wangfujing", note: "Reliable international chain right on Wangfujing." },
       { tier: "budget", n: "Atour, JI Hotel or Hanting branches", area: "Wangfujing / Qianmen", note: "Clean Chinese chains from ~¥350. On Trip.com, check the listing accepts foreign passports." },
     ],
     getAround: "Metro is fast and cheap (¥3–10). Scan the Alipay transport QR code at the gates. Every metro station has an airport-style bag check, so allow 5 extra minutes. DiDi works well outside rush hour (7:30–9:30, 17:30–19:30).",
@@ -1311,10 +1318,10 @@ const CITIES = {
     stay: { area: "The Bund / East Nanjing Road / People's Square", ll: [31.2366, 121.4800], m: "East Nanjing Road · Lines 2/10",
       why: "Walk to the Bund, two metro lines, near Hongchangxing halal hotpot and a short ride to Xiaotaoyuan Mosque." },
     hotels: [
-      { tier: "lux", n: "The Peninsula Shanghai", area: "The Bund", note: "Bund views, top service." },
-      { tier: "lux", n: "Fairmont Peace Hotel", area: "The Bund", note: "1929 Art Deco landmark on the corner of Nanjing Road." },
-      { tier: "mid", n: "Hotel Indigo Shanghai on the Bund", area: "South Bund", note: "River views at mid-range prices." },
-      { tier: "mid", n: "Les Suites Orient, Bund Shanghai", area: "Bund", note: "Spacious rooms, near Yu Garden and Xiaotaoyuan Mosque." },
+      { tier: "lux", n: "The Peninsula Shanghai", ll: [31.2425, 121.4902], area: "The Bund", note: "Bund views, top service." },
+      { tier: "lux", n: "Fairmont Peace Hotel", ll: [31.2403, 121.4903], area: "The Bund", note: "1929 Art Deco landmark on the corner of Nanjing Road." },
+      { tier: "mid", n: "Hotel Indigo Shanghai on the Bund", ll: [31.2248, 121.4988], area: "South Bund", note: "River views at mid-range prices." },
+      { tier: "mid", n: "Les Suites Orient, Bund Shanghai", ll: [31.2297, 121.4957], area: "Bund", note: "Spacious rooms, near Yu Garden and Xiaotaoyuan Mosque." },
       { tier: "budget", n: "JI Hotel or Atour near People's Square / East Nanjing Road", area: "Huangpu", note: "From ~¥400. Confirm the listing accepts foreign passports." },
     ],
     getAround: "Excellent metro (¥3–10), pay with the Alipay QR code. Lines 2 and 10 cover most sights. DiDi is easy; taxis are plentiful. Hellobike/Meituan bikes are good in the French Concession.",
@@ -1378,11 +1385,11 @@ const CITIES = {
     stay: { area: "Inside the City Wall near the Bell Tower", ll: [34.2610, 108.9420], m: "Bell Tower (Zhonglou) · Line 2",
       why: "Walk to the Muslim Quarter, the Great Mosque and the City Wall. The best halal food in China is minutes away." },
     hotels: [
-      { tier: "lux", n: "Sofitel Xi'an on Renmin Square", area: "Inside the wall", note: "Best luxury option inside the old city, 10 min walk to the Muslim Quarter." },
-      { tier: "mid", n: "Grand Mercure Xi'an on Renmin Square", area: "Inside the wall", note: "Same complex as the Sofitel, cheaper." },
-      { tier: "mid", n: "Xi'an Bell Tower Hotel (钟楼饭店)", area: "Bell Tower", note: "Unbeatable location facing the Bell Tower." },
-      { tier: "budget", n: "Han Tang Inn hostel (汉唐驿)", area: "Near Bell Tower", note: "Popular backpacker hostel with private rooms; organises Terracotta trips." },
-      { tier: "budget", n: "Xi'an Shuyuan Youth Hostel (书院青年旅舍)", area: "South Gate", note: "Courtyard hostel right by the City Wall." },
+      { tier: "lux", n: "Sofitel Xi'an on Renmin Square", ll: [34.269, 108.9522], area: "Inside the wall", note: "Best luxury option inside the old city, 10 min walk to the Muslim Quarter." },
+      { tier: "mid", n: "Grand Mercure Xi'an on Renmin Square", ll: [34.2686, 108.9516], area: "Inside the wall", note: "Same complex as the Sofitel, cheaper." },
+      { tier: "mid", n: "Xi'an Bell Tower Hotel (钟楼饭店)", ll: [34.2597, 108.9447], area: "Bell Tower", note: "Unbeatable location facing the Bell Tower." },
+      { tier: "budget", n: "Han Tang Inn hostel (汉唐驿)", ll: [34.2617, 108.9465], area: "Near Bell Tower", note: "Popular backpacker hostel with private rooms; organises Terracotta trips." },
+      { tier: "budget", n: "Xi'an Shuyuan Youth Hostel (书院青年旅舍)", ll: [34.2527, 108.9448], area: "South Gate", note: "Courtyard hostel right by the City Wall." },
     ],
     getAround: "Metro Line 2 runs north–south through the Bell Tower. Most of the old city is walkable. DiDi is cheap (most rides ¥10–25).",
     arrive: "Xianyang Airport (XIY): Metro Line 14 then Line 2 (~1 h), or DiDi to the Bell Tower (~50 min, ~¥100–130). Xi'an North Station (high-speed trains): Line 2 straight to the Bell Tower (~25 min).",
@@ -1445,8 +1452,8 @@ const CITIES = {
     stay: { area: "Chunxi Road / Taikoo Li", ll: [30.6570, 104.0830], m: "Chunxi Road · Lines 2/3",
       why: "Central, on two metro lines, close to nightlife and transport to the Panda Base." },
     hotels: [
-      { tier: "lux", n: "The Temple House", area: "Taikoo Li", note: "Boutique luxury built around a Qing courtyard." },
-      { tier: "mid", n: "Buddhazen Hotel", area: "Wenshu Monastery", note: "Quiet courtyard hotel in a temple neighbourhood." },
+      { tier: "lux", n: "The Temple House", ll: [30.6547, 104.0848], area: "Taikoo Li", note: "Boutique luxury built around a Qing courtyard." },
+      { tier: "mid", n: "Buddhazen Hotel", ll: [30.6742, 104.0738], area: "Wenshu Monastery", note: "Quiet courtyard hotel in a temple neighbourhood." },
       { tier: "mid", n: "International chains around Tianfu Square (Hilton, Marriott, Holiday Inn)", area: "Tianfu Square", note: "Reliable mid-range, on Lines 1/2." },
       { tier: "budget", n: "JI Hotel or Atour near Chunxi Road", area: "Jinjiang", note: "From ~¥300. Confirm foreign passports accepted." },
     ],
@@ -1507,7 +1514,7 @@ const CITIES = {
     stay: { area: "Jiefangbei / Yuzhong Peninsula", ll: [29.5580, 106.5770], m: "Jiaochangkou · Lines 1/2",
       why: "Walk to Hongyadong, the cableway and river cruises." },
     hotels: [
-      { tier: "lux", n: "InterContinental Chongqing Raffles City", area: "Chaotianmen", note: "Inside the striking Raffles City towers with river views." },
+      { tier: "lux", n: "InterContinental Chongqing Raffles City", ll: [29.5683, 106.5862], area: "Chaotianmen", note: "Inside the striking Raffles City towers with river views." },
       { tier: "mid", n: "Hilton Chongqing", area: "Yuzhong", note: "Reliable mid-range." },
       { tier: "budget", n: "JI Hotel or Atour near Jiefangbei", area: "Yuzhong", note: "From ~¥250. Confirm foreign passports accepted." },
     ],
@@ -1561,8 +1568,8 @@ const CITIES = {
     stay: { area: "Central Guilin (Two Rivers & Four Lakes)", ll: [25.2780, 110.2950], m: null,
       why: "Walkable lakes and Elephant Trunk Hill, close to the cruise transfer pick-ups." },
     hotels: [
-      { tier: "lux", n: "Shangri-La Guilin", area: "Li River", note: "Riverfront resort with mountain views." },
-      { tier: "mid", n: "Sheraton Guilin", area: "Binjiang Road", note: "On the river, walk to the lakes." },
+      { tier: "lux", n: "Shangri-La Guilin", ll: [25.2645, 110.3005], area: "Li River", note: "Riverfront resort with mountain views." },
+      { tier: "mid", n: "Sheraton Guilin", ll: [25.2733, 110.2993], area: "Binjiang Road", note: "On the river, walk to the lakes." },
       { tier: "budget", n: "Guesthouses and chains near Zhengyang pedestrian street", area: "Centre", note: "From ~¥200." },
     ],
     getAround: "No metro; DiDi and buses. The centre is walkable.",
@@ -1601,8 +1608,8 @@ const CITIES = {
     stay: { area: "West Street area or the Yulong River countryside", ll: [24.7780, 110.4960], m: null,
       why: "Town centre for restaurants and night life; countryside retreats for views and quiet." },
     hotels: [
-      { tier: "lux", n: "Banyan Tree Yangshuo", area: "Li River", note: "Resort among the peaks." },
-      { tier: "mid", n: "Yangshuo Mountain Retreat", area: "Yulong River", note: "Riverside rooms facing the mountains; bikes and rafting arranged." },
+      { tier: "lux", n: "Banyan Tree Yangshuo", ll: [24.7865, 110.5045], area: "Li River", note: "Resort among the peaks." },
+      { tier: "mid", n: "Yangshuo Mountain Retreat", ll: [24.7305, 110.4565], area: "Yulong River", note: "Riverside rooms facing the mountains; bikes and rafting arranged." },
       { tier: "budget", n: "Guesthouses around West Street", area: "Town centre", note: "From ~¥150, many with English-speaking staff." },
     ],
     getAround: "Rent an e-bike (~¥50/day) or bicycle. DiDi and local taxis for longer hops.",
@@ -1643,8 +1650,8 @@ const CITIES = {
     stay: { area: "Wulingyuan town (by the national park's east gate)", ll: [29.3480, 110.5450], m: null,
       why: "Walk to the park entrance and save 1 h each way compared with the city." },
     hotels: [
-      { tier: "lux", n: "Pullman Zhangjiajie", area: "City centre", note: "Best for Tianmen Mountain (cable car is in the city)." },
-      { tier: "mid", n: "Pipaxi Hotel (琵琶溪宾馆)", area: "Wulingyuan", note: "Near the park entrance." },
+      { tier: "lux", n: "Pullman Zhangjiajie", ll: [29.1225, 110.479], area: "City centre", note: "Best for Tianmen Mountain (cable car is in the city)." },
+      { tier: "mid", n: "Pipaxi Hotel (琵琶溪宾馆)", ll: [29.3462, 110.5395], area: "Wulingyuan", note: "Near the park entrance." },
       { tier: "budget", n: "Guesthouses in Wulingyuan", area: "Wulingyuan", note: "From ~¥150; many offer park transport tips." },
     ],
     getAround: "Inside the park, free eco-buses link everything. Between Wulingyuan, the city and Tianmen Mountain, use DiDi or buses (~45 min).",
@@ -1691,9 +1698,9 @@ const CITIES = {
     stay: { area: "Hubin (east shore of West Lake)", ll: [30.2580, 120.1650], m: "Longxiangqiao · Line 1",
       why: "Walk to the lake, on Line 1, 10 min from the Phoenix Mosque and its halal food." },
     hotels: [
-      { tier: "lux", n: "Four Seasons Hotel Hangzhou at West Lake", area: "West Lake", note: "Lakeside gardens, very peaceful." },
-      { tier: "lux", n: "Amanfayun", area: "Lingyin", note: "Restored tea village by the temples." },
-      { tier: "mid", n: "Hyatt Regency Hangzhou", area: "Hubin", note: "Right on the lake's east shore." },
+      { tier: "lux", n: "Four Seasons Hotel Hangzhou at West Lake", ll: [30.2512, 120.1442], area: "West Lake", note: "Lakeside gardens, very peaceful." },
+      { tier: "lux", n: "Amanfayun", ll: [30.2402, 120.1012], area: "Lingyin", note: "Restored tea village by the temples." },
+      { tier: "mid", n: "Hyatt Regency Hangzhou", ll: [30.2587, 120.1642], area: "Hubin", note: "Right on the lake's east shore." },
       { tier: "budget", n: "JI Hotel or Atour near Hubin / Wulin", area: "Shangcheng", note: "From ~¥350." },
     ],
     getAround: "Metro for longer hops; Hellobike bicycles are perfect around the lake. DiDi to Lingyin and Longjing.",
@@ -1743,8 +1750,8 @@ const CITIES = {
     stay: { area: "Pingjiang Road / old town", ll: [31.3110, 120.6290], m: null,
       why: "Canal-side lanes, walking distance to the main gardens." },
     hotels: [
-      { tier: "lux", n: "Pan Pacific Suzhou", area: "Old town", note: "Garden resort beside the Pan Gate." },
-      { tier: "mid", n: "Pingjiang Lodge (平江客栈)", area: "Pingjiang Road", note: "Boutique inn in a Ming-era house." },
+      { tier: "lux", n: "Pan Pacific Suzhou", ll: [31.2953, 120.6093], area: "Old town", note: "Garden resort beside the Pan Gate." },
+      { tier: "mid", n: "Pingjiang Lodge (平江客栈)", ll: [31.3162, 120.6337], area: "Pingjiang Road", note: "Boutique inn in a Ming-era house." },
       { tier: "budget", n: "JI Hotel or Atour near Guanqian Street", area: "Old town", note: "From ~¥300." },
     ],
     getAround: "Old town is walkable; metro and DiDi for Tiger Hill and Jinji Lake.",
@@ -1794,9 +1801,9 @@ const CITIES = {
     stay: { area: "Yuexiu (Beijing Road / Haizhu Square)", ll: [23.1260, 113.2700], m: "Gongyuanqian · Lines 1/2",
       why: "Old city, near Huaisheng Mosque and Xiaobei's Middle Eastern restaurants, two metro lines." },
     hotels: [
-      { tier: "lux", n: "Four Seasons Hotel Guangzhou", area: "Zhujiang New Town", note: "Sky-high rooms in the IFC tower facing Canton Tower." },
-      { tier: "lux", n: "White Swan Hotel", area: "Shamian Island", note: "Historic riverside landmark." },
-      { tier: "mid", n: "The Garden Hotel", area: "Yuexiu", note: "Classic large hotel, near Xiaobei." },
+      { tier: "lux", n: "Four Seasons Hotel Guangzhou", ll: [23.1197, 113.3222], area: "Zhujiang New Town", note: "Sky-high rooms in the IFC tower facing Canton Tower." },
+      { tier: "lux", n: "White Swan Hotel", ll: [23.1062, 113.2402], area: "Shamian Island", note: "Historic riverside landmark." },
+      { tier: "mid", n: "The Garden Hotel", ll: [23.1372, 113.2852], area: "Yuexiu", note: "Classic large hotel, near Xiaobei." },
       { tier: "budget", n: "JI Hotel or Atour near Beijing Road", area: "Yuexiu", note: "From ~¥250." },
     ],
     getAround: "Huge, efficient metro (Alipay QR). DiDi is cheap.",
@@ -1855,8 +1862,8 @@ const CITIES = {
     stay: { area: "Futian", ll: [22.5380, 114.0560], m: "Shopping Park · Lines 1/3",
       why: "Central, on several lines, 20 min from the Hong Kong border, near Shenzhen Mosque." },
     hotels: [
-      { tier: "lux", n: "Four Seasons Hotel Shenzhen", area: "Futian", note: "Central luxury near the Civic Center." },
-      { tier: "mid", n: "Hilton Shenzhen Shekou Nanhai", area: "Shekou", note: "Seaside; ferries to Hong Kong airport and Macau." },
+      { tier: "lux", n: "Four Seasons Hotel Shenzhen", ll: [22.5392, 114.0562], area: "Futian", note: "Central luxury near the Civic Center." },
+      { tier: "mid", n: "Hilton Shenzhen Shekou Nanhai", ll: [22.4842, 113.9142], area: "Shekou", note: "Seaside; ferries to Hong Kong airport and Macau." },
       { tier: "budget", n: "JI Hotel or Atour in Futian", area: "Futian", note: "From ~¥300." },
     ],
     getAround: "Excellent metro (Alipay QR). DiDi is easy. Border crossings at Futian, Luohu and Shenzhen Bay.",
@@ -1905,10 +1912,10 @@ const CITIES = {
     stay: { area: "Tsim Sha Tsui (Kowloon)", ll: [22.2980, 114.1720], m: "Tsim Sha Tsui · Tsuen Wan Line",
       why: "Next to Kowloon Mosque, halal curry houses and the harbour; the Star Ferry and MTR reach everything." },
     hotels: [
-      { tier: "lux", n: "The Peninsula Hong Kong", area: "Tsim Sha Tsui", note: "Legendary 1928 hotel, 2 min walk to Kowloon Mosque." },
-      { tier: "mid", n: "Hotel ICON", area: "Tsim Sha Tsui East", note: "Stylish, harbour views, great value for HK." },
-      { tier: "mid", n: "Eaton HK", area: "Jordan", note: "Lively, near Temple Street Night Market." },
-      { tier: "budget", n: "YHA Mei Ho House", area: "Sham Shui Po", note: "Heritage public-housing block turned hostel, private rooms." },
+      { tier: "lux", n: "The Peninsula Hong Kong", ll: [22.2951, 114.1719], area: "Tsim Sha Tsui", note: "Legendary 1928 hotel, 2 min walk to Kowloon Mosque." },
+      { tier: "mid", n: "Hotel ICON", ll: [22.3006, 114.1786], area: "Tsim Sha Tsui East", note: "Stylish, harbour views, great value for HK." },
+      { tier: "mid", n: "Eaton HK", ll: [22.3061, 114.1711], area: "Jordan", note: "Lively, near Temple Street Night Market." },
+      { tier: "budget", n: "YHA Mei Ho House", ll: [22.3321, 114.1641], area: "Sham Shui Po", note: "Heritage public-housing block turned hostel, private rooms." },
       { tier: "budget", n: "Guesthouses in Chungking Mansions", area: "Tsim Sha Tsui", note: "Very basic, tiny rooms, but surrounded by halal food. Read recent reviews." },
     ],
     getAround: "Get an Octopus card (or add it to Apple Wallet). MTR, buses, trams (HK$3.3) and the Star Ferry all take it. Taxis are red (urban), green (New Territories) or blue (Lantau).",
@@ -1983,8 +1990,8 @@ const CITIES = {
     stay: { area: "Cotai (resorts) or the historic peninsula", ll: [22.1940, 113.5410], m: null,
       why: "Peninsula is best for heritage walks; Cotai has big resorts with free shuttle buses everywhere." },
     hotels: [
-      { tier: "lux", n: "Wynn Palace or The Venetian Macao", area: "Cotai", note: "Huge resorts; free shuttles to the ferry terminals and border." },
-      { tier: "mid", n: "Sofitel Macau at Ponte 16", area: "Inner Harbour", note: "Walk to the historic centre." },
+      { tier: "lux", n: "Wynn Palace or The Venetian Macao", ll: [22.1468, 113.563], area: "Cotai", note: "Huge resorts; free shuttles to the ferry terminals and border." },
+      { tier: "mid", n: "Sofitel Macau at Ponte 16", ll: [22.1971, 113.5331], area: "Inner Harbour", note: "Walk to the historic centre." },
       { tier: "budget", n: "Guesthouses near Senado Square", area: "Peninsula", note: "Small and basic; book early." },
     ],
     getAround: "Free hotel/casino shuttle buses between the ferry terminals, border and resorts. Public buses ~MOP 6. Taxis via the 'Macau Taxi' or the local ride apps.",
@@ -2122,7 +2129,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
   const STORE = "chk-trip-planner-v1";
 
   // Give every place a stable id
-  Object.entries(CITIES).forEach(([cid, c]) => c.places.forEach((p, i) => (p.id = cid + "-" + i)));
+  Object.entries(CITIES).forEach(([cid, c]) => { c.id = cid; c.places.forEach((p, i) => (p.id = cid + "-" + i)); });
 
   /* ---------- state ---------- */
   const DEFAULT = {
@@ -2154,7 +2161,19 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
   }
   const round5 = (n) => Math.round(n / 5) * 5;
 
+  /* ---------- the traveller's own hotel (optional), else the recommended area ---------- */
+  const userHotel = (city) => (state.hotels && state.hotels[city.id] && state.hotels[city.id].ll ? state.hotels[city.id] : null);
+  const stayLL = (city) => (userHotel(city) ? userHotel(city).ll : city.stay.ll);
+  const stayName = (city) => (userHotel(city) ? userHotel(city).name : city.stay.area);
+  // Nearest known metro station to a point (within ~1.3 km), from the city's sights and recommended area
+  function nearestMetro(city, ll) {
+    const cands = city.places.filter((p) => p.m).map((p) => ({ m: p.m, d: km(ll, p.ll) })).concat(city.stay.m ? [{ m: city.stay.m, d: km(ll, city.stay.ll) }] : []);
+    const best = cands.sort((a, b) => a.d - b.d)[0];
+    return best && best.d < 1.3 ? best.m : null;
+  }
   function hotelPoint(city) {
+    const h = userHotel(city);
+    if (h) return { n: h.name, zh: h.name, ll: h.ll, m: nearestMetro(city, h.ll), hotel: true };
     return { n: "your hotel (" + city.stay.area + ")", ll: city.stay.ll, m: city.stay.m, hotel: true };
   }
 
@@ -2460,7 +2479,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
       if (c) { ctx.used.add(c.id); day.slots.push(activity(ctx, "n", c, alt, prev)); prev = c; }
       else day.slots.push({ part: "n", type: "free", text: city.night[(ctx.fullCount + day.slots.length) % city.night.length], eat: { label: "Dinner (halal)", ...eatNear(city, prev.ll) } });
     } else {
-      day.slots.push({ part: "n", type: "free", late: true, when: "After check-in", text: "You arrive late: check in, grab a meal near the hotel and rest for tomorrow.", eat: { label: "Late meal near the hotel (halal)", ...eatNear(city, city.stay.ll) } });
+      day.slots.push({ part: "n", type: "free", late: true, when: "After check-in", text: "You arrive late: check in, grab a meal near the hotel and rest for tomorrow.", eat: { label: "Late meal near the hotel (halal)", ...eatNear(city, stayLL(city)) } });
     }
     day.back = prev !== hotel ? getThere(prev, hotel, city) : null;
     return day;
@@ -2541,12 +2560,72 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
           <button type="button" class="icon-btn" data-act="remove" data-i="${i}" aria-label="Remove ${esc(c.name)}">✕</button></div>
         <label class="nights" for="nights-${i}">Nights <input type="number" id="nights-${i}" min="1" max="30" value="${st.nights}" data-act="nights" data-i="${i}"></label>
         ${legRow(st, i)}
+        ${hotelRow(st, i)}
         <div class="row"><select id="place-${i}" data-act="place" data-i="${i}" aria-label="Add a place in ${esc(c.name)}"><option value="">Add a place to see…</option>${opts}</select></div>
         ${chips ? `<div class="chips">${chips}</div>` : `<p class="hint suggest">No places chosen, so we'll plan the top-rated ones for your trip style, e.g. ${topPicks(st.city, 3).map((p) => esc(p.n.split(/[:(]/)[0].trim())).join(", ")}. <button type="button" class="btn small" data-act="addtop" data-i="${i}">Add top picks</button></p>`}
       </div>`;
     }).join("");
     renderTally();
     renderOutLeg();
+  }
+
+  /* ---------- "Your hotel" on each city card ---------- */
+  const hotelOpen = {}, hotelResults = {};
+  function hotelRow(st, i) {
+    const c = CITIES[st.city], h = userHotel(c), open = hotelOpen[c.id] || (h && h.src !== "list");
+    const listOpts = c.hotels.map((x, k) => (x.ll ? `<option value="list:${k}" ${h && h.src === "list" && h.k === k ? "selected" : ""}>${TIER[x.tier]} · ${esc(x.n)}</option>` : "")).join("");
+    const mt = h ? nearestMetro(c, h.ll) : null;
+    return `<div class="hotelrow">
+      <label class="hint lbl" for="hotel-${i}">🏨 Your hotel in ${esc(c.name)}:</label>
+      <select id="hotel-${i}" data-act="hotelsel" data-i="${i}">
+        <option value="" ${!h && !open ? "selected" : ""}>Not booked yet — plan around ${esc(c.stay.area)}</option>
+        <optgroup label="Suggested hotels">${listOpts}</optgroup>
+        <option value="other" ${open && !(h && h.src === "list") ? "selected" : ""}>${h && h.src !== "list" ? "📍 " + esc(h.name) : "Another hotel… (search or map link)"}</option>
+      </select>
+      ${open ? `<div class="hotelfind"><input type="text" id="hotelq-${i}" placeholder="Hotel name, address or map link" aria-label="Find your hotel in ${esc(c.name)}"><button type="button" class="btn small" data-act="hotelfind" data-i="${i}">Find</button></div><div class="hotelres" id="hotelres-${i}" aria-live="polite"></div>` : ""}
+      ${h ? `<p class="hint hotelset">📍 Planning from <b>${esc(h.name)}</b>${mt ? " · nearest metro " + esc(mt) : " · no metro close by, so DiDi/taxi times are used"} · ${km(h.ll, c.stay.ll).toFixed(1)} km from ${esc(c.stay.area)} · <a href="https://maps.apple.com/?ll=${h.ll[0]},${h.ll[1]}&q=${encodeURIComponent(h.name)}" target="_blank" rel="noopener">check the pin ↗</a></p>` : ""}
+    </div>`;
+  }
+  // Coordinates from pasted text: "39.91, 116.41", Google "@39.91,116.41,15z", Apple "ll=39.91,116.41", Amap "116.41,39.91"
+  function parseLatLng(text) {
+    const m = String(text).match(/(-?\d{1,3}\.\d{2,})\s*,\s*(-?\d{1,3}\.\d{2,})/);
+    if (!m) return null;
+    let a = +m[1], b = +m[2];
+    if (a > 70 && a < 140 && b > 15 && b < 56) { const x = a; a = b; b = x; }
+    return a > 15 && a < 56 && b > 70 && b < 140 ? [a, b] : null;
+  }
+  function setHotel(i, h) {
+    const c = CITIES[state.stops[i].city];
+    const d = km(h.ll, c.stay.ll);
+    if (d > 150) { toast(`That spot is ${Math.round(d)} km from ${c.name}. Check it's the right place, or paste the hotel's map link.`); return; }
+    state.hotels = state.hotels || {};
+    state.hotels[c.id] = h;
+    hotelOpen[c.id] = false;
+    persist(); renderStops();
+    if (d > 40) toast(`Saved, but it's ${Math.round(d)} km from central ${c.name}: double-check the pin.`);
+    if (lastPlan) { generate(false); if (d <= 40) toast(`Plan updated: times and directions in ${c.name} now start from ${h.name}.`); }
+  }
+  function findHotel(i) {
+    const c = CITIES[state.stops[i].city];
+    const q = ($("#hotelq-" + i).value || "").trim();
+    const box = $("#hotelres-" + i);
+    if (!q) { toast("Type the hotel's name or address, or paste its map link."); return; }
+    const ll = parseLatLng(q);
+    if (ll) { setHotel(i, { name: "My hotel (map pin)", ll, src: "pin" }); return; }
+    if (window.NO_PRINT) { box.innerHTML = `<p class="hint">Searching isn't possible inside the Claude preview. Paste the hotel's Google or Apple Maps link (or its coordinates) instead.</p>`; return; }
+    box.innerHTML = `<p class="hint">Searching OpenStreetMap…</p>`;
+    const [la, lo] = c.stay.ll;
+    const url = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=en&bounded=1&viewbox=" +
+      [lo - 0.6, la + 0.6, lo + 0.6, la - 0.6].join(",") + "&q=" + encodeURIComponent(q);
+    let done = false;
+    const fail = (why) => { if (done) return; done = true; box.innerHTML = `<p class="hint">${why} Paste the hotel's Google or Apple Maps link (or its coordinates) instead — open the hotel in Maps, tap Share → Copy link.</p>`; };
+    setTimeout(() => fail("The search took too long."), 9000);
+    fetch(url, { headers: { Accept: "application/json" } }).then((r) => r.json()).then((rows) => {
+      if (done) return; done = true;
+      hotelResults[i] = (rows || []).map((r) => ({ name: r.name || String(r.display_name).split(",")[0], addr: String(r.display_name).split(",").slice(0, 4).join(","), ll: [+r.lat, +r.lon] }));
+      if (!hotelResults[i].length) { done = false; fail(`No match for “${esc(q)}” near ${esc(c.name)}. Try the English or Chinese name, or the street.`); return; }
+      box.innerHTML = `<p class="hint">Pick your hotel:</p>` + hotelResults[i].map((r, k) => `<button type="button" class="btn small hotelpick" data-act="hotelpick" data-i="${i}" data-k="${k}"><b>${esc(r.name)}</b><br><span class="hint">${esc(r.addr)} · ${km(r.ll, c.stay.ll).toFixed(1)} km from ${esc(c.stay.area)}</span></button>`).join("");
+    }).catch(() => fail("Couldn't reach the map search (it needs an internet connection)."));
   }
 
   // How you get to this stop (from the previous stop, or from the arrival airport): mode + optional times
@@ -2640,12 +2719,22 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
       else if (act === "remove") state.stops.splice(i, 1);
       else if (act === "unplace") state.stops[i].places = state.stops[i].places.filter((x) => x !== b.dataset.id);
       else if (act === "fit") { fitNights(); return; }
+      else if (act === "hotelfind") { findHotel(i); return; }
+      else if (act === "hotelpick") { const r = (hotelResults[i] || [])[+b.dataset.k]; if (r) setHotel(i, { name: r.name, ll: r.ll, src: "search" }); return; }
       else return;
       persist(); renderStops();
     });
     $("#planner").addEventListener("change", (e) => {
       const t = e.target;
       if (t.dataset.act === "place" && t.value) { state.stops[+t.dataset.i].places.push(t.value); persist(); renderStops(); return; }
+      if (t.dataset.act === "hotelsel") {
+        const i = +t.dataset.i, c = CITIES[state.stops[i].city];
+        if (t.value === "") { if (state.hotels) delete state.hotels[c.id]; hotelOpen[c.id] = false; persist(); renderStops(); if (lastPlan) generate(false); return; }
+        if (t.value === "other") { hotelOpen[c.id] = true; renderStops(); const q = $("#hotelq-" + i); if (q) q.focus(); return; }
+        const k = +t.value.split(":")[1], x = c.hotels[k];
+        setHotel(i, { name: x.n, ll: x.ll, src: "list", k });
+        return;
+      }
       if (t.dataset.act === "legdep" || t.dataset.act === "legarr" || t.dataset.act === "legmode") {
         const st = state.stops[+t.dataset.i];
         if (!st.leg || st.leg.from !== t.dataset.from) st.leg = { from: t.dataset.from };
@@ -2729,7 +2818,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
           ${s.ready != null && s.ready < 14 * 60 ? `<span class="timing">Hotel check-in is usually from 14:00. Ask for early check-in when you book, or leave your bags at reception and head out.</span>` : ""}`;
       body = s.via
         ? `<div class="travel"><b class="k">Land in ${esc(s.city.name)}</b>${timing}${fromSyd() ? `<span>${sydLine(s.flyIn, "in")}</span>` : ""}<span>${esc(s.text)}</span></div>`
-        : `<div class="travel"><b class="k">Arrive & check in</b>${timing}${fromSyd() ? `<span>${sydLine(s.flyIn, "in")}</span>` : ""}<span>${esc(s.text)}</span><span>Check in to your hotel in <b>${esc(city.stay.area)}</b>, rest, and change money/test Alipay if you haven't.</span></div>`;
+        : `<div class="travel"><b class="k">Arrive & check in</b>${timing}${fromSyd() ? `<span>${sydLine(s.flyIn, "in")}</span>` : ""}<span>${esc(s.text)}</span><span>Check in ${userHotel(city) ? "at" : "to your hotel in"} <b>${esc(stayName(city))}</b>, rest, and change money/test Alipay if you haven't.</span></div>`;
     } else if (s.type === "travel") {
       body = `<div class="travel"><b class="k">${s.toFlight ? "To your flight" : s.sameDay ? "Onward the same day" : "Travel day"} · ${esc(s.from.name)} → ${esc(s.to.name)}</b>
         ${s.dep != null ? `<span class="timing">${s.est ? `Estimated${s.leg && !s.leg.chosen ? " (assuming " + MODE[s.leg.rec].label.toLowerCase() + ")" : ""}: departs` : "Departs"} <b>${hhmm(s.dep)}</b>, arrives <b>${hhmm(s.arr)}</b>${s.est ? " — add your booked times in the form for an exact plan" : ""}.${s.leaveBy != null && !s.toFlight ? ` Leave the hotel by <b>${hhmm(s.leaveBy)}</b>.` : ""}</span>` : !s.toFlight ? `<span class="timing">No times entered — add your departure and arrival times on the ${esc(s.to.name)} card in the form for an exact plan.</span>` : ""}
@@ -2744,8 +2833,8 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
           : `<span><b>How you'll travel isn't chosen yet.</b> Pick it on the ${esc(s.toFlight ? "“Fly home from” section" : s.to.name + " card")} in the form. Until then, timings assume the usual choice (${MODE[(s.leg || {}).rec || "train"].label.toLowerCase()}).</span>${legOptionsHTML(s.fromId, s.toId)}`}
         ${s.border ? `<span><b>Border crossing:</b> passport out. ${isAU() ? (s.to.region === "mainland" ? "Australians: entering the mainland starts a fresh visa-free stay of up to 30 days." : s.to.region === "hk" ? "Australians: visa-free in Hong Kong for up to 90 days." : "Australians: visa-free entry to Macau.") : "Leaving or entering the mainland uses one visa entry — see Before you go."}</span>` : ""}
         ${s.toFlight ? "" : `<span><b>On arrival:</b> ${esc(s.arrive)}</span>
-        <span>Check in to your hotel in <b>${esc(s.to.stay.area)}</b>.</span>`}</div>
-        ${s.toFlight || (s.arr != null && s.arr >= 16 * 60) ? "" : eatHTML({ label: s.sameDay || (s.arr != null && s.arr >= 14 * 60) ? "First meal on arrival (halal)" : "Lunch on arrival (halal)", ...eatNear(s.to, s.to.stay.ll) })}`;
+        <span>Check in ${userHotel(s.to) ? "at" : "to your hotel in"} <b>${esc(stayName(s.to))}</b>.</span>`}</div>
+        ${s.toFlight || (s.arr != null && s.arr >= 16 * 60) ? "" : eatHTML({ label: s.sameDay || (s.arr != null && s.arr >= 14 * 60) ? "First meal on arrival (halal)" : "Lunch on arrival (halal)", ...eatNear(s.to, stayLL(s.to)) })}`;
     } else if (s.type === "depart") {
       const fl = s.flightNo ? `Flight <b>${esc(s.flightNo)}</b> ` : "Your flight ";
       const timing = s.off == null
@@ -2817,7 +2906,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
       if (s.type === "arrive") {
         if (s.land != null) {
           push({ k: "flight", title: `${s.flightNo ? s.flightNo + " lands" : "Flight lands"} in ${s.city.name}`, start: s.land, end: s.land + IMMIGRATION, note: "Immigration, bags and customs." });
-          if (!s.via) { push({ k: "hotel", title: `To the hotel (${city.stay.area})`, start: s.land + IMMIGRATION, end: s.ready, note: s.ready < 14 * 60 ? "Check-in is usually from 14:00 — leave your bags at reception." : "Check in." }); t = s.ready; }
+          if (!s.via) { push({ k: "hotel", title: `To the hotel (${stayName(city)})`, ll: stayLL(city), start: s.land + IMMIGRATION, end: s.ready, note: s.ready < 14 * 60 ? "Check-in is usually from 14:00 — leave your bags at reception." : "Check in." }); t = s.ready; }
           else t = s.land + IMMIGRATION;
         } else { push({ k: "hotel", title: "Arrive, check in and rest", start: 9 * 60, end: 12 * 60 + 30, note: "Add your landing time in step 2 to plan this exactly." }); t = 13 * 60 + 15; }
         return;
@@ -2837,7 +2926,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
         const leave = s.leaveBy != null ? s.leaveBy : dep - e.lead;
         if (!s.sameDay && e.lead > 0) push({ k: "hotel", title: `Check out${s.collect ? " (collect your bags)" : ""} and go to the ${mode === "flight" ? "airport" : mode === "train" ? "station" : mode === "boat" ? "pier" : "pick-up point"}`, start: leave, end: dep });
         push({ k: "travel", icon: MODE[mode].icon, title: `${MODE[mode].label}: ${s.from.name} → ${s.to.name}`, start: dep, end: arr, note: s.dep == null || s.est ? "Estimated — add your booked times on the " + s.to.name + " card." : "" });
-        push({ k: "hotel", title: `Check in — ${s.to.stay.area}`, start: arr + 20, end: arr + 60 });
+        push({ k: "hotel", title: `Check in — ${stayName(s.to)}`, start: arr + 20, end: arr + 60, ll: stayLL(s.to) });
         t = arr + 60;
         return;
       }
@@ -3193,7 +3282,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
       if (day.kind !== "full" && day.kind !== "depart") {
         const st = state.stops[n];
         html += `<div class="city-band"><h3>${esc(day.city.name)}</h3><span class="han">${day.city.zh}</span><span class="meta">${st ? st.nights + " night" + (st.nights > 1 ? "s" : "") : ""}</span></div>
-          <p class="city-stay">${esc(day.city.intro)} <b>Stay:</b> ${esc(day.city.stay.area)}. ${esc(day.city.stay.why)}</p>
+          <p class="city-stay">${esc(day.city.intro)} <b>Stay:</b> ${userHotel(day.city) ? `<b>${esc(stayName(day.city))}</b> (your hotel) — all times and directions are worked out from it.` : `${esc(day.city.stay.area)}. ${esc(day.city.stay.why)} <i>Add your hotel on the ${esc(day.city.name)} card to plan from it.</i>`}</p>
           <p class="city-stay"><b>Top rated here:</b> ${day.city.places.filter((p) => p.r === 3).map((p) => plan.stops[n].used.has(p.id) ? `${esc(p.n)} <span style="color:var(--jade)">✓ in your plan</span>` : `${esc(p.n)} <i>(not in this plan — add a night)</i>`).join(" · ")}</p>`;
         n++;
       }
@@ -3797,7 +3886,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     return "https://www.google.com/maps/dir/" + pts.map(encodeURIComponent).join("/");
   }
   function googleDayLink(day) {
-    const hotel = day.city.stay.ll;
+    const hotel = stayLL(day.city);
     const pts = [hotel].concat(day.slots.filter((s) => s.type === "act").map((s) => s.p.ll), day.kind === "depart" ? [] : [hotel]);
     return pts.length > 1 ? "https://www.google.com/maps/dir/" + pts.map((ll) => ll[0] + "," + ll[1]).join("/") : "";
   }
@@ -3874,13 +3963,13 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
           .bindTooltip(`Day ${i + 1} · ${SLOT[s.part].label}: ${esc(s.p.n)}`).addTo(lmapLayer);
         pts.push(s.p.ll);
       }));
-      seq.forEach((p) => pin(CITIES[p.id].stay.ll, "#17202B", p.n ? String(p.n) : "✈", `${p.n ? p.n + ". " : ""}${esc(CITIES[p.id].name)}${p.nights ? " · " + p.nights + " nights" : " (airport)"}`, true));
+      seq.forEach((p) => pin(p.n ? stayLL(CITIES[p.id]) : CITIES[p.id].stay.ll, "#17202B", p.n ? String(p.n) : "✈", `${p.n ? p.n + ". " : ""}${esc(CITIES[p.id].name)}${p.nights ? " · " + p.nights + " nights" : " (airport)"}`, true));
     } else {
       const d = lastPlan.days[+which], color = DAY_COLORS[+which % DAY_COLORS.length];
-      const hotel = d.city.stay.ll;
+      const hotel = stayLL(d.city);
       const acts = d.slots.filter((s) => s.type === "act");
       L.polyline([hotel].concat(acts.map((s) => s.p.ll), d.kind === "depart" ? [] : [hotel]), { color, weight: 4, opacity: 0.8 }).addTo(lmapLayer);
-      pin(hotel, "#17202B", "H", `Hotel area: ${esc(d.city.stay.area)}`, true);
+      pin(hotel, "#17202B", "H", `${userHotel(d.city) ? "Your hotel" : "Hotel area"}: ${esc(stayName(d.city))}`, true);
       acts.forEach((s, k) => pin(s.p.ll, color, String(k + 1), `${SLOT[s.part].label}: ${esc(s.p.n)}`));
       if (d.slots.some((s) => s.type === "travel")) {
         const t = d.slots.find((s) => s.type === "travel");
@@ -3920,7 +4009,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
         ${s.collect ? `<div>Collect bags from the hotel first.</div>` : ""}
         ${s.leg && s.leg.chosen ? `<div><b>${MODE[s.leg.chosen].label}:</b> ${esc(s.text)}</div>` : `<div><b>Mode not chosen.</b> Options: ${esc(modesFor(s.fromId, s.toId).map((m) => MODE[m].label + " ~" + dur(modeEstimate(m, s.fromId, s.toId).door) + ", " + modeEstimate(m, s.fromId, s.toId).cost).join(" · "))}</div>`}
         ${s.border ? `<div>Border crossing — passport ready.</div>` : ""}
-        ${s.toFlight ? "" : `<div><b>On arrival:</b> ${esc(firstSentence(s.arrive))} Check in at ${esc(s.to.stay.area)}.</div>`}`;
+        ${s.toFlight ? "" : `<div><b>On arrival:</b> ${esc(firstSentence(s.arrive))} Check in at ${esc(stayName(s.to))}.</div>`}`;
     } else if (s.type === "depart") {
       b = `<div class="pv-name">Departure</div>${s.off != null ? `<div><b>${s.flightNo ? esc(s.flightNo) + " takes off" : "Take-off"} ${hhmm(s.off)}</b> · at the airport by ${hhmm(s.off - INTL_BUFFER)}${s.leaveBy != null ? ` · leave hotel by ${hhmm(s.leaveBy)}` : ""}</div>` : ""}<div>${esc(s.text)}</div>${fromSyd() ? `<div>${plain(sydLine(s.flyOut, "out"))}</div>` : ""}`;
     } else if (s.type === "rest") {
@@ -3958,7 +4047,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
       const hotel = d.city.hotels.find((h) => h.tier === state.budget) || d.city.hotels[0];
       pages.push(`${head(`Day ${i + 1} · ${esc(d.city.name)} <span class="han">${d.city.zh}</span>`, (d.date ? fmtDate(d.date) + " · " : "") + (KIND[d.kind] || "Sightseeing"))}
         <p class="pv-sub">${esc(dayTitle(d))}</p>
-        ${firstInCity ? `<p class="pv-stay"><b>Stay:</b> ${esc(d.city.stay.area)} — e.g. ${esc(hotel.n)}. <b>Halal near hotel:</b> ${esc(eatNear(d.city, d.city.stay.ll, 2).located.map((h) => h.n).join("; ") || d.city.halalTip)}</p>` : ""}
+        ${firstInCity ? `<p class="pv-stay"><b>Stay:</b> ${userHotel(d.city) ? esc(stayName(d.city)) + " (your hotel)" : esc(d.city.stay.area) + " — e.g. " + esc(hotel.n)}. <b>Halal near hotel:</b> ${esc(eatNear(d.city, stayLL(d.city), 2).located.map((h) => h.n).join("; ") || d.city.halalTip)}</p>` : ""}
         <table class="pv-tl"><tbody>${timelineFor(d, i).map((x) => `<tr class="k-${x.k}"><td class="pv-t">${hhmm(x.start)}${x.end > x.start ? "–" + hhmm(x.end) : ""}</td><td>${x.icon || TL_ICON[x.k] || ""} <b>${esc(x.title)}</b>${x.note ? ` <span class="pv-meta">— ${esc(x.note)}</span>` : ""}</td></tr>`).join("")}</tbody></table>
         <h2>Details & directions</h2>
         <table class="pv-day"><tbody>${d.slots.filter((s) => s.type !== "act" || !isEdited(d, i) || timelineFor(d, i).some((x) => x.pid === s.p.id)).map((s) => pvSlot(s, d)).join("")}</tbody></table>
@@ -3971,7 +4060,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     pages.push(`${head("Key information")}
       <div class="pv-cols">
         ${uniq.map((id) => { const ct = CITIES[id]; return `<section><h2>${esc(ct.name)} <span class="han">${ct.zh}</span></h2>
-          <p><b>Stay:</b> ${esc(ct.stay.area)}</p>
+          <p><b>Stay:</b> ${userHotel(ct) ? esc(stayName(ct)) + " (your hotel)" : esc(ct.stay.area)}</p>
           <p><b>Hotels:</b> ${ct.hotels.map((h) => `${esc(h.n)} (${T[h.tier]})`).join("; ")}</p>
           <p><b>Halal:</b> ${ct.halal.map((h) => esc(h.n)).join("; ")}</p>
           ${ct.mosques.length ? `<p><b>Mosque:</b> ${ct.mosques.map((m) => esc(m.n)).join("; ")}</p>` : ""}

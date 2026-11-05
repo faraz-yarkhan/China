@@ -6,6 +6,15 @@
    tip, x how to get there when it is far from the centre, cl closed weekdays (0 Sun … 6 Sat),
    r rating 1–3 (3 = unmissable). */
 
+/* ---------- DATA REFRESH — updated by the weekly refresh (see tools/REFRESH.md) ---------- */
+const DATA_INFO = {
+  refreshed: "2026-11-05", // date the data below was last checked (YYYY-MM-DD)
+  // Mid-market rates to Australian dollars: A$ per 1 unit of local currency
+  audRates: { "¥": 0.214, "HK$": 0.179, "MOP": 0.174 },
+  ratesNote: "1 CNY ≈ A$0.214 · HK$1 ≈ A$0.179 · MOP 1 ≈ A$0.174 (mid-market)",
+  covers: "exchange rates, entry rules for Australians, Sydney flights, prices, opening days, hotels and halal food listings",
+};
+
 const TRIP_TYPES = [
   { id: "sightseeing", label: "Sightseeing" },
   { id: "culture", label: "Culture & history", tags: ["culture", "history"] },

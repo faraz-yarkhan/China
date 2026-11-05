@@ -42,3 +42,9 @@ Prices, opening hours and visa rules are typical for 2025–26 and change often:
 
 ## Using it on iPhone / iPad
 Tapping the .html file in Files, Mail, WhatsApp or the Claude app opens a **preview that doesn't run JavaScript**, so the planner can't work there (the page shows a notice when this happens). Instead, open it in Safari from a web address: the published Claude page, or host this repo with GitHub Pages (Settings → Pages → deploy from this branch) and open the Pages URL (https://faraz-yarkhan.github.io/China/). To carry your plan on the phone without internet, press **Save offline copy**: it saves a script-free HTML file of your itinerary that opens in any iPhone preview (Files, WhatsApp, Mail) and prints the same compact layout. The code avoids JavaScript features older iOS Safari lacks, so it runs on iOS 12 and later.
+
+## Keeping the data current
+A scheduled Claude session refreshes the facts weekly following `tools/REFRESH.md` (exchange rates, entry rules,
+flights, prices, opening days, hotels, halal food), logs changes in `tools/refresh-log.md`, and updates the
+"Data last refreshed" date shown at the bottom of the page. To rebuild by hand: `python3 tools/build.py`, then
+`node tools/smoke-test.js`.

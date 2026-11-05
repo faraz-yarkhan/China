@@ -1040,6 +1040,7 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
 .glance .g-sleep { white-space: nowrap; color: var(--muted); }
 .glance .kind-chip { display: block; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gold); }
 .day { scroll-margin-top: 64px; }
+.refresh { max-width: 1320px; margin: 28px auto 0; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); }
 .print-only { display: none; }
 .print-btn { border-color: var(--ink); font-weight: 600; }
 #printView { display: none; }
@@ -1206,6 +1207,7 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; color:
 
   <section class="out" id="out" aria-live="polite"></section>
 </main>
+<footer class="refresh" id="refreshFooter">Data last refreshed: 5 Nov 2026 (exchange rates, entry rules for Australians, Sydney flights, prices, opening days, hotels and halal food listings). Checked weekly.</footer>
 
 <script>
   window.onerror = function (msg) {

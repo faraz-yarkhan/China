@@ -56,8 +56,11 @@
 
   /* ---------- prices in Australian dollars (approximate, mid-market) ---------- */
   // Checked 2 Nov 2026: 1 CNY ≈ A$0.214 (XE, Wise, Ria). HK$ and MOP from recent quotes; the pataca is pegged at MOP 1.03 = HK$1.
-  const AUD_RATE = { "¥": 0.214, "HK$": 0.179, "MOP": 0.174 };
-  const AUD_NOTE = "1 CNY ≈ A$0.214 · HK$1 ≈ A$0.179 · MOP 1 ≈ A$0.174 (mid-market, early Nov 2026)";
+  const AUD_RATE = DATA_INFO.audRates;
+  // "5 Nov 2026" from "2026-11-05"
+  const refreshedLabel = (() => { const d = new Date(DATA_INFO.refreshed + "T00:00:00"); return isNaN(d) ? DATA_INFO.refreshed : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }); })();
+  const AUD_NOTE = DATA_INFO.ratesNote + ", checked " + refreshedLabel;
+  const refreshLine = () => `Data last refreshed: ${refreshedLabel} (${DATA_INFO.covers}). Checked weekly.`;
   const audFmt = (v) => (v < 1 ? String(Math.max(0.5, Math.round(v * 2) / 2)) : v < 10 ? String(Math.round(v * 2) / 2) : v < 100 ? String(Math.round(v)) : (v < 1000 ? Math.round(v / 5) * 5 : Math.round(v / 10) * 10).toLocaleString("en-US"));
   // Adds "(≈A$…)" after every ¥ / HK$ / MOP amount or range in a piece of text
   const PRICE_RE = /(¥|HK\$|MOP\$?\s?)(\d[\d,]*(?:\.\d+)?)(\s?[–-]\s?(?:¥|HK\$|MOP\$?\s?)?(\d[\d,]*(?:\.\d+)?))?(?![\d,]*\.?\d)(?!\s*\(?≈\s?A\$)/g;
@@ -1236,7 +1239,7 @@
        <div id="pane-stay" role="tabpanel" aria-labelledby="tab-stay" class="out" ${currentTab !== "stay" ? "hidden" : ""}><h2 class="print-only">Hotels, halal food & things to do</h2>${stayHTML(ids)}</div>
        <div id="pane-prep" role="tabpanel" aria-labelledby="tab-prep" class="out" ${currentTab !== "prep" ? "hidden" : ""}><h2 class="print-only">Before you go</h2>${prepHTML(routeIds, hasMainland, hasHK, hasMO)}</div>
        <div id="pane-talk" role="tabpanel" aria-labelledby="tab-talk" class="out" ${currentTab !== "talk" ? "hidden" : ""}><h2 class="print-only">Phrases</h2>${phrasesHTML(hasHK || hasMO)}</div>
-       <p class="foot">Prices, opening hours and visa rules change. Figures here are typical for 2025–26 and meant for planning; confirm bookings and entry rules on official sites before you travel. Directions are estimates from map distance — use Apple Maps or Amap on the day for live routes.</p>`;
+       <p class="foot"><b>${esc(refreshLine())}</b> Prices, opening hours and visa rules change. Figures here are meant for planning; confirm bookings and entry rules on official sites before you travel. Directions are estimates from map distance — use Apple Maps or Amap on the day for live routes.</p>`;
     restoreChecks();
     plan.days.forEach((d, i) => { if (isEdited(d, i)) { const pids = new Set(timelineFor(d, i).map((x) => x.pid).filter(Boolean)); document.querySelectorAll(`#day-${i + 1} .slot[data-pid]`).forEach((sl) => (sl.hidden = !pids.has(sl.dataset.pid))); } });
     if (currentTab === "map") showStreetMap();
@@ -1963,6 +1966,7 @@
     // 1. Overview
     pages.push(`${head(`${state.days}-day trip`, c.startD ? fmtDate(c.startD) + " – " + fmtDate(c.endD) : "")}
       <p class="pv-route">${esc(routeTxt)}</p>
+      <p class="pv-meta">${esc(refreshLine())}</p>
       <ul class="pv-notes">${c.notes.filter((n) => n[1] !== "Example").map(([, t, h]) => `<li><b>${t}:</b> ${plain(h)}</li>`).join("")}</ul>
       <table class="pv-tbl"><thead><tr><th>Day</th><th>City</th><th>Plan</th></tr></thead><tbody>
       ${plan.days.map((d, i) => `<tr><td>${i + 1}${d.date ? "<br>" + fmtDate(d.date) : ""}</td><td>${esc(d.city.name)}</td><td>${esc(dayTitle(d))}</td></tr>`).join("")}
@@ -2237,7 +2241,7 @@ ${pv}
       if (d.back && d.kind !== "depart") L.push(`  Back to hotel: ${strip(d.back.text)}`);
       L.push("");
     });
-    return withAUD(L.join("\n")) + "\n\nPrices: " + AUD_NOTE + ".";
+    return withAUD(L.join("\n")) + "\n\nPrices: " + AUD_NOTE + ".\n" + refreshLine();
   }
 
   function copy(text, okMsg) {
@@ -2311,6 +2315,9 @@ ${pv}
     if (e.target.closest("[data-pvprint]")) { if (window.NO_PRINT) toast("Printing is blocked in this preview — use your browser's Share → Print, or open the web version."); else try { window.print(); } catch (err) { /* ignore */ } }
   });
   window.addEventListener("beforeprint", fitPrintPages);
+
+  const rf = $("#refreshFooter");
+  if (rf) rf.textContent = refreshLine();
 
   renderForm();
   bindForm();

@@ -270,7 +270,7 @@
   const toMin = (t) => { if (!t || !/^\d{1,2}:\d{2}/.test(t)) return null; const p = t.split(":"); return +p[0] * 60 + +p[1]; };
   const hhmm = (m) => { m = (((Math.round(m / 5) * 5) % 1440) + 1440) % 1440; return String(Math.floor(m / 60)).padStart(2, "0") + ":" + String(m % 60).padStart(2, "0"); };
   // Typical minutes from the city centre to its main airport
-  const AIRPORT_MIN = { bj: 60, sh: 60, xa: 60, cd: 60, cq: 45, gl: 45, ys: 90, zjj: 60, hz: 50, su: 90, gz: 50, sz: 40, hk: 45, mo: 30 };
+  const AIRPORT_MIN = { bj: 60, sh: 60, xa: 60, cd: 60, cq: 45, gl: 45, ys: 90, zjj: 60, fr: 90, hz: 50, su: 90, gz: 50, sz: 40, hk: 45, mo: 30 };
   const IMMIGRATION = 75; // landing → through immigration with bags
   const INTL_BUFFER = 180; // at the airport this long before an international take-off
   // Time to leave the hotel before a train/flight departs
@@ -975,7 +975,7 @@
         }
         const start = r5(Math.max(base, (t == null ? base : t) + mins));
         const end = r5(start + durH * 60);
-        push({ k: "sight", title: p.n, start, end, pid: p.id, ll: p.ll, note: far ? (s.part === "full" ? "Bring lunch and water — halal food is rare out here." : "") : `${g.mode} ~${mins} min from the previous stop.`, why: s.why ? s.why[1] : "" });
+        push({ k: "sight", title: p.n, start, end, pid: p.id, ll: p.ll, note: far ? (s.part === "full" ? "Bring lunch and water — halal food is rare out here." : "") : mins < 3 ? "Right next to the previous stop." : `${g.mode} ~${mins} min from the previous stop.`, why: s.why ? s.why[1] : "" });
         t = end;
         if (far) {
           const back = getThere(p, hotel, actCity).mins || mins;
@@ -1692,6 +1692,7 @@
   function recReason(mode, a, b) {
     const key = pairKey(a, b), opts = modesFor(a, b);
     if (key === "gl|ys" && mode === "boat") return "The Li River cruise is the highlight of this region, and it gets you to Yangshuo anyway — your transfer doubles as sightseeing.";
+    if (key === "fr|zjj" && mode === "train") return "The quickest way: 20–30 min on the high-speed train from Zhangjiajie West (allow 40–50 min by taxi from Wulingyuan to the station), then about 10 min by taxi from Furongzhen station to the old town. By car it's 1.5–2 h each way.";
     if (key === "hk|mo" && mode === "boat") return "The ferries leave from Sheung Wan and Tsim Sha Tsui, close to the recommended hotels, and take about an hour. The bridge bus is cheaper but starts out at Tung Chung near the airport.";
     const t = opts.includes("train") ? modeEstimate("train", a, b) : null, f = opts.includes("flight") ? modeEstimate("flight", a, b) : null;
     switch (mode) {

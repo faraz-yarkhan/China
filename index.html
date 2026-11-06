@@ -802,6 +802,10 @@ select { flex: 1 1 160px; min-width: 0; max-width: 100%; }
 .timerow input[type=time] { width: 122px; flex: none; }
 .timerow input[type=text] { width: 0; flex: 1 1 80px; max-width: 130px; text-transform: uppercase; }
 .timerow input[type=text]::placeholder { text-transform: none; }
+.ownplace { display: grid; gap: 6px; font-size: 13px; padding: 8px; border: 1px dashed var(--line); border-radius: 8px; background: var(--card); }
+.ownopts { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; }
+.ownopts select { min-height: 34px; padding: 4px 6px; flex: 1 1 110px; min-width: 0; }
+.chip.own { border-color: var(--seal); }
 .hotelrow { display: grid; gap: 6px; font-size: 13px; }
 .hotelrow select { min-height: 36px; padding: 5px 8px; width: 100%; max-width: 100%; }
 .hotelfind { display: flex; gap: 6px; }

@@ -473,10 +473,10 @@
     if (!state.stops.length) { el.innerHTML = '<p class="hint">No cities yet. Add your first city above.</p>'; renderTally(); return; }
     el.innerHTML = state.stops.map((st, i) => {
       const c = CITIES[st.city];
-      const opts = c.places.filter((p) => !st.places.includes(p.id)).map((p) => `<option value="${p.id}">${esc(p.n)}${p.s.includes("full") ? " (full day)" : ""}</option>`).join("");
+      const opts = c.places.filter((p) => !st.places.includes(p.id)).map((p) => `<option value="${p.id}">${p.custom ? "✳️ " : ""}${esc(p.n)}${p.s.includes("full") ? " (full day)" : ""}</option>`).join("");
       const chips = st.places.map((id) => {
         const p = c.places.find((x) => x.id === id);
-        return p ? `<span class="chip">${esc(p.n)}<button type="button" data-act="unplace" data-i="${i}" data-id="${id}" aria-label="Remove ${esc(p.n)}">×</button></span>` : "";
+        return p ? `<span class="chip${p.custom ? " own" : ""}">${p.custom ? "✳️ " : ""}${esc(p.n)}<button type="button" data-act="unplace" data-i="${i}" data-id="${id}" aria-label="Remove ${esc(p.n)}">×</button></span>` : "";
       }).join("");
       return `<div class="stop">
         <div class="stop-head"><span class="num">${String(i + 1).padStart(2, "0")}</span><strong>${esc(c.name)}</strong><span class="han">${c.zh}</span>
@@ -487,11 +487,89 @@
         ${legRow(st, i)}
         ${hotelRow(st, i)}
         <div class="row"><select id="place-${i}" data-act="place" data-i="${i}" aria-label="Add a place in ${esc(c.name)}"><option value="">Add a place to see…</option>${opts}</select></div>
+        ${ownPlaceRow(i, c)}
         ${chips ? `<div class="chips">${chips}</div><div><button type="button" class="btn small" data-act="addtop" data-i="${i}">＋ Add top picks</button></div>` : `<p class="hint suggest">No places chosen, so we'll plan the top-rated ones for your trip style, e.g. ${topPicks(st.city, 3).map((p) => esc(p.n.split(/[:(]/)[0].trim())).join(", ")}. <button type="button" class="btn small" data-act="addtop" data-i="${i}">Add top picks</button></p>`}
       </div>`;
     }).join("");
     renderTally();
     renderOutLeg();
+  }
+
+  /* ---------- the traveller's own places ---------- */
+  // Saved per city in state.customPlaces and merged into that city's places so the planner treats them like any other
+  function applyCustomPlaces() {
+    const cp = state.customPlaces || {};
+    Object.keys(cp).forEach((cid) => {
+      const city = CITIES[cid];
+      if (!city) return;
+      cp[cid].forEach((p) => { if (!city.places.some((q) => q.id === p.id)) city.places.push(p); });
+    });
+  }
+  function removeCustomPlace(cid, pid) {
+    const cp = state.customPlaces && state.customPlaces[cid];
+    if (cp) state.customPlaces[cid] = cp.filter((p) => p.id !== pid);
+    const city = CITIES[cid];
+    if (city) city.places = city.places.filter((p) => p.id !== pid);
+  }
+  const ownResults = {};
+  function ownPlaceRow(i, c) {
+    return `<div class="ownplace">
+      <span class="hint lbl">✳️ Add your own place in ${esc(c.name)} — a sight, shop, café, restaurant, friend's address…</span>
+      <div class="hotelfind"><input type="text" id="ownq-${i}" placeholder="Place name or map link" aria-label="Your own place in ${esc(c.name)}"><button type="button" class="btn small" data-act="ownfind" data-i="${i}">Find</button></div>
+      <div class="ownopts">
+        <label class="hint" for="owndur-${i}">Time there</label>
+        <select id="owndur-${i}"><option value="1">1 hour</option><option value="2" selected>2 hours</option><option value="3">3 hours</option><option value="4">Half day</option><option value="full">Full day</option></select>
+        <label class="hint" for="ownwhen-${i}">When</label>
+        <select id="ownwhen-${i}"><option value="any">Any time</option><option value="m">Morning</option><option value="e">Afternoon</option><option value="n">Evening</option></select>
+      </div>
+      <div class="hotelres" id="ownres-${i}" aria-live="polite"></div>
+    </div>`;
+  }
+  function addOwnPlace(i, info) {
+    const st = state.stops[i], c = CITIES[st.city];
+    if (info.ll && km(info.ll, c.stay.ll) > 150) { toast(`That spot is ${Math.round(km(info.ll, c.stay.ll))} km from ${c.name}. Check it's the right place.`); return; }
+    const dur = $("#owndur-" + i).value, when = $("#ownwhen-" + i).value;
+    const H = { 1: "1 h", 2: "2 h", 3: "3 h", 4: "Half day (4 h)", full: "Full day" }[dur];
+    const p = {
+      id: c.id + "-u" + Date.now().toString(36), n: info.name, zh: "", t: ["custom"],
+      s: dur === "full" ? ["full"] : when === "any" ? ["m", "e", "n"] : [when],
+      h: H, c: "Your own pick — check prices locally", ll: info.ll || c.stay.ll, m: info.ll ? nearestMetro(c, info.ll) : null,
+      d: info.addr ? `Your own addition: ${info.addr}.` : "Your own addition.",
+      tip: info.ll ? "" : "No map pin, so travel times are estimated from the city centre. Paste the place's map link to make them exact.",
+      x: info.ll && km(info.ll, c.stay.ll) > 25 ? "Outside the city centre: about " + Math.round(km(info.ll, c.stay.ll)) + " km away. A DiDi or car is easiest." : undefined,
+      r: 2, custom: true,
+    };
+    state.customPlaces = state.customPlaces || {};
+    (state.customPlaces[c.id] = state.customPlaces[c.id] || []).push(p);
+    c.places.push(p);
+    st.places.push(p.id);
+    persist(); renderStops();
+    if (lastPlan) generate(false);
+    toast(`Added “${p.n}” to ${c.name}. It's in your plan — find it in the hour-by-hour timeline.`);
+  }
+  function findOwnPlace(i) {
+    const c = CITIES[state.stops[i].city];
+    const q = ($("#ownq-" + i).value || "").trim();
+    const box = $("#ownres-" + i);
+    if (!q) { toast("Type the place's name, or paste its map link."); return; }
+    const ll = parseLatLng(q);
+    if (ll) { addOwnPlace(i, { name: nameFromLink(q, "My place (map pin)"), ll }); return; }
+    const noPin = `<button type="button" class="btn small hotelpick" data-act="ownnopin" data-i="${i}">Add “${esc(q)}” without a map pin<br><span class="hint">Times will be estimated from the city centre</span></button>`;
+    if (window.NO_PRINT) { box.innerHTML = `<p class="hint">Searching isn't possible inside the Claude preview. Paste the place's Google or Apple Maps link, or add it by name:</p>` + noPin; return; }
+    box.innerHTML = `<p class="hint">Searching OpenStreetMap near ${esc(c.name)}…</p>`;
+    const [la, lo] = c.stay.ll;
+    const url = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=en&bounded=1&viewbox=" +
+      [lo - 0.8, la + 0.8, lo + 0.8, la - 0.8].join(",") + "&q=" + encodeURIComponent(q);
+    let done = false;
+    const fail = (why) => { if (done) return; done = true; box.innerHTML = `<p class="hint">${why} Paste the place's map link (in Google or Apple Maps: Share → Copy link), or:</p>` + noPin; };
+    setTimeout(() => fail("The search took too long."), 9000);
+    fetch(url, { headers: { Accept: "application/json" } }).then((r) => r.json()).then((rows) => {
+      if (done) return;
+      ownResults[i] = (rows || []).map((r) => ({ name: r.name || String(r.display_name).split(",")[0], addr: String(r.display_name).split(",").slice(0, 4).join(","), ll: [+r.lat, +r.lon] }));
+      if (!ownResults[i].length) { fail(`No match for “${esc(q)}” near ${esc(c.name)}. Try the English or Chinese name, or a street.`); return; }
+      done = true;
+      box.innerHTML = `<p class="hint">Pick the right place:</p>` + ownResults[i].map((r, k) => `<button type="button" class="btn small hotelpick" data-act="ownpick" data-i="${i}" data-k="${k}"><b>${esc(r.name)}</b><br><span class="hint">${esc(r.addr)} · ${km(r.ll, c.stay.ll).toFixed(1)} km from the centre</span></button>`).join("") + noPin;
+    }).catch(() => fail("Couldn't reach the map search (it needs an internet connection)."));
   }
 
   /* ---------- "Your hotel" on each city card ---------- */
@@ -519,6 +597,16 @@
     if (a > 70 && a < 140 && b > 15 && b < 56) { const x = a; a = b; b = x; }
     return a > 15 && a < 56 && b > 70 && b < 140 ? [a, b] : null;
   }
+  // A place name from a pasted map link: Apple "?q=Name", Google ".../place/Name/@..."
+  function nameFromLink(text, fallback) {
+    const t = String(text);
+    let m = t.match(/[?&]q=([^&#]+)/);
+    if (m) { const v = decodeURIComponent(m[1].replace(/\+/g, " ")).trim(); if (v && !/^[-\d.,\s]+$/.test(v)) return v; }
+    m = t.match(/\/place\/([^/@?]+)/);
+    if (m) { const v = decodeURIComponent(m[1].replace(/\+/g, " ")).trim(); if (v && !parseLatLng(v)) return v; }
+    const plain = t.replace(/https?:\/\/\S+/g, "").replace(/-?\d{1,3}\.\d+\s*,\s*-?\d{1,3}\.\d+/g, "").trim();
+    return plain || fallback;
+  }
   function setHotel(i, h) {
     const c = CITIES[state.stops[i].city];
     const d = km(h.ll, c.stay.ll);
@@ -536,7 +624,7 @@
     const box = $("#hotelres-" + i);
     if (!q) { toast("Type the hotel's name or address, or paste its map link."); return; }
     const ll = parseLatLng(q);
-    if (ll) { setHotel(i, { name: "My hotel (map pin)", ll, src: "pin" }); return; }
+    if (ll) { setHotel(i, { name: nameFromLink(q, "My hotel (map pin)"), ll, src: "pin" }); return; }
     if (window.NO_PRINT) { box.innerHTML = `<p class="hint">Searching isn't possible inside the Claude preview. Paste the hotel's Google or Apple Maps link (or its coordinates) instead.</p>`; return; }
     box.innerHTML = `<p class="hint">Searching OpenStreetMap…</p>`;
     const [la, lo] = c.stay.ll;
@@ -650,9 +738,15 @@
         toast("Added: " + add.map((id) => CITIES[st.city].places.find((p) => p.id === id).n.split(/[:(]/)[0].trim()).join(", "));
       }
       else if (act === "remove") state.stops.splice(i, 1);
-      else if (act === "unplace") state.stops[i].places = state.stops[i].places.filter((x) => x !== b.dataset.id);
+      else if (act === "unplace") {
+        state.stops[i].places = state.stops[i].places.filter((x) => x !== b.dataset.id);
+        if (/-u[0-9a-z]+$/.test(b.dataset.id) && !state.stops.some((st) => st.places.includes(b.dataset.id))) removeCustomPlace(state.stops[i].city, b.dataset.id);
+      }
       else if (act === "fit") { fitNights(); return; }
       else if (act === "hotelfind") { findHotel(i); return; }
+      else if (act === "ownfind") { findOwnPlace(i); return; }
+      else if (act === "ownpick") { const r = (ownResults[i] || [])[+b.dataset.k]; if (r) addOwnPlace(i, r); return; }
+      else if (act === "ownnopin") { const q = ($("#ownq-" + i).value || "").trim(); if (q) addOwnPlace(i, { name: q, ll: null }); return; }
       else if (act === "hotelpick") { const r = (hotelResults[i] || [])[+b.dataset.k]; if (r) setHotel(i, { name: r.name, ll: r.ll, src: "search" }); return; }
       else return;
       persist(); renderStops();
@@ -2316,6 +2410,15 @@ ${pv}
   });
   window.addEventListener("beforeprint", fitPrintPages);
 
+  $("#planner").addEventListener("keydown", (e) => {
+    const t = e.target;
+    if (e.key !== "Enter" || !t.id) return;
+    const m = t.id.match(/^(ownq|hotelq)-(\d+)$/);
+    if (!m) return;
+    e.preventDefault();
+    if (m[1] === "ownq") findOwnPlace(+m[2]); else findHotel(+m[2]);
+  });
+  applyCustomPlaces();
   const rf = $("#refreshFooter");
   if (rf) rf.textContent = refreshLine();
 

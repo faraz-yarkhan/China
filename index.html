@@ -1037,6 +1037,13 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
 .pv-tl .pv-t { width: 24mm; font-family: var(--mono); white-space: nowrap; color: #333; }
 .pv-tl .k-sight b { color: #A3241E; }
 .pv-tl .k-meal b, .pv-tl .k-breakfast b { color: #1D6B4F; }
+/* Weather */
+.wx { display: flex; gap: 8px; align-items: flex-start; font-size: 13.5px; background: var(--sky-soft); border-radius: 8px; padding: 7px 10px; margin-bottom: 6px; }
+.wx.muted { color: var(--muted); background: var(--paper); border: 1px dashed var(--line); }
+.wx-ic { font-size: 18px; line-height: 1.2; }
+.g-wx { white-space: nowrap; font-family: var(--mono); font-size: 12.5px; }
+table.wxmon tr.trip td { background: var(--seal-soft); }
+table.wxsum td, table.wxmon td { vertical-align: top; }
 /* At a glance */
 .glance table { font-size: 13.5px; }
 .glance td, .glance th { padding: 7px 8px; }
@@ -1070,6 +1077,12 @@ body.pv-screen .pv-page { margin: 12px auto; padding: 10mm; box-shadow: 0 2px 12
 #pdfView .day { animation: none; }
 #pdfView .print-only { display: block; font-family: var(--display); font-size: 22px; margin: 6px 0 0; padding-bottom: 4px; border-bottom: 3px solid var(--seal); }
 #pdfView [hidden] { display: none !important; }
+/* html2canvas draws inset shadows as solid fills: use a plain border in the PDF */
+#pdfView .hotel.pick { box-shadow: none; border-width: 2px; }
+/* In the PDF, day cards use the stacked layout so they can break cleanly between parts */
+#pdfView .day { grid-template-columns: minmax(0, 1fr); }
+#pdfView .day-num { flex-direction: row; justify-content: flex-start; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px 14px; gap: 10px; text-align: left; }
+#pdfView .day-num .stamp { width: 40px; height: 40px; font-size: 19px; }
 /* Visible but off-screen while the PDF is drawn */
 #printView.capturing { display: block; position: absolute; left: -10000px; top: 0; width: 190mm; }
 #printView.capturing .pv-page { margin: 0 0 20px; }

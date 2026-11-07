@@ -1037,6 +1037,13 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
 .pv-tl .pv-t { width: 24mm; font-family: var(--mono); white-space: nowrap; color: #333; }
 .pv-tl .k-sight b { color: #A3241E; }
 .pv-tl .k-meal b, .pv-tl .k-breakfast b { color: #1D6B4F; }
+/* Weather */
+.wx { display: flex; gap: 8px; align-items: flex-start; font-size: 13.5px; background: var(--sky-soft); border-radius: 8px; padding: 7px 10px; margin-bottom: 6px; }
+.wx.muted { color: var(--muted); background: var(--paper); border: 1px dashed var(--line); }
+.wx-ic { font-size: 18px; line-height: 1.2; }
+.g-wx { white-space: nowrap; font-family: var(--mono); font-size: 12.5px; }
+table.wxmon tr.trip td { background: var(--seal-soft); }
+table.wxsum td, table.wxmon td { vertical-align: top; }
 /* At a glance */
 .glance table { font-size: 13.5px; }
 .glance td, .glance th { padding: 7px 8px; }
@@ -1070,6 +1077,12 @@ body.pv-screen .pv-page { margin: 12px auto; padding: 10mm; box-shadow: 0 2px 12
 #pdfView .day { animation: none; }
 #pdfView .print-only { display: block; font-family: var(--display); font-size: 22px; margin: 6px 0 0; padding-bottom: 4px; border-bottom: 3px solid var(--seal); }
 #pdfView [hidden] { display: none !important; }
+/* html2canvas draws inset shadows as solid fills: use a plain border in the PDF */
+#pdfView .hotel.pick { box-shadow: none; border-width: 2px; }
+/* In the PDF, day cards use the stacked layout so they can break cleanly between parts */
+#pdfView .day { grid-template-columns: minmax(0, 1fr); }
+#pdfView .day-num { flex-direction: row; justify-content: flex-start; border-right: 0; border-bottom: 1px solid var(--line); padding: 8px 14px; gap: 10px; text-align: left; }
+#pdfView .day-num .stamp { width: 40px; height: 40px; font-size: 19px; }
 /* Visible but off-screen while the PDF is drawn */
 #printView.capturing { display: block; position: absolute; left: -10000px; top: 0; width: 190mm; }
 #printView.capturing .pv-page { margin: 0 0 20px; }
@@ -2173,6 +2186,37 @@ const SYD_FLIGHTS = {
   zjj: { direct: false, airport: "Zhangjiajie Hehua (DYG)", text: "No nonstop. Connect via Guangzhou, Shanghai or Chengdu, or fly to Changsha and take the high-speed train." },
   hk: { direct: true, airport: "Hong Kong (HKG)", text: "Nonstop with Cathay Pacific (several a day) and Qantas, about 9–9.5 h. Overnight southbound flights land in Sydney early morning." },
   mo: { direct: false, airport: "Hong Kong (HKG) or Macau (MFM)", text: "No nonstop. Fly to Hong Kong (~9.5 h), then the Hong Kong–Zhuhai–Macao Bridge bus (~45 min) or the TurboJET ferry from Sheung Wan (~1 h)." },
+};
+
+/* Typical weather by month (long-term averages, rounded): average high and low in °C, and days with rain.
+   Sources: Wikipedia / national weather service climate tables; Zhangjiajie, Guilin and Chongqing cross-checked
+   with travel-weather sites (Nov 2026). These are averages for planning, not forecasts. */
+const CLIMATE = {
+  bj: { hi: [2, 6, 13, 21, 27, 31, 31, 30, 26, 19, 10, 3], lo: [-8, -5, 1, 8, 14, 19, 22, 21, 15, 8, 0, -6], rain: [2, 3, 4, 5, 6, 10, 13, 12, 7, 5, 3, 2],
+    notes: [[[12, 1, 2], "Very cold, dry and often sunny. Strong wind chill on the Great Wall."], [[3, 4], "Windy, with occasional dust; warm days, cold nights."], [[5, 6], "Warm to hot and mostly dry."], [[7, 8], "Hot and humid, with heavy thunderstorms — the rainy season."], [[9, 10], "The best months: clear, mild and dry."], [[11], "Turning cold; heating comes on in mid-November."]] },
+  sh: { hi: [8, 10, 14, 20, 25, 28, 32, 32, 28, 23, 17, 11], lo: [1, 3, 6, 11, 16, 21, 25, 25, 21, 15, 9, 3], rain: [10, 10, 13, 12, 12, 14, 13, 12, 10, 7, 9, 8],
+    notes: [[[12, 1, 2], "Damp chill that feels colder than the number; older buildings have little heating."], [[3, 4], "Mild but changeable spring."], [[5], "Warm and pleasant."], [[6, 7], "Plum-rain season (mid-June to early July): long spells of rain, very humid."], [[7, 8, 9], "Hot and humid; typhoons possible from August to September."], [[10, 11], "The best months: mild and drier."]] },
+  su: { hi: [8, 10, 15, 21, 26, 29, 33, 32, 28, 23, 17, 10], lo: [1, 3, 7, 12, 17, 21, 25, 25, 21, 15, 9, 3], rain: [10, 10, 13, 12, 12, 14, 13, 12, 10, 7, 8, 8], same: "sh" },
+  hz: { hi: [8, 11, 15, 22, 27, 30, 34, 33, 28, 23, 17, 11], lo: [2, 4, 8, 13, 18, 22, 26, 25, 21, 15, 9, 3], rain: [12, 12, 15, 14, 14, 15, 13, 13, 11, 8, 9, 8], same: "sh" },
+  xa: { hi: [6, 10, 16, 22, 28, 32, 33, 31, 26, 20, 13, 7], lo: [-3, 0, 5, 10, 15, 20, 23, 22, 17, 11, 4, -2], rain: [4, 5, 7, 7, 8, 8, 10, 9, 11, 9, 6, 3],
+    notes: [[[12, 1, 2], "Cold and dry; winter haze is common."], [[3, 4], "Spring arrives quickly; windy days."], [[5, 6, 7, 8], "Hot; July–August thunderstorms."], [[9], "Often the rainiest month, with long drizzly spells."], [[10, 11], "Pleasant autumn, cooling fast in November."]] },
+  cd: { hi: [10, 12, 17, 22, 26, 28, 30, 30, 26, 21, 16, 11], lo: [3, 5, 9, 13, 17, 20, 22, 22, 19, 15, 9, 4], rain: [8, 8, 12, 13, 14, 16, 18, 16, 17, 15, 9, 6],
+    notes: [[[12, 1, 2], "Grey, damp chill; little indoor heating."], [[3, 4, 5], "Mild spring — a good time to visit."], [[6, 7, 8], "Hot, humid and the wettest months."], [[9, 10, 11], "Mild autumn, often overcast with drizzle."]] },
+  cq: { hi: [11, 13, 18, 23, 27, 29, 33, 33, 28, 22, 17, 12], lo: [7, 8, 12, 17, 21, 23, 26, 26, 22, 17, 13, 8], rain: [9, 9, 12, 14, 15, 15, 12, 10, 13, 15, 11, 9],
+    notes: [[[12, 1, 2], "Cool, damp and often foggy (\"the fog city\")."], [[3, 4, 5], "Warm spring with showers."], [[7, 8], "One of China's \"furnace\" cities: heatwaves can reach 38–40°C."], [[6, 9, 10, 11], "Warm and humid, with frequent drizzle in autumn."]] },
+  gl: { hi: [12, 13, 17, 23, 27, 30, 33, 33, 31, 26, 20, 15], lo: [5, 7, 11, 16, 20, 23, 25, 24, 22, 17, 12, 7], rain: [11, 13, 18, 18, 18, 17, 15, 14, 8, 7, 7, 7],
+    notes: [[[12, 1, 2], "Cool and damp; misty river scenery."], [[3, 4, 5, 6], "Rainy season: lush and green, with occasional floods on the Li River."], [[7, 8], "Hot and humid, with afternoon storms."], [[9, 10, 11], "The best months: dry, clear and warm."]] },
+  ys: { hi: [13, 14, 18, 24, 28, 31, 33, 33, 31, 27, 21, 16], lo: [6, 8, 12, 17, 21, 24, 25, 25, 22, 18, 12, 7], rain: [11, 13, 18, 18, 18, 17, 15, 14, 8, 7, 7, 7], same: "gl" },
+  zjj: { hi: [9, 11, 16, 22, 26, 29, 32, 32, 28, 22, 16, 11], lo: [2, 4, 8, 13, 17, 21, 24, 23, 19, 14, 8, 3], rain: [9, 10, 14, 16, 18, 16, 15, 11, 9, 10, 8, 7], mountain: true,
+    notes: [[[12, 1, 2], "Cold; ice or snow possible on the peaks and some paths or cable cars can close."], [[3, 4], "Mild spring; mist and cloud are common (beautiful — or no view at all)."], [[5, 6, 7], "The wettest months; paths get slippery."], [[8], "Hot, with afternoon storms."], [[9, 10, 11], "The best months: clearer views and mild temperatures."]] },
+  fr: { hi: [9, 11, 16, 22, 26, 29, 32, 32, 28, 22, 16, 11], lo: [2, 4, 8, 13, 17, 21, 24, 23, 19, 14, 8, 3], rain: [9, 10, 14, 16, 18, 16, 15, 11, 9, 10, 8, 7],
+    notes: [[[12, 1, 2], "Cold; the waterfall can drop to a trickle."], [[3, 4, 5, 6, 7], "Wet season — the waterfall is at its fullest."], [[8], "Hot and humid."], [[9, 10, 11], "Mild and pleasant."]] },
+  gz: { hi: [19, 20, 22, 26, 30, 32, 33, 33, 32, 29, 25, 21], lo: [10, 13, 16, 20, 23, 25, 26, 26, 24, 20, 16, 11], rain: [7, 10, 15, 16, 18, 19, 17, 17, 13, 6, 5, 5],
+    notes: [[[1, 2], "Cool and often cloudy; damp cold indoors."], [[3, 4], "Humid and foggy, with drizzle."], [[5, 6, 7, 8, 9], "Hot, very humid and wet; typhoon season peaks July–September."], [[10, 11, 12], "The best months: dry, sunny and warm."]] },
+  sz: { hi: [20, 21, 23, 27, 30, 32, 33, 33, 32, 29, 26, 22], lo: [12, 14, 17, 21, 24, 26, 27, 26, 25, 22, 17, 13], rain: [6, 9, 12, 13, 16, 19, 17, 17, 13, 6, 5, 4], same: "gz" },
+  hk: { hi: [19, 19, 22, 25, 29, 31, 32, 32, 31, 28, 24, 20], lo: [15, 15, 17, 21, 24, 26, 27, 27, 26, 24, 20, 16], rain: [5, 9, 10, 11, 14, 18, 17, 17, 14, 7, 5, 4],
+    notes: [[[1, 2], "Cool and cloudy, sometimes chilly in the wind."], [[3, 4], "Humid and foggy; views from the Peak can disappear."], [[5, 6, 7, 8, 9], "Hot, humid, heavy showers; typhoon season — follow Hong Kong Observatory warnings."], [[10, 11, 12], "The best months: dry, sunny and comfortable."]] },
+  mo: { hi: [18, 19, 21, 25, 28, 31, 32, 32, 31, 28, 24, 20], lo: [13, 14, 17, 21, 24, 26, 27, 26, 25, 22, 18, 14], rain: [5, 9, 11, 12, 15, 18, 17, 16, 13, 6, 5, 4], same: "hk" },
 };
 
 </script>
@@ -3401,6 +3445,140 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     return true;
   }
 
+  /* ---------- weather: typical (climate averages) for each date, or a live forecast within ~2 weeks ---------- */
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const isoDate = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+  const climateNotes = (cid) => { const c = CLIMATE[cid] || {}; return c.notes || (c.same && CLIMATE[c.same].notes) || []; };
+  // Monthly averages sit mid-month; days in between are blended with the neighbouring month
+  function typicalFor(cid, date) {
+    const c = CLIMATE[cid];
+    if (!c || !date) return null;
+    const m = date.getMonth(), dim = new Date(date.getFullYear(), m + 1, 0).getDate();
+    const pos = (date.getDate() - 15) / dim, f = Math.abs(pos), m2 = pos >= 0 ? (m + 1) % 12 : (m + 11) % 12;
+    const mix = (a) => a[m] * (1 - f) + a[m2] * f;
+    return { hi: mix(c.hi), lo: mix(c.lo), rain: mix(c.rain) / 30, mountain: !!c.mountain };
+  }
+  const forecastCache = {};
+  const wxIcon = (code) => (code === 0 ? "☀️" : code <= 2 ? "🌤" : code === 3 ? "☁️" : code === 45 || code === 48 ? "🌫" : code >= 71 && code <= 77 ? "❄️" : code >= 95 ? "⛈" : code >= 80 ? "🌦" : code >= 51 ? "🌧" : "🌤");
+  const climIcon = (t) => (t.lo <= -3 ? "🥶" : t.rain >= 0.45 ? "🌦" : t.hi >= 30 ? "☀️" : t.hi <= 8 ? "🧥" : "🌤");
+  function weatherFor(cid, date) {
+    if (!date) return null;
+    const f = forecastCache[cid + "|" + isoDate(date)];
+    const mountain = !!(CLIMATE[cid] && CLIMATE[cid].mountain);
+    if (f) return { src: "forecast", hi: f.hi, lo: f.lo, rain: f.pp / 100, icon: wxIcon(f.code), mountain };
+    const t = typicalFor(cid, date);
+    return t ? Object.assign({ src: "typical", icon: climIcon(t) }, t) : null;
+  }
+  const deg = (v) => Math.round(v) + "°C";
+  const rainWords = (p) => (p >= 0.6 ? "rain likely" : p >= 0.35 ? "showers possible" : p >= 0.15 ? "small chance of rain" : "rain unlikely");
+  // What to wear for a day's high, low and chance of rain
+  function attire(hi, lo, rain) {
+    const out = [];
+    if (hi >= 30) out.push("light, loose, breathable clothes (thin long sleeves keep you covered and cool)", "sun hat, sunglasses and SPF 50");
+    else if (hi >= 24) out.push("light clothes", "a thin layer for air-conditioning and evenings");
+    else if (hi >= 17) out.push("long sleeves", "a light jacket or cardigan");
+    else if (hi >= 10) out.push("a sweater or fleece", "a medium jacket");
+    else if (hi >= 4) out.push("a warm coat", "layers with a thermal top", "a scarf");
+    else out.push("a down jacket", "thermal underwear", "hat, gloves and scarf");
+    if (lo <= 0 && hi >= 4) out.push("gloves and a hat for mornings and evenings");
+    if (rain >= 0.4) out.push("a compact umbrella or rain jacket", "quick-dry shoes");
+    else if (rain >= 0.2) out.push("a compact umbrella");
+    return out;
+  }
+  const attireShort = (hi, lo, rain) => {
+    const b = hi >= 30 ? "Light & breathable, sun hat" : hi >= 24 ? "Light clothes + thin layer" : hi >= 17 ? "Long sleeves + light jacket" : hi >= 10 ? "Sweater + jacket" : hi >= 4 ? "Warm coat, layers, scarf" : "Down jacket, thermals, hat & gloves";
+    return b + (rain >= 0.4 ? " · rain gear" : rain >= 0.2 ? " · umbrella" : "");
+  };
+  // Extra items for what's planned that day
+  function dayExtras(day) {
+    const ps = day.slots.filter((s) => s.type === "act").map((s) => s.p), out = [];
+    if (ps.some((p) => p.t.indexOf("adventure") >= 0 || p.t.indexOf("nature") >= 0 || p.s.indexOf("full") >= 0)) out.push("grippy walking shoes");
+    if (ps.some((p) => /mosque/i.test(p.n))) out.push("modest clothes for the mosque (women: headscarf, arms and legs covered)");
+    if (ps.some((p) => /cruise|boat|ferry|raft/i.test(p.n))) out.push("a light layer for the breeze on the water");
+    return out;
+  }
+  function wxData(day) {
+    const w = weatherFor(day.cityId, day.date);
+    if (!w) return null;
+    return { w, am: w.lo + 0.35 * (w.hi - w.lo), night: w.lo + 0.25 * (w.hi - w.lo), wear: attire(w.hi, w.lo, w.rain).concat(dayExtras(day)) };
+  }
+  function wxLine(day) {
+    const x = wxData(day);
+    if (!x) return `<div class="wx muted"><span class="wx-ic">🌤</span><span>Add a start date (step 1) to see the expected weather and what to wear each day.</span></div>`;
+    const w = x.w;
+    return `<div class="wx"><span class="wx-ic" aria-hidden="true">${w.icon}</span><span><b>${w.src === "forecast" ? "Forecast" : "Typical"} for ${fmtDate(day.date)} in ${esc(day.city.name)}:</b> morning ~${deg(x.am)}, afternoon ~${deg(w.hi)}, night ~${deg(x.night)} · ${rainWords(w.rain)}${w.mountain ? " · up to 5°C cooler on the peaks" : ""}${w.src === "forecast" ? ' <span class="badge rec">live forecast</span>' : ""}<br><b>Wear:</b> ${esc(x.wear.join(", "))}.</span></div>`;
+  }
+  const wxPlain = (day) => { const x = wxData(day); return x ? `${x.w.src === "forecast" ? "Forecast" : "Typical"}: morning ~${deg(x.am)}, afternoon ~${deg(x.w.hi)}, night ~${deg(x.night)}, ${rainWords(x.w.rain)}. Wear: ${x.wear.join(", ")}.` : ""; };
+
+  // Consecutive days in the same city
+  function citySegments(plan) {
+    const segs = [];
+    plan.days.forEach((d) => { const last = segs[segs.length - 1]; if (last && last.cid === d.cityId) last.days.push(d); else segs.push({ cid: d.cityId, city: d.city, days: [d] }); });
+    return segs;
+  }
+  function segWeather(seg) {
+    const ws = seg.days.map((d) => weatherFor(d.cityId, d.date)).filter(Boolean);
+    if (!ws.length) return null;
+    const avg = (k) => ws.reduce((a, w) => a + w[k], 0) / ws.length;
+    const lo = Math.min.apply(null, ws.map((w) => w.lo)), rain = Math.max.apply(null, ws.map((w) => w.rain));
+    const extras = [];
+    seg.days.forEach((d) => dayExtras(d).forEach((e) => { if (extras.indexOf(e) < 0) extras.push(e); }));
+    return { hi: avg("hi"), lo, rain, forecast: ws.some((w) => w.src === "forecast"), mountain: ws[0].mountain, pack: attire(avg("hi"), lo, rain).concat(extras) };
+  }
+
+  function weatherHTML(plan) {
+    const segs = citySegments(plan);
+    const dated = !!state.start;
+    const range = (seg) => seg.days.length > 1 ? `${fmtDate(seg.days[0].date)} – ${fmtDate(seg.days[seg.days.length - 1].date)}` : fmtDate(seg.days[0].date);
+    const summary = dated ? `<section class="panel"><h3>Your trip at a glance</h3>
+      <p class="hint">Typical weather for your dates from long-term averages${segs.some((s) => (segWeather(s) || {}).forecast) ? ", with live forecasts where your dates are within about two weeks" : ""}. Check a forecast a few days before you go.</p>
+      <div class="tbl-wrap"><table class="wxsum"><thead><tr><th>City</th><th>Dates</th><th>Day / night</th><th>Rain</th><th>What to pack</th></tr></thead><tbody>
+      ${segs.map((s) => { const w = segWeather(s); return w ? `<tr><td><b>${esc(s.city.name)}</b></td><td class="g-date">${range(s)}</td><td>${deg(w.hi)} / ${deg(w.lo)}${w.mountain ? '<br><span class="hint">peaks up to 5°C cooler</span>' : ""}</td><td>${rainWords(w.rain)}</td><td>${esc(w.pack.join(", "))}</td></tr>` : ""; }).join("")}
+      </tbody></table></div></section>`
+      : `<section class="panel"><h3>Your trip at a glance</h3><p>Add a <b>start date</b> in step 1 to see the weather for your dates, day by day, with what to wear. Until then, the tables below show each city month by month.</p></section>`;
+    const tripMonths = (cid) => { const s = {}; plan.days.forEach((d) => { if (d.cityId === cid && d.date) s[d.date.getMonth()] = 1; }); return s; };
+    const cities = segs.map((s) => s.cid).filter((v, i, a) => a.indexOf(v) === i);
+    const panels = cities.map((cid) => {
+      const c = CLIMATE[cid], tm = tripMonths(cid);
+      if (!c) return "";
+      return `<section class="panel"><h3>${esc(CITIES[cid].name)} <span class="han" style="color:var(--seal)">${CITIES[cid].zh}</span></h3>
+        <ul>${climateNotes(cid).map(([ms, t]) => `<li><b>${ms.map((m) => MONTHS[m - 1]).join(", ")}:</b> ${esc(t)}</li>`).join("")}${c.mountain ? "<li><b>On the peaks:</b> up to 5°C cooler than in town, and often misty — bring an extra layer.</li>" : ""}</ul>
+        <div class="tbl-wrap"><table class="wxmon"><thead><tr><th>Month</th><th>High / low</th><th>Rainy days</th><th>What to wear</th></tr></thead><tbody>
+        ${c.hi.map((hi, m) => `<tr class="${tm[m] ? "trip" : ""}"><td><b>${MONTHS[m]}</b>${tm[m] ? ' <span class="badge pick">your trip</span>' : ""}</td><td>${hi}° / ${c.lo[m]}°C</td><td>${c.rain[m]}</td><td>${esc(attireShort(hi, c.lo[m], c.rain[m] / 30))}</td></tr>`).join("")}
+        </tbody></table></div></section>`;
+    }).join("");
+    const always = `<section class="panel"><h3>Pack for every city</h3><ul>
+      <li><b>Comfortable walking shoes</b> — you'll walk 15–25,000 steps a day; grippy soles for the Great Wall, Zhangjiajie or Huashan.</li>
+      <li><b>Modest clothing</b> for mosques and temples: shoulders and knees covered; a headscarf for women in mosques.</li>
+      <li><b>A light layer</b> even in summer — trains, malls and museums are strongly air-conditioned.</li>
+      <li><b>A compact umbrella</b> — it doubles as a sunshade.</li>
+      <li>Sunscreen, sunglasses, a refillable bottle, tissues and hand sanitiser.</li></ul>
+      <p class="hint">Temperatures are long-term averages for each date (a typical day), not forecasts — real days can be several degrees warmer or colder.</p></section>`;
+    return summary + panels + always;
+  }
+
+  // Live forecast (Open-Meteo, free, no key) when the trip starts within ~2 weeks
+  const forecastAsked = {};
+  function fetchForecasts(plan) {
+    if (window.NO_PRINT || !plan || !state.start || typeof fetch !== "function") return;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const soon = plan.days.filter((d) => d.date && (d.date - today) / 86400000 >= -1 && (d.date - today) / 86400000 <= 15);
+    const cids = soon.map((d) => d.cityId).filter((v, i, a) => a.indexOf(v) === i && !forecastAsked[v]);
+    if (!cids.length) return;
+    let pending = cids.length, added = false;
+    cids.forEach((cid) => {
+      forecastAsked[cid] = true;
+      const ll = CITIES[cid].stay.ll;
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${ll[0]}&longitude=${ll[1]}&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,weather_code&timezone=auto&forecast_days=16`)
+        .then((r) => r.json()).then((j) => {
+          const d = j && j.daily;
+          if (!d || !d.time) return;
+          d.time.forEach((t, k) => { if (d.temperature_2m_max[k] != null) { forecastCache[cid + "|" + t] = { hi: d.temperature_2m_max[k], lo: d.temperature_2m_min[k], pp: d.precipitation_probability_max[k] || 0, code: d.weather_code[k] }; added = true; } });
+        }).catch(() => { /* offline or blocked: averages stay */ })
+        .then(() => { if (--pending === 0 && added && lastPlan === plan) generate(false); });
+    });
+  }
+
   // "At a glance": one row per day, built from each day's (possibly edited) timeline
   function glanceHTML(plan) {
     const show = { sight: 1, travel: 1, flight: 1, custom: 1, shop: 0, rest: 1, free: 1, prayer: 0, meal: 0, cafe: 0, breakfast: 0, hotel: 0 };
@@ -3418,6 +3596,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
       return `<tr data-goto="day-${i + 1}" tabindex="0" role="link" aria-label="Go to day ${i + 1}">
         <td class="g-day"><b>${i + 1}</b></td>
         <td class="g-date">${d.date ? fmtDate(d.date) : "—"}</td>
+        <td class="g-wx">${(() => { const w = weatherFor(d.cityId, d.date); return w ? `${w.icon} ${Math.round(w.hi)}° / ${Math.round(w.lo)}°` : "—"; })()}</td>
         <td><b>${esc(d.city.name)}</b>${kind}${isEdited(d, i) ? '<span class="kind-chip edited">edited</span>' : ""}</td>
         <td>${cell(part(0, 12 * 60 + 30))}</td><td>${cell(cont(12 * 60 + 30).concat(part(12 * 60 + 30, 18 * 60 + 30)))}</td><td>${cell(part(18 * 60 + 30, 24 * 60))}</td>
         <td class="g-sleep">${d.kind === "depart" ? "✈ Home" : esc(d.city.name)}</td></tr>`;
@@ -3425,7 +3604,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     return `<section class="panel glance">
       <h3>At a glance</h3>
       ${state.start ? "" : `<p class="hint">Add a start date (step 1) to see the dates and weekdays here.</p>`}
-      <div class="tbl-wrap"><table><thead><tr><th>Day</th><th>Date</th><th>City</th><th>Morning</th><th>Afternoon / evening</th><th>Night</th><th>Sleep in</th></tr></thead><tbody>${rows}</tbody></table></div>
+      <div class="tbl-wrap"><table><thead><tr><th>Day</th><th>Date</th><th>Weather</th><th>City</th><th>Morning</th><th>Afternoon / evening</th><th>Night</th><th>Sleep in</th></tr></thead><tbody>${rows}</tbody></table></div>
       <p class="hint">Tap a day to jump to its hour-by-hour plan, where you can edit times and add or remove anything.</p>
     </section>`;
   }
@@ -3522,7 +3701,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     </div>`;
 
     const tabs = `<div class="tabs" role="tablist">
-      ${[["plan", "Day by day"], ["map", "Map"], ["stay", "Hotels & halal food"], ["prep", "Before you go"], ["talk", "Phrases"]].map(([id, l]) => `<button type="button" role="tab" id="tab-${id}" aria-selected="${currentTab === id}" aria-controls="pane-${id}" data-tab="${id}">${l}</button>`).join("")}
+      ${[["plan", "Day by day"], ["map", "Map"], ["wx", "Weather & what to wear"], ["stay", "Hotels & halal food"], ["prep", "Before you go"], ["talk", "Phrases"]].map(([id, l]) => `<button type="button" role="tab" id="tab-${id}" aria-selected="${currentTab === id}" aria-controls="pane-${id}" data-tab="${id}">${l}</button>`).join("")}
     </div>`;
 
     // Day by day
@@ -3538,6 +3717,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
       html += `<article class="day" id="day-${i + 1}">
         <div class="day-num"><div class="stamp">${i + 1}</div><small>Day ${i + 1}${day.date ? "<br>" + fmtDate(day.date) : ""}</small></div>
         <div class="day-body"><h4 class="day-title">${esc(dayTitle(day))}${KIND[day.kind] ? `<span class="kind">${KIND[day.kind]}</span>` : ""}</h4>
+          ${wxLine(day)}
           <div class="tl" id="tl-${i}">${timelineHTML(i)}</div>
           <h5 class="details-h">Details, directions & halal food</h5>
           ${day.slots.map((s) => slotHTML(s, day)).join("")}
@@ -3550,6 +3730,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     out.innerHTML = hdr + tabs +
       `<div id="pane-plan" role="tabpanel" aria-labelledby="tab-plan" class="out" ${currentTab !== "plan" ? "hidden" : ""}><h2 class="print-only">Day-by-day itinerary</h2>${html}</div>
        <div id="pane-map" role="tabpanel" aria-labelledby="tab-map" class="out" ${currentTab !== "map" ? "hidden" : ""}><h2 class="print-only">Map</h2>${mapPaneHTML(plan)}</div>
+       <div id="pane-wx" role="tabpanel" aria-labelledby="tab-wx" class="out" ${currentTab !== "wx" ? "hidden" : ""}><h2 class="print-only">Weather & what to wear</h2>${weatherHTML(plan)}</div>
        <div id="pane-stay" role="tabpanel" aria-labelledby="tab-stay" class="out" ${currentTab !== "stay" ? "hidden" : ""}><h2 class="print-only">Hotels, halal food & things to do</h2>${stayHTML(ids)}</div>
        <div id="pane-prep" role="tabpanel" aria-labelledby="tab-prep" class="out" ${currentTab !== "prep" ? "hidden" : ""}><h2 class="print-only">Before you go</h2>${prepHTML(routeIds, hasMainland, hasHK, hasMO)}</div>
        <div id="pane-talk" role="tabpanel" aria-labelledby="tab-talk" class="out" ${currentTab !== "talk" ? "hidden" : ""}><h2 class="print-only">Phrases</h2>${phrasesHTML(hasHK || hasMO)}</div>
@@ -3558,6 +3739,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     plan.days.forEach((d, i) => { if (isEdited(d, i)) { const pids = new Set(timelineFor(d, i).map((x) => x.pid).filter(Boolean)); document.querySelectorAll(`#day-${i + 1} .slot[data-pid]`).forEach((sl) => (sl.hidden = !pids.has(sl.dataset.pid))); } });
     if (currentTab === "map") showStreetMap();
     addAUD($("#out"));
+    fetchForecasts(plan);
     lastPrintArgs = { ids, routeIds, arrId, depId, hasMainland, hasHK, hasMO, startD, endD, notes };
     buildPrintView(plan, lastPrintArgs);
     if (scroll) out.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -4299,6 +4481,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
       const hotel = d.city.hotels.find((h) => h.tier === state.budget) || d.city.hotels[0];
       pages.push(`${head(`Day ${i + 1} · ${esc(d.city.name)} <span class="han">${d.city.zh}</span>`, (d.date ? fmtDate(d.date) + " · " : "") + (KIND[d.kind] || "Sightseeing"))}
         <p class="pv-sub">${esc(dayTitle(d))}</p>
+        ${d.date ? `<p class="pv-meta">🌤 ${esc(wxPlain(d))}</p>` : ""}
         ${firstInCity ? `<p class="pv-stay"><b>Stay:</b> ${userHotel(d.city) ? esc(stayName(d.city)) + " (your hotel)" : esc(d.city.stay.area) + " — e.g. " + esc(hotel.n)}. <b>Halal near hotel:</b> ${esc(eatNear(d.city, stayLL(d.city), 2).located.map((h) => h.n).join("; ") || d.city.halalTip)}</p>` : ""}
         <table class="pv-tl"><tbody>${timelineFor(d, i).map((x) => `<tr class="k-${x.k}"><td class="pv-t">${hhmm(x.start)}${x.end > x.start ? "–" + hhmm(x.end) : ""}</td><td>${x.icon || TL_ICON[x.k] || ""} <b>${esc(x.title)}</b>${x.note ? ` <span class="pv-meta">— ${esc(x.note)}</span>` : ""}</td></tr>`).join("")}</tbody></table>
         <h2>Details & directions</h2>
@@ -4316,7 +4499,8 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
           <p><b>Hotels:</b> ${ct.hotels.map((h) => `${esc(h.n)} (${T[h.tier]})`).join("; ")}</p>
           <p><b>Halal:</b> ${ct.halal.map((h) => esc(h.n)).join("; ")}</p>
           ${ct.mosques.length ? `<p><b>Mosque:</b> ${ct.mosques.map((m) => esc(m.n)).join("; ")}</p>` : ""}
-          <p><b>Getting around:</b> ${esc(firstSentence(ct.getAround))}</p></section>`; }).join("")}
+          <p><b>Getting around:</b> ${esc(firstSentence(ct.getAround))}</p>
+          ${(() => { const sg = citySegments(plan).filter((x) => x.cid === id).map(segWeather).filter(Boolean)[0]; return sg ? `<p><b>Weather on your dates:</b> about ${deg(sg.hi)} by day, ${deg(sg.lo)} at night, ${rainWords(sg.rain)}. <b>Pack:</b> ${esc(sg.pack.slice(0, 4).join(", "))}.</p>` : ""; })()}</section>`; }).join("")}
         <section><h2>Visa & entry</h2>
           ${isAU() ? `<p>Australian passport: visa-free up to 30 days per mainland entry (to 31 Dec 2026); Hong Kong 90 days; Macau visa-free. Passport valid 6+ months. Fill in the arrival card on landing; carry your passport at all times.</p>`
             : `<p>Check visa-free entry or the 240-hour transit for your passport, otherwise apply for an L visa (COVA form at visaforchina.cn). Double/multiple entry if you visit Hong Kong/Macau mid-trip. Arrival card on landing; carry your passport.</p>`}</section>
@@ -4555,52 +4739,81 @@ ${pv}
       paint();
       let y = M, pages = 1;
       const newPage = () => { pdf.addPage(); paint(); y = M; pages++; };
-      const canvases = [];
-      for (let k = 0; k < view.blocks.length; k++) {
-        toast(`Making your PDF… section ${k + 1} of ${view.blocks.length}`);
-        canvases.push(await window.html2canvas(view.blocks[k], { scale: SCALE, backgroundColor: "rgb(" + PAPER.join(",") + ")", useCORS: true, logging: false, windowWidth: 1300 }));
+      // 1. Find where each section may break: between its parts, never through a line of text.
+      //    A section is drawn once; tall ones are cut into slices at the tops of their parts.
+      const host = view.holder.getBoundingClientRect();
+      const slices = [];
+      view.blocks.forEach((b, bi) => {
+        const leaves = [];
+        const expand = (el) => {
+          if (el.offsetHeight * pxToMm > PH && el.children.length > 1) Array.prototype.forEach.call(el.children, (k) => { if (k.offsetHeight > 0) expand(k); });
+          else leaves.push(el);
+        };
+        expand(b);
+        const br = b.getBoundingClientRect();
+        leaves.forEach((el, n) => {
+          const top = n === 0 ? 0 : el.getBoundingClientRect().top - br.top;
+          const next = leaves[n + 1] ? leaves[n + 1].getBoundingClientRect().top - br.top : br.height;
+          if (next - top > 0.5) slices.push({ bi, el, top, bottom: next, last: n === leaves.length - 1 });
+        });
+      });
+      const cls = (el, c) => el.classList && el.classList.contains(c);
+      const isSection = (el) => el.tagName === "H2" && cls(el, "print-only");
+      const isCity = (el) => cls(el, "city-band");
+      const keepsWithNext = (el) => isSection(el) || isCity(el) || cls(el, "city-stay") || /^H[1-6]$/.test(el.tagName) || cls(el, "day-num") || cls(el, "day-title") || cls(el, "details-h") || cls(el, "wx") || cls(el, "tl-head") || cls(el, "slot-when");
+      // 2. Draw each section once
+      const drawn = [];
+      for (let bi = 0; bi < view.blocks.length; bi++) {
+        toast(`Making your PDF… ${Math.round((bi / view.blocks.length) * 100)}%`);
+        drawn.push(await window.html2canvas(view.blocks[bi], { scale: SCALE, backgroundColor: "rgb(" + PAPER.join(",") + ")", useCORS: true, logging: false, windowWidth: 1300 }));
       }
-      for (let k = 0; k < canvases.length; k++) {
-        const cv = canvases[k], el = view.blocks[k];
-        const wMm = (cv.width / SCALE) * pxToMm, hMm = (cv.height / SCALE) * pxToMm;
-        const isHeading = /^H[1-6]$/.test(el.tagName) || el.classList.contains("city-band") || el.classList.contains("city-stay");
-        const room = M + PH - y;
-        if (isHeading) {
-          // keep headings with at least the start of what follows
-          const nextH = canvases[k + 1] ? Math.min(45, (canvases[k + 1].height / SCALE) * pxToMm) : 0;
-          if (y > M && hMm + nextH > room) newPage();
-          pdf.addImage(cv.toDataURL("image/jpeg", Q), "JPEG", M, y, wMm, hMm, undefined, "FAST");
-          y += hMm + 1;
-          continue;
+      const hOf = (k) => (slices[k].bottom - slices[k].top) * pxToMm;
+      // 3. Place slices: sections and cities start a new page; nothing splits mid-text; headings stay with what follows
+      let atTop = true, prevSection = false;
+      for (let k = 0; k < slices.length; k++) {
+        const sl = slices[k], el = sl.el, block = view.blocks[sl.bi], src = drawn[sl.bi];
+        const br = block.getBoundingClientRect();
+        const xMm = M + (br.left - host.left) * pxToMm, wMm = br.width * pxToMm, hMm = hOf(k);
+        if ((isSection(el) || (isCity(el) && !prevSection)) && !atTop) { newPage(); atTop = true; }
+        else {
+          let need = hMm, j = k + 1;
+          // don't strand a short closing line (e.g. "Back to the hotel") on its own page
+          if (slices[k + 1] && slices[k + 1].bi === sl.bi && slices[k + 1].last && hOf(k + 1) < 22) need += hOf(k + 1);
+          if (keepsWithNext(el)) {
+            while (j < slices.length && keepsWithNext(slices[j].el) && !isSection(slices[j].el) && !isCity(slices[j].el)) { need += hOf(j); j++; }
+            // pieces can't be split, so reserve the whole next piece (unless it's taller than a page anyway)
+            if (j < slices.length) need += hOf(j) <= PH ? hOf(j) : 50;
+          }
+          if (!atTop && need > M + PH - y) { newPage(); atTop = true; }
         }
-        if (hMm <= room) {
-          pdf.addImage(cv.toDataURL("image/jpeg", Q), "JPEG", M, y, wMm, hMm, undefined, "FAST");
-          y += hMm + 4;
-          continue;
+        // crop this slice out of the section's drawing
+        const sy = Math.round(sl.top * SCALE), sh = Math.min(src.height - sy, Math.round((sl.bottom - sl.top) * SCALE));
+        if (sh <= 0) continue;
+        const piece = document.createElement("canvas");
+        piece.width = src.width; piece.height = sh;
+        piece.getContext("2d").drawImage(src, 0, sy, src.width, sh, 0, 0, src.width, sh);
+        if (hMm <= PH) {
+          pdf.addImage(piece.toDataURL("image/jpeg", Q), "JPEG", xMm, y, wMm, hMm, undefined, "FAST");
+          y += hMm + (sl.last ? 4 : 0);
+        } else {
+          // A single part taller than a whole page (rare): split it at a blank line
+          let from = 0;
+          while (from < piece.height - 2) {
+            const roomPx = ((M + PH - y) / pxToMm) * SCALE;
+            let cut = from + roomPx >= piece.height ? piece.height : quietRow(piece, from + roomPx, Math.min(260, roomPx * 0.4));
+            if (cut <= from + 20) cut = Math.min(piece.height, from + roomPx);
+            const part = document.createElement("canvas");
+            part.width = piece.width; part.height = cut - from;
+            part.getContext("2d").drawImage(piece, 0, from, piece.width, cut - from, 0, 0, piece.width, cut - from);
+            const partMm = ((cut - from) / SCALE) * pxToMm;
+            pdf.addImage(part.toDataURL("image/jpeg", Q), "JPEG", xMm, y, wMm, partMm, undefined, "FAST");
+            y += partMm; from = cut;
+            if (from < piece.height - 2) newPage();
+          }
+          y += sl.last ? 4 : 0;
         }
-        // Doesn't fit: start on a new page only if little room is left and it would fit there whole
-        if (room < PH * 0.35 && hMm <= PH) {
-          newPage();
-          pdf.addImage(cv.toDataURL("image/jpeg", Q), "JPEG", M, y, wMm, hMm, undefined, "FAST");
-          y += hMm + 4;
-          continue;
-        }
-        if (room < 25) newPage();
-        // Otherwise fill this page and carry on, splitting between lines of text
-        let src = 0;
-        while (src < cv.height - 2) {
-          const roomPx = ((M + PH - y) / pxToMm) * SCALE;
-          let cut = src + roomPx >= cv.height ? cv.height : quietRow(cv, src + roomPx, Math.min(260, roomPx * 0.4));
-          if (cut <= src + 20) cut = Math.min(cv.height, src + roomPx);
-          const part = document.createElement("canvas");
-          part.width = cv.width; part.height = cut - src;
-          part.getContext("2d").drawImage(cv, 0, src, cv.width, cut - src, 0, 0, cv.width, cut - src);
-          const partMm = ((cut - src) / SCALE) * pxToMm;
-          pdf.addImage(part.toDataURL("image/jpeg", Q), "JPEG", M, y, wMm, partMm, undefined, "FAST");
-          y += partMm + 4;
-          src = cut;
-          if (src < cv.height - 2) newPage();
-        }
+        atTop = false;
+        prevSection = isSection(el);
       }
       const ids = state.stops.map((x) => CITIES[x.city].name).filter((v, i, a) => a.indexOf(v) === i);
       const blob = pdf.output("blob");
@@ -4624,6 +4837,7 @@ ${pv}
     L.push("");
     lastPlan.days.forEach((d, i) => {
       L.push(`DAY ${i + 1}${d.date ? " — " + fmtDate(d.date) : ""} · ${d.city.name} · ${dayTitle(d)}`);
+      if (d.date) L.push("  Weather — " + wxPlain(d));
       timelineFor(d, i).forEach((x) => L.push(`  ${hhmm(x.start)}${x.end > x.start ? "–" + hhmm(x.end) : ""}  ${x.title}${x.note ? " — " + x.note : ""}`));
       L.push("  Details:");
       d.slots.forEach((s) => {
@@ -4682,7 +4896,7 @@ ${pv}
         if (tab.dataset.mapdayOpen != null) lmapDay = tab.dataset.mapdayOpen;
         currentTab = tab.dataset.tab; save("tab", currentTab);
         document.querySelectorAll(".tabs [data-tab]").forEach((b) => b.setAttribute("aria-selected", b.dataset.tab === currentTab));
-        ["plan", "map", "stay", "prep", "talk"].forEach((id) => ($("#pane-" + id).hidden = id !== currentTab));
+        ["plan", "map", "wx", "stay", "prep", "talk"].forEach((id) => ($("#pane-" + id).hidden = id !== currentTab));
         if (currentTab === "map") showStreetMap();
         if (!tab.closest(".tabs")) $(".tabs").scrollIntoView({ behavior: "smooth", block: "start" });
         return;

@@ -29,7 +29,8 @@ restaurants and hotels open and close. Once a week a scheduled Claude session fo
 7. **Halal food & mosques** (`CITIES[...].halal`, `.mosques`): still open (recent reviews), addresses.
    Remove or replace closed ones; add well-reviewed new halal places if found.
 8. **Intercity routes** (`ROUTES`, `BOATS` in `app.js`): typical times and fares, new lines/services.
-9. **Recommendations / ratings**: adjust `r` only with good reason; note why in the log.
+9. **Climate averages** (`CLIMATE` in `data.js`) rarely change; only correct clear errors against Wikipedia / national weather service tables.
+10. **Recommendations / ratings**: adjust `r` only with good reason; note why in the log.
 
 ## Finish
 1. Set `DATA_INFO.refreshed` in `data.js` to today's date (YYYY-MM-DD) — even if nothing else changed.

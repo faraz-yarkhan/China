@@ -933,3 +933,34 @@ const SYD_FLIGHTS = {
   hk: { direct: true, airport: "Hong Kong (HKG)", text: "Nonstop with Cathay Pacific (several a day) and Qantas, about 9–9.5 h. Overnight southbound flights land in Sydney early morning." },
   mo: { direct: false, airport: "Hong Kong (HKG) or Macau (MFM)", text: "No nonstop. Fly to Hong Kong (~9.5 h), then the Hong Kong–Zhuhai–Macao Bridge bus (~45 min) or the TurboJET ferry from Sheung Wan (~1 h)." },
 };
+
+/* Typical weather by month (long-term averages, rounded): average high and low in °C, and days with rain.
+   Sources: Wikipedia / national weather service climate tables; Zhangjiajie, Guilin and Chongqing cross-checked
+   with travel-weather sites (Nov 2026). These are averages for planning, not forecasts. */
+const CLIMATE = {
+  bj: { hi: [2, 6, 13, 21, 27, 31, 31, 30, 26, 19, 10, 3], lo: [-8, -5, 1, 8, 14, 19, 22, 21, 15, 8, 0, -6], rain: [2, 3, 4, 5, 6, 10, 13, 12, 7, 5, 3, 2],
+    notes: [[[12, 1, 2], "Very cold, dry and often sunny. Strong wind chill on the Great Wall."], [[3, 4], "Windy, with occasional dust; warm days, cold nights."], [[5, 6], "Warm to hot and mostly dry."], [[7, 8], "Hot and humid, with heavy thunderstorms — the rainy season."], [[9, 10], "The best months: clear, mild and dry."], [[11], "Turning cold; heating comes on in mid-November."]] },
+  sh: { hi: [8, 10, 14, 20, 25, 28, 32, 32, 28, 23, 17, 11], lo: [1, 3, 6, 11, 16, 21, 25, 25, 21, 15, 9, 3], rain: [10, 10, 13, 12, 12, 14, 13, 12, 10, 7, 9, 8],
+    notes: [[[12, 1, 2], "Damp chill that feels colder than the number; older buildings have little heating."], [[3, 4], "Mild but changeable spring."], [[5], "Warm and pleasant."], [[6, 7], "Plum-rain season (mid-June to early July): long spells of rain, very humid."], [[7, 8, 9], "Hot and humid; typhoons possible from August to September."], [[10, 11], "The best months: mild and drier."]] },
+  su: { hi: [8, 10, 15, 21, 26, 29, 33, 32, 28, 23, 17, 10], lo: [1, 3, 7, 12, 17, 21, 25, 25, 21, 15, 9, 3], rain: [10, 10, 13, 12, 12, 14, 13, 12, 10, 7, 8, 8], same: "sh" },
+  hz: { hi: [8, 11, 15, 22, 27, 30, 34, 33, 28, 23, 17, 11], lo: [2, 4, 8, 13, 18, 22, 26, 25, 21, 15, 9, 3], rain: [12, 12, 15, 14, 14, 15, 13, 13, 11, 8, 9, 8], same: "sh" },
+  xa: { hi: [6, 10, 16, 22, 28, 32, 33, 31, 26, 20, 13, 7], lo: [-3, 0, 5, 10, 15, 20, 23, 22, 17, 11, 4, -2], rain: [4, 5, 7, 7, 8, 8, 10, 9, 11, 9, 6, 3],
+    notes: [[[12, 1, 2], "Cold and dry; winter haze is common."], [[3, 4], "Spring arrives quickly; windy days."], [[5, 6, 7, 8], "Hot; July–August thunderstorms."], [[9], "Often the rainiest month, with long drizzly spells."], [[10, 11], "Pleasant autumn, cooling fast in November."]] },
+  cd: { hi: [10, 12, 17, 22, 26, 28, 30, 30, 26, 21, 16, 11], lo: [3, 5, 9, 13, 17, 20, 22, 22, 19, 15, 9, 4], rain: [8, 8, 12, 13, 14, 16, 18, 16, 17, 15, 9, 6],
+    notes: [[[12, 1, 2], "Grey, damp chill; little indoor heating."], [[3, 4, 5], "Mild spring — a good time to visit."], [[6, 7, 8], "Hot, humid and the wettest months."], [[9, 10, 11], "Mild autumn, often overcast with drizzle."]] },
+  cq: { hi: [11, 13, 18, 23, 27, 29, 33, 33, 28, 22, 17, 12], lo: [7, 8, 12, 17, 21, 23, 26, 26, 22, 17, 13, 8], rain: [9, 9, 12, 14, 15, 15, 12, 10, 13, 15, 11, 9],
+    notes: [[[12, 1, 2], "Cool, damp and often foggy (\"the fog city\")."], [[3, 4, 5], "Warm spring with showers."], [[7, 8], "One of China's \"furnace\" cities: heatwaves can reach 38–40°C."], [[6, 9, 10, 11], "Warm and humid, with frequent drizzle in autumn."]] },
+  gl: { hi: [12, 13, 17, 23, 27, 30, 33, 33, 31, 26, 20, 15], lo: [5, 7, 11, 16, 20, 23, 25, 24, 22, 17, 12, 7], rain: [11, 13, 18, 18, 18, 17, 15, 14, 8, 7, 7, 7],
+    notes: [[[12, 1, 2], "Cool and damp; misty river scenery."], [[3, 4, 5, 6], "Rainy season: lush and green, with occasional floods on the Li River."], [[7, 8], "Hot and humid, with afternoon storms."], [[9, 10, 11], "The best months: dry, clear and warm."]] },
+  ys: { hi: [13, 14, 18, 24, 28, 31, 33, 33, 31, 27, 21, 16], lo: [6, 8, 12, 17, 21, 24, 25, 25, 22, 18, 12, 7], rain: [11, 13, 18, 18, 18, 17, 15, 14, 8, 7, 7, 7], same: "gl" },
+  zjj: { hi: [9, 11, 16, 22, 26, 29, 32, 32, 28, 22, 16, 11], lo: [2, 4, 8, 13, 17, 21, 24, 23, 19, 14, 8, 3], rain: [9, 10, 14, 16, 18, 16, 15, 11, 9, 10, 8, 7], mountain: true,
+    notes: [[[12, 1, 2], "Cold; ice or snow possible on the peaks and some paths or cable cars can close."], [[3, 4], "Mild spring; mist and cloud are common (beautiful — or no view at all)."], [[5, 6, 7], "The wettest months; paths get slippery."], [[8], "Hot, with afternoon storms."], [[9, 10, 11], "The best months: clearer views and mild temperatures."]] },
+  fr: { hi: [9, 11, 16, 22, 26, 29, 32, 32, 28, 22, 16, 11], lo: [2, 4, 8, 13, 17, 21, 24, 23, 19, 14, 8, 3], rain: [9, 10, 14, 16, 18, 16, 15, 11, 9, 10, 8, 7],
+    notes: [[[12, 1, 2], "Cold; the waterfall can drop to a trickle."], [[3, 4, 5, 6, 7], "Wet season — the waterfall is at its fullest."], [[8], "Hot and humid."], [[9, 10, 11], "Mild and pleasant."]] },
+  gz: { hi: [19, 20, 22, 26, 30, 32, 33, 33, 32, 29, 25, 21], lo: [10, 13, 16, 20, 23, 25, 26, 26, 24, 20, 16, 11], rain: [7, 10, 15, 16, 18, 19, 17, 17, 13, 6, 5, 5],
+    notes: [[[1, 2], "Cool and often cloudy; damp cold indoors."], [[3, 4], "Humid and foggy, with drizzle."], [[5, 6, 7, 8, 9], "Hot, very humid and wet; typhoon season peaks July–September."], [[10, 11, 12], "The best months: dry, sunny and warm."]] },
+  sz: { hi: [20, 21, 23, 27, 30, 32, 33, 33, 32, 29, 26, 22], lo: [12, 14, 17, 21, 24, 26, 27, 26, 25, 22, 17, 13], rain: [6, 9, 12, 13, 16, 19, 17, 17, 13, 6, 5, 4], same: "gz" },
+  hk: { hi: [19, 19, 22, 25, 29, 31, 32, 32, 31, 28, 24, 20], lo: [15, 15, 17, 21, 24, 26, 27, 27, 26, 24, 20, 16], rain: [5, 9, 10, 11, 14, 18, 17, 17, 14, 7, 5, 4],
+    notes: [[[1, 2], "Cool and cloudy, sometimes chilly in the wind."], [[3, 4], "Humid and foggy; views from the Peak can disappear."], [[5, 6, 7, 8, 9], "Hot, humid, heavy showers; typhoon season — follow Hong Kong Observatory warnings."], [[10, 11, 12], "The best months: dry, sunny and comfortable."]] },
+  mo: { hi: [18, 19, 21, 25, 28, 31, 32, 32, 31, 28, 24, 20], lo: [13, 14, 17, 21, 24, 26, 27, 26, 25, 22, 18, 14], rain: [5, 9, 11, 12, 15, 18, 17, 16, 13, 6, 5, 4], same: "hk" },
+};

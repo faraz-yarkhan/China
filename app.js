@@ -551,32 +551,26 @@
     const c = CITIES[state.stops[i].city];
     const q = ($("#ownq-" + i).value || "").trim();
     const box = $("#ownres-" + i);
-    if (!q) { toast("Type the place's name, or paste its map link."); return; }
+    if (!q) { toast("Type the place's name, or paste its coordinates."); return; }
     const ll = parseLatLng(q);
     if (ll) { addOwnPlace(i, { name: nameFromLink(q, "My place (map pin)"), ll }); return; }
     const noPin = `<button type="button" class="btn small hotelpick" data-act="ownnopin" data-i="${i}">Add “${esc(q)}” without a map pin<br><span class="hint">Times will be estimated from the city centre</span></button>`;
-    if (window.NO_PRINT) { box.innerHTML = `<p class="hint">Searching isn't possible inside the Claude preview. Paste the place's Google or Apple Maps link, or add it by name:</p>` + noPin; return; }
+    if (isShortMapLink(q)) { box.innerHTML = SHORT_LINK_HELP + nearPicker(i, "own", c, ""); return; }
+    if (window.NO_PRINT) { box.innerHTML = `<p class="hint">Searching isn't possible inside the Claude preview.</p>` + COORD_TIP + nearPicker(i, "own", c, q) + noPin; return; }
     box.innerHTML = `<p class="hint">Searching OpenStreetMap near ${esc(c.name)}…</p>`;
-    const [la, lo] = c.stay.ll;
-    const url = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=en&bounded=1&viewbox=" +
-      [lo - 0.8, la + 0.8, lo + 0.8, la - 0.8].join(",") + "&q=" + encodeURIComponent(q);
-    let done = false;
-    const fail = (why) => { if (done) return; done = true; box.innerHTML = `<p class="hint">${why} Paste the place's map link (in Google or Apple Maps: Share → Copy link), or:</p>` + noPin; };
-    setTimeout(() => fail("The search took too long."), 9000);
-    fetch(url, { headers: { Accept: "application/json" } }).then((r) => r.json()).then((rows) => {
-      if (done) return;
-      ownResults[i] = (rows || []).map((r) => ({ name: r.name || String(r.display_name).split(",")[0], addr: String(r.display_name).split(",").slice(0, 4).join(","), ll: [+r.lat, +r.lon] }));
-      if (!ownResults[i].length) { fail(`No match for “${esc(q)}” near ${esc(c.name)}. Try the English or Chinese name, or a street.`); return; }
-      done = true;
-      box.innerHTML = `<p class="hint">Pick the right place:</p>` + ownResults[i].map((r, k) => `<button type="button" class="btn small hotelpick" data-act="ownpick" data-i="${i}" data-k="${k}"><b>${esc(r.name)}</b><br><span class="hint">${esc(r.addr)} · ${km(r.ll, c.stay.ll).toFixed(1)} km from the centre</span></button>`).join("") + noPin;
-    }).catch(() => fail("Couldn't reach the map search (it needs an internet connection)."));
+    geoSearch(c, q, (rows, why) => {
+      if (!rows || !rows.length) { box.innerHTML = (why ? `<p class="hint">${why}</p>` : notFoundMsg(q, c, "places")) + COORD_TIP + nearPicker(i, "own", c, q) + noPin; return; }
+      ownResults[i] = rows;
+      box.innerHTML = `<p class="hint">Pick the right place:</p>` + rows.map((r, k) => `<button type="button" class="btn small hotelpick" data-act="ownpick" data-i="${i}" data-k="${k}"><b>${esc(r.name)}</b><br><span class="hint">${esc(r.addr)} · ${km(r.ll, c.stay.ll).toFixed(1)} km from the centre</span></button>`).join("") + nearPicker(i, "own", c, q) + noPin;
+    });
   }
+
 
   /* ---------- "Your hotel" on each city card ---------- */
   const hotelOpen = {}, hotelResults = {};
   function hotelRow(st, i) {
     const c = CITIES[st.city], h = userHotel(c), open = hotelOpen[c.id] || (h && h.src !== "list");
-    const listOpts = c.hotels.map((x, k) => (x.ll ? `<option value="list:${k}" ${h && h.src === "list" && h.k === k ? "selected" : ""}>${TIER[x.tier]} · ${esc(x.n)}</option>` : "")).join("");
+    const listOpts = c.hotels.map((x, k) => (x.ll ? `<option value="list:${k}" ${h && h.src === "list" && h.name === x.n ? "selected" : ""}>${TIER[x.tier]} · ${esc(x.n)}</option>` : "")).join("");
     const mt = h ? nearestMetro(c, h.ll) : null;
     return `<div class="hotelrow">
       <label class="hint lbl" for="hotel-${i}">🏨 Your hotel in ${esc(c.name)}:</label>
@@ -586,17 +580,52 @@
         <option value="other" ${open && !(h && h.src === "list") ? "selected" : ""}>${h && h.src !== "list" ? "📍 " + esc(h.name) : "Another hotel… (search or map link)"}</option>
       </select>
       ${open ? `<div class="hotelfind"><input type="text" id="hotelq-${i}" placeholder="Hotel name, address or map link" aria-label="Find your hotel in ${esc(c.name)}"><button type="button" class="btn small" data-act="hotelfind" data-i="${i}">Find</button></div><div class="hotelres" id="hotelres-${i}" aria-live="polite"></div>` : ""}
-      ${h ? `<p class="hint hotelset">📍 Planning from <b>${esc(h.name)}</b>${mt ? " · nearest metro " + esc(mt) : " · no metro close by, so DiDi/taxi times are used"} · ${km(h.ll, c.stay.ll).toFixed(1)} km from ${esc(c.stay.area)} · <a href="https://maps.apple.com/?ll=${h.ll[0]},${h.ll[1]}&q=${encodeURIComponent(h.name)}" target="_blank" rel="noopener">check the pin ↗</a></p>` : ""}
+      ${h ? `<p class="hint hotelset">📍 Planning from <b>${esc(h.name)}</b>${h.src === "near" ? ` (placed near ${esc(h.near)} — approximate; paste its coordinates for exact times)` : ""}${mt ? " · nearest metro " + esc(mt) : " · no metro close by, so DiDi/taxi times are used"} · ${km(h.ll, c.stay.ll).toFixed(1)} km from ${esc(c.stay.area)} · <a href="https://maps.apple.com/?ll=${h.ll[0]},${h.ll[1]}&q=${encodeURIComponent(h.name)}" target="_blank" rel="noopener">check the pin ↗</a></p>` : ""}
     </div>`;
   }
   // Coordinates from pasted text: "39.91, 116.41", Google "@39.91,116.41,15z", Apple "ll=39.91,116.41", Amap "116.41,39.91"
   function parseLatLng(text) {
+    const pin = String(text).match(/!3d(-?\d{1,3}\.\d+)!4d(-?\d{1,3}\.\d+)/); // Google's exact place pin
+    if (pin) { const a = +pin[1], b = +pin[2]; if (a > 15 && a < 56 && b > 70 && b < 140) return [a, b]; }
     const m = String(text).match(/(-?\d{1,3}\.\d{2,})\s*,\s*(-?\d{1,3}\.\d{2,})/);
     if (!m) return null;
     let a = +m[1], b = +m[2];
     if (a > 70 && a < 140 && b > 15 && b < 56) { const x = a; a = b; b = x; }
     return a > 15 && a < 56 && b > 70 && b < 140 ? [a, b] : null;
   }
+  // Share links that hide the location behind a redirect (the browser can't follow it)
+  const isShortMapLink = (q) => /(maps\.app\.goo\.gl|goo\.gl\/maps|g\.co\/kgs|maps\.apple\/p\/|surl\.amap\.com|j\.map\.baidu\.com)/i.test(q);
+  const COORD_TIP = `<p class="hint"><b>Most reliable:</b> in Google Maps or Apple Maps, press and hold on the exact spot (the hotel's entrance). The coordinates appear, e.g. <i>39.9195, 116.4105</i> — tap to copy them and paste here. Or open the link in your browser and copy the long address from the address bar.</p>`;
+  const SHORT_LINK_HELP = `<p class="hint"><b>That's a short share link</b> (like maps.app.goo.gl/…). It doesn't contain the location — it only points to Google, and a web page can't follow it. Instead:</p>` + COORD_TIP;
+  // Put a hotel or place near a known landmark when it can't be found
+  function nearPicker(i, kind, c, q) {
+    const opts = [`<option value="stay">${esc(c.stay.area)} (recommended area)</option>`]
+      .concat(c.places.filter((p) => !p.custom && !p.x).map((p) => `<option value="${p.id}">${esc(p.n.split(/[:(]/)[0].trim())}</option>`)).join("");
+    return `<div class="nearpick"><label class="hint" for="${kind}near-${i}">Or put ${q ? "“" + esc(q) + "”" : "it"} near (approximate):</label>
+      <select id="${kind}near-${i}">${opts}</select><button type="button" class="btn small" data-act="${kind}near" data-i="${i}">Use this</button></div>`;
+  }
+  function nearChoice(i, kind) {
+    const c = CITIES[state.stops[i].city], v = $("#" + kind + "near-" + i).value;
+    const p = v === "stay" ? null : c.places.find((x) => x.id === v);
+    return { ll: p ? p.ll : c.stay.ll, label: p ? p.n.split(/[:(]/)[0].trim() : c.stay.area };
+  }
+  // OpenStreetMap search near the city, then a wider search if nothing turns up
+  function geoSearch(c, q, cb) {
+    const [la, lo] = c.stay.ll;
+    const base = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=en";
+    const near = base + "&bounded=1&viewbox=" + [lo - 0.8, la + 0.8, lo + 0.8, la - 0.8].join(",") + "&q=" + encodeURIComponent(q);
+    const wide = base + "&q=" + encodeURIComponent(q + ", " + c.name + ", China");
+    let done = false;
+    const finish = (rows, why) => { if (done) return; done = true; cb(rows, why); };
+    setTimeout(() => finish(null, "The search took too long."), 15000);
+    const get = (u) => fetch(u, { headers: { Accept: "application/json" } }).then((r) => r.json());
+    const tidy = (rows) => (rows || []).map((r) => ({ name: r.name || String(r.display_name).split(",")[0], addr: String(r.display_name).split(",").slice(0, 4).join(","), ll: [+r.lat, +r.lon] })).filter((r) => km(r.ll, c.stay.ll) < 150);
+    get(near).then((rows) => { const a = tidy(rows); return a.length ? a : new Promise((res) => setTimeout(res, 1100)).then(() => get(wide)).then(tidy); })
+      .then((a) => finish(a, null))
+      .catch(() => finish(null, "Couldn't reach the map search (it needs an internet connection)."));
+  }
+  const notFoundMsg = (q, c, what) => `<p class="hint">No match for “${esc(q)}” on OpenStreetMap near ${esc(c.name)}. Many ${what} in China aren't listed there, or are listed under another name — try the brand name, the Chinese name, or the street.</p>`;
+
   // A place name from a pasted map link: Apple "?q=Name", Google ".../place/Name/@..."
   function nameFromLink(text, fallback) {
     const t = String(text);
@@ -622,24 +651,19 @@
     const c = CITIES[state.stops[i].city];
     const q = ($("#hotelq-" + i).value || "").trim();
     const box = $("#hotelres-" + i);
-    if (!q) { toast("Type the hotel's name or address, or paste its map link."); return; }
+    if (!q) { toast("Type the hotel's name or address, or paste its coordinates."); return; }
     const ll = parseLatLng(q);
     if (ll) { setHotel(i, { name: nameFromLink(q, "My hotel (map pin)"), ll, src: "pin" }); return; }
-    if (window.NO_PRINT) { box.innerHTML = `<p class="hint">Searching isn't possible inside the Claude preview. Paste the hotel's Google or Apple Maps link (or its coordinates) instead.</p>`; return; }
+    if (isShortMapLink(q)) { box.innerHTML = SHORT_LINK_HELP + nearPicker(i, "hotel", c, ""); return; }
+    if (window.NO_PRINT) { box.innerHTML = `<p class="hint">Searching isn't possible inside the Claude preview.</p>` + COORD_TIP + nearPicker(i, "hotel", c, q); return; }
     box.innerHTML = `<p class="hint">Searching OpenStreetMap…</p>`;
-    const [la, lo] = c.stay.ll;
-    const url = "https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&accept-language=en&bounded=1&viewbox=" +
-      [lo - 0.6, la + 0.6, lo + 0.6, la - 0.6].join(",") + "&q=" + encodeURIComponent(q);
-    let done = false;
-    const fail = (why) => { if (done) return; done = true; box.innerHTML = `<p class="hint">${why} Paste the hotel's Google or Apple Maps link (or its coordinates) instead — open the hotel in Maps, tap Share → Copy link.</p>`; };
-    setTimeout(() => fail("The search took too long."), 9000);
-    fetch(url, { headers: { Accept: "application/json" } }).then((r) => r.json()).then((rows) => {
-      if (done) return; done = true;
-      hotelResults[i] = (rows || []).map((r) => ({ name: r.name || String(r.display_name).split(",")[0], addr: String(r.display_name).split(",").slice(0, 4).join(","), ll: [+r.lat, +r.lon] }));
-      if (!hotelResults[i].length) { done = false; fail(`No match for “${esc(q)}” near ${esc(c.name)}. Try the English or Chinese name, or the street.`); return; }
-      box.innerHTML = `<p class="hint">Pick your hotel:</p>` + hotelResults[i].map((r, k) => `<button type="button" class="btn small hotelpick" data-act="hotelpick" data-i="${i}" data-k="${k}"><b>${esc(r.name)}</b><br><span class="hint">${esc(r.addr)} · ${km(r.ll, c.stay.ll).toFixed(1)} km from ${esc(c.stay.area)}</span></button>`).join("");
-    }).catch(() => fail("Couldn't reach the map search (it needs an internet connection)."));
+    geoSearch(c, q, (rows, why) => {
+      if (!rows || !rows.length) { box.innerHTML = (why ? `<p class="hint">${why}</p>` : notFoundMsg(q, c, "hotels")) + COORD_TIP + nearPicker(i, "hotel", c, q); return; }
+      hotelResults[i] = rows;
+      box.innerHTML = `<p class="hint">Pick your hotel:</p>` + rows.map((r, k) => `<button type="button" class="btn small hotelpick" data-act="hotelpick" data-i="${i}" data-k="${k}"><b>${esc(r.name)}</b><br><span class="hint">${esc(r.addr)} · ${km(r.ll, c.stay.ll).toFixed(1)} km from ${esc(c.stay.area)}</span></button>`).join("") + nearPicker(i, "hotel", c, q);
+    });
   }
+
 
   // How you get to this stop (from the previous stop, or from the arrival airport): mode + optional times
   function modeSelect(id, fromId, toId, current, extraAttrs) {
@@ -745,6 +769,15 @@
       else if (act === "fit") { fitNights(); return; }
       else if (act === "hotelfind") { findHotel(i); return; }
       else if (act === "ownfind") { findOwnPlace(i); return; }
+      else if (act === "hotelnear" || act === "ownnear") {
+        const kind = act === "hotelnear" ? "hotel" : "own";
+        const typed = ($("#" + (kind === "hotel" ? "hotelq-" : "ownq-") + i).value || "").trim();
+        const name = typed && !/^https?:/i.test(typed) ? typed : kind === "hotel" ? "My hotel" : "My place";
+        const n = nearChoice(i, kind);
+        if (kind === "hotel") setHotel(i, { name, ll: n.ll, src: "near", near: n.label });
+        else addOwnPlace(i, { name, ll: n.ll, addr: "placed near " + n.label + " (approximate)" });
+        return;
+      }
       else if (act === "ownpick") { const r = (ownResults[i] || [])[+b.dataset.k]; if (r) addOwnPlace(i, r); return; }
       else if (act === "ownnopin") { const q = ($("#ownq-" + i).value || "").trim(); if (q) addOwnPlace(i, { name: q, ll: null }); return; }
       else if (act === "hotelpick") { const r = (hotelResults[i] || [])[+b.dataset.k]; if (r) setHotel(i, { name: r.name, ll: r.ll, src: "search" }); return; }

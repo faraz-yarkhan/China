@@ -38,6 +38,7 @@ const CITIES = {
       { tier: "lux", n: "The Peninsula Beijing", ll: [39.9152, 116.4135], area: "Wangfujing", note: "Classic luxury, 10 min walk to the Forbidden City's east side." },
       { tier: "lux", n: "Waldorf Astoria Beijing", ll: [39.9163, 116.4138], area: "Wangfujing", note: "Modern, quiet rooms, excellent service." },
       { tier: "mid", n: "Hotel Kapok Beijing", ll: [39.9148, 116.4048], area: "Donghuamen", note: "Design hotel a few minutes' walk from the Forbidden City." },
+      { tier: "mid", n: "Guo Ji Yi Yuan Hotel (Crowne Plaza Beijing Wangfujing)", ll: [39.9195, 116.4105], area: "48 Wangfujing Avenue", note: "On Wangfujing's main street near Dengshikou; walk to Wangfujing and Dengshikou metro. Location approximate." },
       { tier: "mid", n: "Novotel Beijing Peace", ll: [39.9128, 116.4128], area: "Wangfujing", note: "Reliable international chain right on Wangfujing." },
       { tier: "budget", n: "Atour, JI Hotel or Hanting branches", area: "Wangfujing / Qianmen", note: "Clean Chinese chains from ~¥350. On Trip.com, check the listing accepts foreign passports." },
     ],

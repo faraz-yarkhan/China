@@ -6,7 +6,7 @@
    tip, x how to get there when it is far from the centre, cl closed weekdays (0 Sun … 6 Sat),
    r rating 1–3 (3 = unmissable). */
 
-/* ---------- DATA REFRESH — updated by the weekly refresh (see tools/REFRESH.md) ---------- */
+/* ---------- DATA REFRESH — updated by the daily refresh (see tools/REFRESH.md) ---------- */
 const DATA_INFO = {
   refreshed: "2026-11-05", // date the data below was last checked (YYYY-MM-DD)
   // Mid-market rates to Australian dollars: A$ per 1 unit of local currency

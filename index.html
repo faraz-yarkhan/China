@@ -1044,6 +1044,18 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
 .g-wx { white-space: nowrap; font-family: var(--mono); font-size: 12.5px; }
 table.wxmon tr.trip td { background: var(--seal-soft); }
 table.wxsum td, table.wxmon td { vertical-align: top; }
+/* Day trips and requests in the builder */
+.trips { border-top: 1px dotted var(--line); padding-top: 6px; font-size: 14px; }
+.trips summary { cursor: pointer; font-weight: 600; padding: 2px 0; }
+.trips[open] summary { margin-bottom: 6px; }
+.tripadd { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 8px; align-items: center; padding: 8px; border: 1px dashed var(--line); border-radius: 8px; background: var(--card); margin-top: 6px; }
+.tripadd select { min-height: 34px; padding: 4px 6px; width: 100%; }
+.tripadd .btn { grid-column: 1 / -1; justify-self: start; }
+.chip.trip { border-color: var(--sky); }
+#reqIn { width: 100%; min-height: 70px; resize: vertical; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; line-height: 1.4; }
+.req-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 13.5px; }
+.req-list li { padding: 6px 8px; border-radius: 6px; background: var(--jade-soft); }
+.req-list li.bad { background: var(--gold-soft); }
 /* Change my plan */
 .ask { border-left: 4px solid var(--seal); }
 .ask-row { display: flex; gap: 8px; align-items: stretch; flex-wrap: wrap; }
@@ -1259,6 +1271,13 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; color:
       </div>
     </div>
 
+    <div class="field">
+      <label class="label" for="reqIn"><span class="step">6</span> Anything else? (optional)</label>
+      <textarea id="reqIn" rows="3" placeholder="One request per line, e.g.&#10;Add a trip from Zhangjiajie to Furong Town on 28 Dec from 5pm till 10pm&#10;Dinner at Donglaishun on day 2 at 7pm"></textarea>
+      <p class="hint">Type anything you already know you want — trips out, a sight on a certain day, a meal, a free evening. Each line is worked out (transport, timings, halal food) and built into your itinerary. Day trips can also be added on each city card above.</p>
+      <div id="reqOut" aria-live="polite"></div>
+    </div>
+
     <button type="submit" class="btn primary" id="go">Build my itinerary</button>
     <button type="button" class="btn print-btn" data-print>🖨 Print itinerary & info</button>
     <button type="button" class="btn print-btn" data-pdf>📄 Download itinerary as PDF</button>
@@ -1267,7 +1286,7 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; color:
 
   <section class="out" id="out" aria-live="polite"></section>
 </main>
-<footer class="refresh" id="refreshFooter">Data last refreshed: 5 Nov 2026 (exchange rates, entry rules for Australians, Sydney flights, prices, opening days, hotels and halal food listings). Checked weekly.</footer>
+<footer class="refresh" id="refreshFooter">Data last refreshed: 5 Nov 2026 (exchange rates, entry rules for Australians, Sydney flights, prices, opening days, hotels and halal food listings). Checked daily.</footer>
 
 <script>
   window.onerror = function (msg) {

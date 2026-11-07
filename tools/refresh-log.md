@@ -1,6 +1,6 @@
 # Data refresh log
 
-Newest first. Each weekly refresh adds an entry (see `tools/REFRESH.md`).
+Newest first. Each daily refresh adds an entry (see `tools/REFRESH.md`).
 
 ## 2026-11-06 — added Furong Town (芙蓉镇)
 - New city "Furong Town" (Yongshun County, western Hunan): coordinates 28.7431, 109.9462 (Wikipedia).

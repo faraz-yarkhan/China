@@ -1044,6 +1044,18 @@ td.py { font-family: var(--mono); font-size: 13px; color: var(--sky); }
 .g-wx { white-space: nowrap; font-family: var(--mono); font-size: 12.5px; }
 table.wxmon tr.trip td { background: var(--seal-soft); }
 table.wxsum td, table.wxmon td { vertical-align: top; }
+/* Day trips and requests in the builder */
+.trips { border-top: 1px dotted var(--line); padding-top: 6px; font-size: 14px; }
+.trips summary { cursor: pointer; font-weight: 600; padding: 2px 0; }
+.trips[open] summary { margin-bottom: 6px; }
+.tripadd { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 6px 8px; align-items: center; padding: 8px; border: 1px dashed var(--line); border-radius: 8px; background: var(--card); margin-top: 6px; }
+.tripadd select { min-height: 34px; padding: 4px 6px; width: 100%; }
+.tripadd .btn { grid-column: 1 / -1; justify-self: start; }
+.chip.trip { border-color: var(--sky); }
+#reqIn { width: 100%; min-height: 70px; resize: vertical; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; line-height: 1.4; }
+.req-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; font-size: 13.5px; }
+.req-list li { padding: 6px 8px; border-radius: 6px; background: var(--jade-soft); }
+.req-list li.bad { background: var(--gold-soft); }
 /* Change my plan */
 .ask { border-left: 4px solid var(--seal); }
 .ask-row { display: flex; gap: 8px; align-items: stretch; flex-wrap: wrap; }
@@ -1259,6 +1271,13 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; color:
       </div>
     </div>
 
+    <div class="field">
+      <label class="label" for="reqIn"><span class="step">6</span> Anything else? (optional)</label>
+      <textarea id="reqIn" rows="3" placeholder="One request per line, e.g.&#10;Add a trip from Zhangjiajie to Furong Town on 28 Dec from 5pm till 10pm&#10;Dinner at Donglaishun on day 2 at 7pm"></textarea>
+      <p class="hint">Type anything you already know you want — trips out, a sight on a certain day, a meal, a free evening. Each line is worked out (transport, timings, halal food) and built into your itinerary. Day trips can also be added on each city card above.</p>
+      <div id="reqOut" aria-live="polite"></div>
+    </div>
+
     <button type="submit" class="btn primary" id="go">Build my itinerary</button>
     <button type="button" class="btn print-btn" data-print>🖨 Print itinerary & info</button>
     <button type="button" class="btn print-btn" data-pdf>📄 Download itinerary as PDF</button>
@@ -1267,7 +1286,7 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; color:
 
   <section class="out" id="out" aria-live="polite"></section>
 </main>
-<footer class="refresh" id="refreshFooter">Data last refreshed: 5 Nov 2026 (exchange rates, entry rules for Australians, Sydney flights, prices, opening days, hotels and halal food listings). Checked weekly.</footer>
+<footer class="refresh" id="refreshFooter">Data last refreshed: 5 Nov 2026 (exchange rates, entry rules for Australians, Sydney flights, prices, opening days, hotels and halal food listings). Checked daily.</footer>
 
 <script>
   window.onerror = function (msg) {
@@ -1289,7 +1308,7 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; color:
    tip, x how to get there when it is far from the centre, cl closed weekdays (0 Sun … 6 Sat),
    r rating 1–3 (3 = unmissable). */
 
-/* ---------- DATA REFRESH — updated by the weekly refresh (see tools/REFRESH.md) ---------- */
+/* ---------- DATA REFRESH — updated by the daily refresh (see tools/REFRESH.md) ---------- */
 const DATA_INFO = {
   refreshed: "2026-11-05", // date the data below was last checked (YYYY-MM-DD)
   // Mid-market rates to Australian dollars: A$ per 1 unit of local currency
@@ -2346,7 +2365,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
   // "5 Nov 2026" from "2026-11-05"
   const refreshedLabel = (() => { const d = new Date(DATA_INFO.refreshed + "T00:00:00"); return isNaN(d) ? DATA_INFO.refreshed : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }); })();
   const AUD_NOTE = DATA_INFO.ratesNote + ", checked " + refreshedLabel;
-  const refreshLine = () => `Data last refreshed: ${refreshedLabel} (${DATA_INFO.covers}). Checked weekly.`;
+  const refreshLine = () => `Data last refreshed: ${refreshedLabel} (${DATA_INFO.covers}). Checked daily.`;
   const audFmt = (v) => (v < 1 ? String(Math.max(0.5, Math.round(v * 2) / 2)) : v < 10 ? String(Math.round(v * 2) / 2) : v < 100 ? String(Math.round(v)) : (v < 1000 ? Math.round(v / 5) * 5 : Math.round(v / 10) * 10).toLocaleString("en-US"));
   // Adds "(≈A$…)" after every ¥ / HK$ / MOP amount or range in a piece of text
   const PRICE_RE = /(¥|HK\$|MOP\$?\s?)(\d[\d,]*(?:\.\d+)?)(\s?[–-]\s?(?:¥|HK\$|MOP\$?\s?)?(\d[\d,]*(?:\.\d+)?))?(?![\d,]*\.?\d)(?!\s*\(?≈\s?A\$)/g;
@@ -2751,6 +2770,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     $("#outTime").value = fl.outTime || ""; $("#outNo").value = fl.outNo || "";
     document.querySelector(`input[name=passport][value=${state.passport}]`).checked = true;
     document.querySelector(`input[name=home][value=${state.home}]`).checked = true;
+    if ($("#reqIn")) $("#reqIn").value = state.requests || "";
     renderStops();
   }
 
@@ -2774,6 +2794,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
         ${hotelRow(st, i)}
         <div class="row"><select id="place-${i}" data-act="place" data-i="${i}" aria-label="Add a place in ${esc(c.name)}"><option value="">Add a place to see…</option>${opts}</select></div>
         ${ownPlaceRow(i, c)}
+        ${tripRow(st, i)}
         ${chips ? `<div class="chips">${chips}</div><div><button type="button" class="btn small" data-act="addtop" data-i="${i}">＋ Add top picks</button></div>` : `<p class="hint suggest">No places chosen, so we'll plan the top-rated ones for your trip style, e.g. ${topPicks(st.city, 3).map((p) => esc(p.n.split(/[:(]/)[0].trim())).join(", ")}. <button type="button" class="btn small" data-act="addtop" data-i="${i}">Add top picks</button></p>`}
       </div>`;
     }).join("");
@@ -3020,6 +3041,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     state.arrive = $("#arriveSel").value;
     state.depart = $("#departSel").value;
     state.optimise = $("#optimise").checked;
+    state.requests = $("#reqIn") ? $("#reqIn").value : state.requests || "";
     state.flights = { inTime: $("#inTime").value, inNo: $("#inNo").value.trim().toUpperCase(), outTime: $("#outTime").value, outNo: $("#outNo").value.trim().toUpperCase() };
   }
 
@@ -3053,6 +3075,8 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
         if (/-u[0-9a-z]+$/.test(b.dataset.id) && !state.stops.some((st) => st.places.includes(b.dataset.id))) removeCustomPlace(state.stops[i].city, b.dataset.id);
       }
       else if (act === "fit") { fitNights(); return; }
+      else if (act === "tripadd") { addTrip(i); return; }
+      else if (act === "tripdel") { state.stops[i].trips.splice(+b.dataset.k, 1); persist(); renderStops(); renderReqPreview(); if (lastPlan) generate(false); return; }
       else if (act === "hotelfind") { findHotel(i); return; }
       else if (act === "ownfind") { findOwnPlace(i); return; }
       else if (act === "hotelnear" || act === "ownnear") {
@@ -3099,6 +3123,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
       readForm(); persist(); renderTally();
     });
     $("#days").addEventListener("input", () => { readForm(); renderTally(); });
+    $("#reqIn").addEventListener("input", () => { state.requests = $("#reqIn").value; persist(); clearTimeout(reqTimer); reqTimer = setTimeout(renderReqPreview, 350); });
     $("#planner").addEventListener("submit", (e) => {
       e.preventDefault();
       readForm();
@@ -3350,7 +3375,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
   // The day's timeline: the traveller's edited version if there is one, else the suggestion
   function timelineFor(day, i) {
     const ed = state.edits && state.edits[dayKey(day, i)];
-    return ed ? ed.map((x) => Object.assign({}, x)) : buildTimeline(day);
+    return ed ? ed.map((x) => Object.assign({}, x)) : day.base ? day.base.map((x) => Object.assign({}, x)) : buildTimeline(day);
   }
   const isEdited = (day, i) => !!(state.edits && state.edits[dayKey(day, i)]);
   function saveTimeline(i, items) {
@@ -3752,8 +3777,19 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     return { mode, out: e.door, back: e.door, ride: e.ride, cost: e.cost + " each way", outText: firstSentence(String(modeText(mode, A.id, B.id)).replace(/<[^>]+>/g, "")), note: "" };
   }
 
+  // The way to go: the mode asked for, else the quickest — or the train when it's nearly as quick (far cheaper)
+  function chooseLeg(A, B, hotel, asked) {
+    const cands = [];
+    ["train", "car", "bus", "boat", "flight"].forEach((m) => { const L = outingLeg(m, A, B, hotel); if (L) cands.push(L); });
+    if (!cands.length) return null;
+    cands.sort((x, y) => x.out + x.back - (y.out + y.back));
+    const train = cands.find((c) => c.mode === "train");
+    const L = (asked && cands.find((c) => c.mode === asked)) || (train && train.out + train.back <= cands[0].out + cands[0].back + 40 ? train : cands[0]);
+    return { L, other: cands.find((c) => c.mode !== L.mode), cands };
+  }
+
   // Everything needed to show (and then add) the change; nothing is saved here
-  function workOut(cmd, plan) {
+  function workOut(cmd, plan, baseItems) {
     const r = { ok: false, cmd, items: [], removed: [], trimmed: [], notes: [], warns: [], alts: [], summary: "" };
     if (!cmd.action) { r.err = "nothing"; return r; }
     if (cmd.day === -2) { r.err = "Add a start date in step 1 to plan by date — or say “day 7” instead."; return r; }
@@ -3764,7 +3800,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     }
     const i = cmd.day, day = plan.days[i], A = day.city, hotel = hotelPoint(A);
     r.i = i;
-    const items = timelineFor(day, i);
+    const items = baseItems || timelineFor(day, i);
     r.where = `Day ${i + 1}${day.date ? " · " + fmtDate(day.date) : ""} · ${A.name}`;
     if (cmd.said.day === "auto") r.notes.push(`No date given, so I picked day ${i + 1}${day.date ? " (" + fmtDate(day.date) + ")" : ""} in ${A.name}. Add a date to choose another.`);
     if (cmd.from && cmd.from !== A.id) r.warns.push(`On day ${i + 1} you're staying in ${A.name}, not ${CITIES[cmd.from].name}, so this is planned from ${A.name}.`);
@@ -3832,16 +3868,11 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
 
     if (cmd.action === "outing") {
       const B = CITIES[cmd.city];
-      const cands = [];
       const asked = cmd.mode;
-      ["train", "car", "bus", "boat", "flight"].forEach((m) => { const L = outingLeg(m, A, B, hotel); if (L) cands.push(L); });
-      if (!cands.length) { r.err = `There's no practical way to get from ${A.name} to ${B.name} and back for a few hours.`; return r; }
-      cands.sort((x, y) => x.out + x.back - (y.out + y.back));
-      let L = asked ? cands.find((c) => c.mode === asked) : null;
-      if (asked && !L) r.warns.push(`${MODE[asked].label} doesn't run between ${A.name} and ${B.name}; using ${MODE[cands[0].mode].label.toLowerCase()} instead.`);
-      const train = cands.find((c) => c.mode === "train");
-      L = L || (train && train.out + train.back <= cands[0].out + cands[0].back + 40 ? train : cands[0]);
-      const other = cands.find((c) => c.mode !== L.mode);
+      const ch = chooseLeg(A, B, hotel, asked);
+      if (!ch) { r.err = `There's no practical way to get from ${A.name} to ${B.name} and back for a few hours.`; return r; }
+      if (asked && ch.L.mode !== asked) r.warns.push(`${MODE[asked].label} doesn't run between ${A.name} and ${B.name}; using ${MODE[ch.L.mode].label.toLowerCase()} instead.`);
+      const L = ch.L, other = ch.other;
       const total = e - s;
       if (L.out + L.back > 0.8 * total + 30 && L.out + L.back >= 5 * 60) { r.err = `${B.name} is about ${dur(L.out)} each way from ${A.name}${L.mode === "flight" ? " including airport time" : ""} — too far for a ${dur(total)} outing. Add ${B.name} as its own stop in step 3 instead.`; return r; }
       let backMode = L, backStart = Math.floor((e - L.back) / 5) * 5, arrive = Math.ceil((s + L.out) / 5) * 5;
@@ -3915,6 +3946,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
           near.forEach((x) => { if (x.start < ms && ms - x.start >= 20) r.trimmed.push({ x, end: ms }); else r.removed.push(x); });
           r.items.unshift(make({ k: "meal", title: `Early ${mealAt} (halal) — ${eatA.n}`, start: ms, end: me, ll: eatA.ll || null, note: `${B.name} has no halal restaurants we know of, so eat before you leave. ${eatA.note || ""}`.trim() }));
         }
+        if (!r.items.some((x) => x.k === "meal")) r.notes.push(`There's no gap for a halal ${mealAt} before you leave, so eat a late lunch, carry food, or have a late halal meal back in ${A.name} (Lanzhou noodle shops often stay open late — check on Amap).`);
         r.notes.push(`Halal food in ${B.name}: ${B.halalTip || "very limited."} Carry snacks; if you eat there, show the halal card (Phrases tab)${(B.dishes || [])[0] ? " — e.g. " + String(B.dishes[0]).split("—")[0].trim() + ", " + String(B.dishes[0]).split("—").slice(1).join("—").trim() : ""}.`);
       }
       r.there = there;
@@ -3967,17 +3999,20 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     return r;
   }
 
+  // The day's items with a worked-out change put in
+  function mergeResult(items, r, tag, extra) {
+    const gone = new Set(r.removed.map((x) => x.id));
+    const out = items.filter((x) => !gone.has(x.id));
+    r.trimmed.forEach((tr) => { const x = out.find((y) => y.id === tr.x.id); if (x) x.end = tr.end; });
+    r.items.forEach((x, k) => out.push(Object.assign({}, x, { id: tag + k }, extra || {})));
+    return out.sort((a, b) => a.start - b.start || a.end - b.end);
+  }
   // Apply a worked-out change to the day and remember how to undo it
   function applyAsk(r) {
     const day = lastPlan.days[r.i], key = dayKey(day, r.i);
     const before = state.edits && state.edits[key] ? JSON.parse(JSON.stringify(state.edits[key])) : null;
-    let items = timelineFor(day, r.i);
-    const gone = new Set(r.removed.map((x) => x.id));
-    items = items.filter((x) => !gone.has(x.id));
-    r.trimmed.forEach((tr) => { const x = items.find((y) => y.id === tr.x.id); if (x) x.end = tr.end; });
     const stamp = Date.now().toString(36);
-    r.items.forEach((x, k) => items.push(Object.assign({}, x, { id: "q" + stamp + k })));
-    saveTimeline(r.i, items);
+    saveTimeline(r.i, mergeResult(timelineFor(day, r.i), r, "q" + stamp));
     state.asks = (state.asks || []).concat([{ id: stamp, key, day: r.i, text: r.cmd.raw, summary: r.summary, before }]).slice(-20);
     persist();
     refreshDay(r.i);
@@ -4150,6 +4185,203 @@ Request: ${txt.trim()}`;
     });
   }
 
+  /* ---------- planned before building: day trips on each city card, and typed requests in the builder ---------- */
+  const TRIP_LEN = [["full", "Full day"], ["half", "Half day (~3½ h there)"], ["120", "2 hours there"], ["180", "3 hours there"], ["240", "4 hours there"], ["300", "5 hours there"], ["360", "6 hours there"]];
+  const TRIP_WHEN = [["best", "Best time"], ["m", "Morning"], ["e", "Afternoon"], ["n", "Evening (incl. after dark)"]];
+  const thereMins = (len) => (len === "full" ? 450 : len === "half" ? 210 : +len || 180);
+  // Day trips worth offering from a city: other towns within ~3½ h each way, and the city's own out-of-town sights
+  function tripOptions(cid) {
+    const A = CITIES[cid], hotel = hotelPoint(A), towns = [];
+    Object.keys(CITIES).forEach((bid) => {
+      if (bid === cid) return;
+      const ch = chooseLeg(A, CITIES[bid], hotel, null);
+      if (ch && ch.L.out <= 210 && ch.L.back <= 210) towns.push({ id: bid, L: ch.L });
+    });
+    towns.sort((a, b) => a.L.out - b.L.out);
+    const sights = A.places.filter((p) => p.x || (p.s || []).indexOf("full") >= 0);
+    return { towns, sights };
+  }
+  // Day numbers and dates for each night of each stop (in the current order)
+  function stopDays(si) {
+    let off = 0;
+    for (let k = 0; k < si; k++) off += state.stops[k].nights;
+    const start = state.start ? new Date(state.start + "T00:00:00") : null;
+    const out = [];
+    for (let k = 0; k < state.stops[si].nights; k++) out.push({ k, day: off + k + 1, date: start ? new Date(start.getTime() + (off + k) * 86400000) : null });
+    return out;
+  }
+  function tripLabel(t, cid) {
+    const A = CITIES[cid];
+    const name = t.to.indexOf("place:") === 0 ? (A.places.find((p) => p.id === t.to.slice(6)) || { n: "?" }).n.split(/[:(]/)[0].trim() : (CITIES[t.to] || { name: "?" }).name;
+    const len = (TRIP_LEN.find((x) => x[0] === t.len) || [0, ""])[1].replace(" there", "");
+    const when = t.len === "full" ? "" : t.when && t.when !== "best" ? " · " + (TRIP_WHEN.find((x) => x[0] === t.when) || [0, ""])[1].split(" (")[0].toLowerCase() : "";
+    const on = t.k != null && t.k >= 0 ? (() => { const d = stopDays(state.stops.findIndex((s) => s.city === cid))[t.k]; return d ? " · day " + d.day + (d.date ? " (" + fmtDate(d.date) + ")" : "") : ""; })() : "";
+    return `${name} · ${len}${when}${on}${t.mode && t.mode !== "best" ? " · " + MODE[t.mode].label.toLowerCase() : ""}`;
+  }
+  function tripRow(st, i) {
+    const c = CITIES[st.city], o = tripOptions(st.city), trips = st.trips || [];
+    const townOpts = o.towns.map((x) => `<option value="${x.id}">${esc(CITIES[x.id].name)} — ~${dur(x.L.out)} each way by ${MODE[x.L.mode].label.toLowerCase()}${state.stops.some((s) => s.city === x.id) ? " (also a stop)" : ""}</option>`).join("");
+    const sightOpts = o.sights.map((p) => `<option value="place:${p.id}">${esc(p.n.split(/[:(]/)[0].trim())}</option>`).join("");
+    const days = stopDays(i).map((d) => `<option value="${d.k}">Day ${d.day}${d.date ? " · " + esc(fmtDate(d.date)) : ""}${d.k === 0 ? (i === 0 ? " (arrival)" : " (travel day)") : ""}</option>`).join("");
+    const chips = trips.map((t, k) => `<span class="chip trip">🚆 ${esc(tripLabel(t, st.city))}<button type="button" data-act="tripdel" data-i="${i}" data-k="${k}" aria-label="Remove this day trip">×</button></span>`).join("");
+    const none = !townOpts && !sightOpts;
+    return `<details class="trips"${trips.length ? " open" : ""}><summary>🚆 Day trips from ${esc(c.name)}${trips.length ? ` <span class="badge pick">${trips.length}</span>` : ""}</summary>
+      ${chips ? `<div class="chips">${chips}</div>` : ""}
+      ${none ? `<p class="hint">No other towns on our list are close enough to ${esc(c.name)} for a day trip.</p>` : `<div class="tripadd">
+        <label class="hint" for="tripto-${i}">Go to</label>
+        <select id="tripto-${i}">${townOpts ? `<optgroup label="Nearby cities & towns">${townOpts}</optgroup>` : ""}${sightOpts ? `<optgroup label="Out-of-town sights">${sightOpts}</optgroup>` : ""}</select>
+        <label class="hint" for="triplen-${i}">How long</label>
+        <select id="triplen-${i}">${TRIP_LEN.map(([v, l]) => `<option value="${v}" ${v === "240" ? "selected" : ""}>${l}</option>`).join("")}</select>
+        <label class="hint" for="tripwhen-${i}">When</label>
+        <select id="tripwhen-${i}">${TRIP_WHEN.map(([v, l]) => `<option value="${v}">${l}</option>`).join("")}</select>
+        <label class="hint" for="tripday-${i}">Which day</label>
+        <select id="tripday-${i}"><option value="-1">Best day for it</option>${days}</select>
+        <label class="hint" for="tripmode-${i}">By</label>
+        <select id="tripmode-${i}"><option value="best">Best option</option><option value="train">High-speed train</option><option value="car">Car & driver</option><option value="bus">Coach / bus</option><option value="boat">Ferry</option></select>
+        <button type="button" class="btn small" data-act="tripadd" data-i="${i}">＋ Add day trip</button>
+      </div>`}
+    </details>`;
+  }
+  function addTrip(i) {
+    const st = state.stops[i];
+    const t = { id: "t" + Date.now().toString(36), to: $("#tripto-" + i).value, len: $("#triplen-" + i).value, when: $("#tripwhen-" + i).value, k: +$("#tripday-" + i).value, mode: $("#tripmode-" + i).value };
+    if (!t.to) return;
+    if (t.k >= st.nights) t.k = -1;
+    st.trips = (st.trips || []).concat([t]);
+    persist(); renderStops(); renderReqPreview();
+    if (lastPlan) generate(false);
+    toast(`Day trip added: ${tripLabel(t, st.city)}. ${lastPlan ? "Your itinerary is updated." : "It goes in when you build the itinerary."}`);
+  }
+
+  // A trip on a city card → a command for workOut, on a chosen (or the best) day
+  function tripCommand(t, si, plan, offset) {
+    const A = CITIES[state.stops[si].city], st = state.stops[si];
+    const dayIdx = (k) => offset + k;
+    let k = t.k != null && t.k >= 0 && t.k < st.nights ? t.k : null;
+    const isPlace = t.to.indexOf("place:") === 0;
+    const there = thereMins(t.len);
+    if (k == null) {
+      // the best day: a full day in this city, fewest sights, no other trip already
+      let best = null;
+      for (let q = 0; q < st.nights; q++) {
+        const d = plan.days[dayIdx(q)];
+        if (!d || d.kind === "depart") continue;
+        const items = d.base || buildTimeline(d);
+        const score = (d.kind === "full" ? 0 : t.len === "full" ? 50 : 8) + items.filter((x) => x.k === "sight").length + (items.some((x) => x.pr) ? 30 : 0);
+        if (!best || score < best.score) best = { q, score };
+      }
+      k = best ? best.q : 0;
+    }
+    const cmd = { raw: tripLabel(t, A.id), day: dayIdx(k), start: null, end: null, len: null, part: null, city: null, from: null, pid: null, halal: null, mode: t.mode && t.mode !== "best" ? t.mode : null, title: null, meal: null, said: t.k != null && t.k >= 0 ? {} : { day: "auto" } };
+    if (isPlace) {
+      const p = A.places.find((x) => x.id === t.to.slice(6));
+      Object.assign(cmd, { action: "place", pid: p ? p.id : null, city: A.id });
+      if (t.len === "full") cmd.part = "full day";
+      else {
+        const when = t.when === "best" ? ((p && p.s) || ["m"])[0] : t.when;
+        cmd.start = when === "n" ? 17 * 60 : when === "e" ? 13 * 60 : 8 * 60 + 30;
+        const go = p ? getThere(hotelPoint(A), p, A).mins || 0 : 0;
+        cmd.end = cmd.start + there + 2 * go;
+      }
+      return cmd;
+    }
+    const B = CITIES[t.to], ch = chooseLeg(A, B, hotelPoint(A), cmd.mode);
+    Object.assign(cmd, { action: "outing", city: t.to });
+    if (!ch) return cmd;
+    const L = ch.L;
+    cmd.mode = L.mode;
+    const when = t.len === "full" ? "m" : t.when !== "best" ? t.when : B.night && B.night.length && there <= 240 ? "n" : there >= 300 ? "m" : "e";
+    const d = plan.days[cmd.day], winter = d && d.date && (d.date.getMonth() > 8 || d.date.getMonth() < 3);
+    let s;
+    if (when === "n") {
+      // be there a little before dusk, so you see it in daylight and lit up
+      const arriveBy = (winter ? 17 * 60 + 45 : 19 * 60 + 15) - Math.min(there - 60, 90);
+      s = arriveBy - L.out;
+    } else s = when === "e" ? 13 * 60 : t.len === "full" ? 8 * 60 : 8 * 60 + 30;
+    if (L.mode === "train" && L.firstOut != null && s + L.acc + L.tr.wait < L.firstOut) s = L.firstOut - L.acc - L.tr.wait;
+    let e = s + L.out + there + L.back;
+    if (L.mode === "train" && L.lastBack != null) {
+      const latest = L.lastBack - L.tr.to.mins - 15 + L.back;
+      if (e > latest) { const shift = e - latest; s -= shift; e -= shift; }
+    }
+    cmd.start = Math.floor(s / 5) * 5; cmd.end = Math.ceil(e / 5) * 5;
+    return cmd;
+  }
+
+  // Requests typed in the builder: one per line
+  const reqLines = () => String(state.requests || "").split(/\n+/).map((x) => x.trim()).filter((x) => x.length > 2);
+  const lineId = (txt) => { let h = 0; for (let k = 0; k < txt.length; k++) h = (h * 31 + txt.charCodeAt(k)) | 0; return "r" + (h >>> 0).toString(36); };
+
+  // Work every planned trip and request into the plan's days; returns what happened to each
+  function applyPlanned(plan) {
+    plan.days.forEach((d) => { d.base = null; });
+    const report = [];
+    const put = (label, kind, cmd, pr) => {
+      if (cmd.day == null || cmd.day < 0 || !plan.days[cmd.day]) { const r0 = workOut(cmd, plan); report.push({ label, kind, ok: false, msg: r0.err === "nothing" ? "I couldn't tell what to add — name a place or town, a day and a time." : r0.err }); return; }
+      const d = plan.days[cmd.day];
+      const items = d.base || buildTimeline(d);
+      // a sight already put on another day by the planner moves to the day asked for; note the gap it leaves
+      let gap = null;
+      if (cmd.pid && cmd.said.day !== "auto") plan.days.forEach((o, k) => {
+        if (k === cmd.day || o.cityId !== d.cityId) return;
+        const its = o.base || buildTimeline(o), P = findPlace(CITIES[o.cityId], cmd.pid);
+        const short = P ? P.n.split(/[:(]/)[0].trim() : "\u0000";
+        const goes = (x) => (x.pid === cmd.pid && !x.pr) || (x.k === "travel" && !x.pr && (x.title.indexOf(short) >= 0 || (/^Back to /.test(x.title) && its.some((y) => y.pid === cmd.pid && !y.pr && Math.abs(y.end - x.start) <= 20))));
+        const out = its.filter(goes);
+        if (!out.length) return;
+        o.base = its.filter((x) => !goes(x));
+        gap = { k, start: Math.min.apply(null, out.map((x) => x.start)), end: Math.max.apply(null, out.map((x) => x.end)) };
+      });
+      let r = workOut(cmd, plan, items);
+      if (!r.ok && cmd.pid && /already on day/.test(r.err || "")) { report.push({ label, kind, ok: true, day: cmd.day, msg: `Already planned on day ${cmd.day + 1}.` }); return; }
+      if (!r.ok) { report.push({ label, kind, ok: false, msg: r.err === "nothing" ? "I couldn't tell what to add — name a place or town, a day and a time." : r.err }); return; }
+      d.base = mergeResult(items, r, pr + "-", { pr });
+      // sights it displaced go into the gap it left (a swap of days), if they fit
+      const moved = [];
+      if (gap) {
+        const o = plan.days[gap.k], A = o.city;
+        let t = gap.start;
+        r.removed.filter((x) => x.k === "sight" && x.pid).forEach((x, n) => {
+          const len = x.end - x.start, st = r5(t + (n ? 20 : 0));
+          if (st + len > gap.end + 30) return;
+          o.base.push(Object.assign({}, x, { id: pr + "-m" + n, start: st, end: st + len, pr, note: `Moved from day ${cmd.day + 1} to make room.` }));
+          moved.push(x.title.split(/[:(&]/)[0].trim()); t = st + len;
+        });
+        o.base.sort((a, b) => a.start - b.start || a.end - b.end);
+        if (moved.length) r.removed = r.removed.filter((x) => moved.indexOf(x.title.split(/[:(&]/)[0].trim()) < 0);
+      }
+      const ed = state.edits && state.edits[dayKey(d, cmd.day)];
+      const blocked = ed && !ed.some((x) => x.pr === pr);
+      report.push({ label, kind, ok: !blocked, day: cmd.day, summary: r.summary, warns: r.warns, gone: r.removed.filter((x) => x.k === "sight").map((x) => x.title),
+        moved: moved.length ? `Moved to day ${gap.k + 1}: ${moved.join(", ")}.` : "",
+        msg: blocked ? `Day ${cmd.day + 1} has your own edits, so this isn't shown there. Use “Reset day” on day ${cmd.day + 1} to add it.` : "" });
+    };
+    let off = 0;
+    state.stops.forEach((st, si) => {
+      (st.trips || []).forEach((t) => put(tripLabel(t, st.city), "trip", tripCommand(t, si, plan, off), t.id));
+      off += st.nights;
+    });
+    reqLines().forEach((line) => put(line, "req", parseAsk(line, plan), lineId(line)));
+    plan.report = report;
+    return report;
+  }
+  function reportHTML(report, built) {
+    if (!report.length) return "";
+    return `<ul class="req-list">${report.map((x) => `<li class="${x.ok ? "ok" : "bad"}"><b>${x.kind === "trip" ? "🚆" : "✍️"} ${esc(x.label)}</b><br>${x.ok ? "✓ " + esc(x.summary || x.msg) : "⚠️ " + esc(x.msg)}${(x.warns || []).map((w) => `<br><span class="hint">⚠️ ${esc(w)}</span>`).join("")}${x.moved ? `<br><span class="hint">${esc(x.moved)}</span>` : ""}${x.gone && x.gone.length ? `<br><span class="hint">Makes way by moving out: ${esc(x.gone.join(", "))}.</span>` : ""}${x.ok && x.msg && x.summary ? `<br><span class="hint">${esc(x.msg)}</span>` : ""}</li>`).join("")}</ul>`;
+  }
+  // Live preview in the builder of what the trips and requests will do
+  let reqTimer = null;
+  function renderReqPreview() {
+    const box = $("#reqOut");
+    if (!box) return;
+    const has = reqLines().length || state.stops.some((s) => (s.trips || []).length);
+    if (!has || !state.stops.length) { box.innerHTML = ""; return; }
+    let rep;
+    try { rep = applyPlanned(buildPlan(state)); } catch (e) { box.innerHTML = ""; return; }
+    box.innerHTML = `<p class="hint"><b>What these will add</b>${lastPlan ? "" : " when you build the itinerary"}:</p>` + reportHTML(rep, false);
+    addAUD(box);
+  }
+
   /* ---------- weather: typical (climate averages) for each date, or a live forecast within ~2 weeks ---------- */
   const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const isoDate = (d) => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
@@ -4317,6 +4549,7 @@ Request: ${txt.trim()}`;
   function generate(scroll) {
     readForm();
     const plan = buildPlan(state);
+    applyPlanned(plan);
     lastPlan = plan;
     editingDay = null;
     plan.map = routeMapSVG(plan);
@@ -4341,6 +4574,8 @@ Request: ${txt.trim()}`;
     if (reordered) notes.push(["info", "Route", `Cities re-ordered so you start in ${esc(CITIES[arrId].name)}, finish near ${esc(CITIES[depId].name)} and travel the shortest way between them. Untick “Recommend the best city order and transport” to keep your own order.`]);
     reordered = false;
     plan.warnings.forEach((w) => notes.push(["warn", "Check", esc(w)]));
+    (plan.report || []).forEach((x) => notes.push([x.ok ? "good" : "warn", x.kind === "trip" ? "Day trip" : "Request",
+      `<b>${esc(x.label)}</b> — ${x.ok ? esc(x.summary || x.msg) + (x.day != null ? ` <a href="#" data-goto="day-${x.day + 1}">See day ${x.day + 1} ↓</a>` : "") : esc(x.msg)}${(x.warns || []).map((w) => "<br>⚠️ " + esc(w)).join("")}${x.moved ? "<br>" + esc(x.moved) : ""}${x.gone && x.gone.length ? "<br>Makes way by moving out: " + esc(x.gone.join(", ")) + " — add a night or another day for them." : ""}${x.ok && x.msg && x.summary ? "<br>" + esc(x.msg) : ""}`]));
     if (isAU() && hasMainland) {
       const longest = Math.max(0, ...mainlandStretches());
       if (longest > 30) notes.push(["warn", "Visa", `Your longest unbroken mainland stretch is <b>${longest} nights</b>. Australians get up to 30 days visa-free per entry, so either break it with a Hong Kong/Macau visit or apply for a tourist (L) visa.`]);
@@ -4441,12 +4676,13 @@ Request: ${txt.trim()}`;
        <div id="pane-talk" role="tabpanel" aria-labelledby="tab-talk" class="out" ${currentTab !== "talk" ? "hidden" : ""}><h2 class="print-only">Phrases</h2>${phrasesHTML(hasHK || hasMO)}</div>
        <p class="foot"><b>${esc(refreshLine())}</b> Prices, opening hours and visa rules change. Figures here are meant for planning; confirm bookings and entry rules on official sites before you travel. Directions are estimates from map distance — use Apple Maps or Amap on the day for live routes.</p>`;
     restoreChecks();
-    plan.days.forEach((d, i) => { if (isEdited(d, i)) { const pids = new Set(timelineFor(d, i).map((x) => x.pid).filter(Boolean)); document.querySelectorAll(`#day-${i + 1} .slot[data-pid]`).forEach((sl) => (sl.hidden = !pids.has(sl.dataset.pid))); } });
+    plan.days.forEach((d, i) => { if (isEdited(d, i) || d.base) { const pids = new Set(timelineFor(d, i).map((x) => x.pid).filter(Boolean)); document.querySelectorAll(`#day-${i + 1} .slot[data-pid]`).forEach((sl) => (sl.hidden = !pids.has(sl.dataset.pid))); } });
     if (currentTab === "map") showStreetMap();
     addAUD($("#out"));
     fetchForecasts(plan);
     renderAskHistory();
     if (askDraft) renderAskPreview();
+    renderReqPreview();
     lastPrintArgs = { ids, routeIds, arrId, depId, hasMainland, hasHK, hasMO, startD, endD, notes };
     buildPrintView(plan, lastPrintArgs);
     if (scroll) out.scrollIntoView({ behavior: "smooth", block: "start" });

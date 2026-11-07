@@ -28,7 +28,7 @@ covers = re.search(r'covers:\s*"([^"]+)"', data).group(1)
 
 page = open("index.html", encoding="utf-8").read()
 page, n = re.subn(r'(<footer class="refresh" id="refreshFooter">)[^<]*(</footer>)',
-                  rf"\g<1>Data last refreshed: {label} ({covers}). Checked weekly.\g<2>", page)
+                  rf"\g<1>Data last refreshed: {label} ({covers}). Checked daily.\g<2>", page)
 if n != 1:
     raise SystemExit("index.html: refresh footer not found")
 open("index.html", "w", encoding="utf-8").write(page)

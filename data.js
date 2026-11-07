@@ -877,6 +877,17 @@ const CITIES = {
   },
 };
 
+// Short trips out and back from where you're staying (used by "Change my plan").
+// Station positions are approximate; train times are typical — always check 12306 / Trip.com.
+const OUTINGS = {
+  "zjj|fr": {
+    train: { from: { n: "Zhangjiajie West station", zh: "张家界西站", ll: [29.115, 110.433] }, to: { n: "Furongzhen station", zh: "芙蓉镇站", mins: 10, fare: "¥15" },
+      ride: 25, wait: 20, fare: "¥40", firstOut: "07:30", lastOut: "21:00", lastBack: "21:30",
+      note: "High-speed trains only — they leave from Zhangjiajie West, not the city-centre station. Book on 12306 or Trip.com with your passport." },
+    car: { mins: 105, note: "About 1½–2 h each way from Wulingyuan by private car. DiDi rarely runs from Furong Town at night, so agree a return price with one driver who waits for you." },
+  },
+};
+
 /* Known intercity connections. Times are typical; fares are 2nd class or economy, approximate. */
 const ROUTES = {
   "bj|sh": "High-speed train Beijing South → Shanghai Hongqiao, 4 h 20 min – 6 h, approx. ¥550–670 (2nd class). Flights take ~2 h 15 plus airport time.",

@@ -3774,13 +3774,17 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     }
     if (modesFor(A.id, B.id).indexOf(mode) < 0) return null;
     const e = modeEstimate(mode, A.id, B.id);
+    // short train hops: less time at the stations than an intercity journey (incl. border checks where there are any)
+    if (mode === "train" && km(A.stay.ll, B.stay.ll) < 200) e.door = 45 + Math.max(15, e.ride) + 25 + (crossesBorder(A.id, B.id) ? 15 : 0);
     return { mode, out: e.door, back: e.door, ride: e.ride, cost: e.cost + " each way", outText: firstSentence(String(modeText(mode, A.id, B.id)).replace(/<[^>]+>/g, "")), note: "" };
   }
 
   // The way to go: the mode asked for, else the quickest — or the train when it's nearly as quick (far cheaper)
   function chooseLeg(A, B, hotel, asked) {
     const cands = [];
-    ["train", "car", "bus", "boat", "flight"].forEach((m) => { const L = outingLeg(m, A, B, hotel); if (L) cands.push(L); });
+    // across the Hong Kong / Macau border a private car needs special cross-border plates: only if asked for
+    const border = crossesBorder(A.id, B.id);
+    ["train", "car", "bus", "boat", "flight"].forEach((m) => { if (m === "car" && border && asked !== "car") return; const L = outingLeg(m, A, B, hotel); if (L) cands.push(L); });
     if (!cands.length) return null;
     cands.sort((x, y) => x.out + x.back - (y.out + y.back));
     const train = cands.find((c) => c.mode === "train");
@@ -4220,7 +4224,7 @@ Request: ${txt.trim()}`;
   }
   function tripRow(st, i) {
     const c = CITIES[st.city], o = tripOptions(st.city), trips = st.trips || [];
-    const townOpts = o.towns.map((x) => `<option value="${x.id}">${esc(CITIES[x.id].name)} — ~${dur(x.L.out)} each way by ${MODE[x.L.mode].label.toLowerCase()}${state.stops.some((s) => s.city === x.id) ? " (also a stop)" : ""}</option>`).join("");
+    const townOpts = o.towns.map((x) => `<option value="${x.id}">${esc(CITIES[x.id].name)} — ~${dur(x.L.out)} each way by ${MODE[x.L.mode].label.toLowerCase()}${x.id === "mo" && x.L.mode === "train" ? " to Zhuhai, then walk across the border" : ""}${state.stops.some((s) => s.city === x.id) ? " (also a stop)" : ""}</option>`).join("");
     const sightOpts = o.sights.map((p) => `<option value="place:${p.id}">${esc(p.n.split(/[:(]/)[0].trim())}</option>`).join("");
     const days = stopDays(i).map((d) => `<option value="${d.k}">Day ${d.day}${d.date ? " · " + esc(fmtDate(d.date)) : ""}${d.k === 0 ? (i === 0 ? " (arrival)" : " (travel day)") : ""}</option>`).join("");
     const chips = trips.map((t, k) => `<span class="chip trip">🚆 ${esc(tripLabel(t, st.city))}<button type="button" data-act="tripdel" data-i="${i}" data-k="${k}" aria-label="Remove this day trip">×</button></span>`).join("");

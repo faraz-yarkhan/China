@@ -1059,6 +1059,17 @@ body.pv-screen > *:not(#printView):not(#pvBar):not(.toast) { display: none !impo
 body.pv-screen #printView { display: block; position: static; visibility: visible; width: auto; }
 body.pv-screen .pv-page { margin: 12px auto; padding: 10mm; box-shadow: 0 2px 12px rgba(0,0,0,.18); box-sizing: content-box; }
 /* Off-screen copy used to measure page heights at A4 width */
+/* Copy of the planner page drawn into the PDF: off-screen, desktop width, always the light palette */
+#pdfView { position: absolute; left: -12000px; top: 0; width: 820px; background: #F3F4F2; padding: 0;
+  --paper: #F3F4F2; --card: #FFFFFF; --ink: #17202B; --muted: #586373; --line: #D9DDE1; --seal: #B3302A; --seal-soft: #F7E4E1;
+  --jade: #1D7556; --jade-soft: #E0F0E8; --gold: #8C620E; --gold-soft: #F5EBD6; --sky: #2B5C8A; --sky-soft: #E2ECF5;
+  --sea: #D9E6EF; --land: #F7F6F2; --coast: #98A6B3; --mapborder: #B4BEC8; color: var(--ink); color-scheme: light; }
+#pdfView .out { display: grid; gap: 14px; }
+#pdfView .mast { padding: 6px 0 4px; max-width: none; }
+#pdfView .mast h1 { font-size: 30px; }
+#pdfView .day { animation: none; }
+#pdfView .print-only { display: block; font-family: var(--display); font-size: 22px; margin: 6px 0 0; padding-bottom: 4px; border-bottom: 3px solid var(--seal); }
+#pdfView [hidden] { display: none !important; }
 /* Visible but off-screen while the PDF is drawn */
 #printView.capturing { display: block; position: absolute; left: -10000px; top: 0; width: 190mm; }
 #printView.capturing .pv-page { margin: 0 0 20px; }

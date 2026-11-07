@@ -2308,36 +2308,123 @@ ${pv}
     });
   }
   let pdfBusy = false;
+  // A copy of the on-screen itinerary (all tabs, light theme) laid out off-screen for capture
+  function buildPdfView() {
+    const old = $("#pdfView");
+    if (old) old.parentNode.removeChild(old);
+    const holder = document.createElement("div");
+    holder.id = "pdfView";
+    const ids = state.stops.map((x) => CITIES[x.city].name).filter((v, i, a) => a.indexOf(v) === i);
+    holder.innerHTML = `<header class="mast"><div><h1>China & Hong Kong Trip Planner <span class="han">中国 · 香港</span></h1><p>${esc(state.days)}-day trip · ${esc(ids.join(", "))} · ${esc(refreshLine())}</p></div></header>`;
+    const clone = $("#out").cloneNode(true);
+    clone.removeAttribute("id");
+    clone.querySelectorAll(".tabs, .actions, .maplinks, .lmap-wrap, [data-tledit], .map-legend .btn, .tl-edit, .opts-more summary, script").forEach((n) => n.parentNode.removeChild(n));
+    clone.querySelectorAll("[role=tabpanel][hidden]").forEach((n) => n.removeAttribute("hidden"));
+    clone.querySelectorAll("details").forEach((n) => n.setAttribute("open", ""));
+    holder.appendChild(clone);
+    document.body.appendChild(holder);
+    // The blocks to place on pages, in reading order; headings stay with what follows
+    const blocks = [holder.querySelector(".mast")];
+    Array.prototype.forEach.call(clone.children, (el) => {
+      if (el.getAttribute("role") === "tabpanel" || el.id === "glanceBox") Array.prototype.forEach.call(el.children, (k) => { if (k.id === "glanceBox") blocks.push(k.firstElementChild); else blocks.push(k); });
+      else blocks.push(el);
+    });
+    return { holder, blocks: blocks.filter((b) => b && b.offsetHeight > 0) };
+  }
+
+  // Find a row near `y` (canvas pixels) that is plain background, so a long card is split between lines of text
+  function quietRow(canvas, y, lookBack) {
+    const ctx = canvas.getContext("2d"), w = canvas.width;
+    for (let r = Math.floor(y); r > y - lookBack && r > 0; r--) {
+      const row = ctx.getImageData(0, r, w, 1).data;
+      let busy = 0;
+      for (let x = 8; x < w - 8; x += 6) {
+        const k = x * 4, a = row[k], g = row[k + 1], bl = row[k + 2];
+        const ref = row[32];
+        if (Math.abs(a - ref) + Math.abs(g - row[33]) + Math.abs(bl - row[34]) > 24) { if (++busy > 2) break; }
+      }
+      if (busy <= 2) return r;
+    }
+    return Math.floor(y);
+  }
+
   async function makePDF() {
     if (pdfBusy) return;
     if (window.NO_PRINT) { showPrintHelp("blocked"); return; }
     if (!lastPlan) return;
     pdfBusy = true;
-    const pv = $("#printView");
+    let view = null;
     try {
       toast("Making your PDF… (needs internet the first time)");
       for (const src of PDF_LIBS) await loadScript(src);
       if (!window.html2canvas || !window.jspdf) throw new Error("libs");
-      fitPrintPages();
-      pv.classList.add("capturing");
-      const pages = Array.prototype.slice.call(pv.querySelectorAll(".pv-page"));
+      if (editingDay != null) { const d = editingDay; editingDay = null; refreshDay(d); }
+      view = buildPdfView();
+      const SCALE = 1.35, PAPER = [243, 244, 242], Q = 0.78;
       const pdf = new window.jspdf.jsPDF({ unit: "mm", format: "a4", compress: true });
-      for (let k = 0; k < pages.length; k++) {
-        toast(`Making your PDF… page ${k + 1} of ${pages.length}`);
-        const canvas = await window.html2canvas(pages[k], { scale: 1.6, backgroundColor: "#ffffff", useCORS: true, logging: false, windowWidth: 900 });
-        const w = 190, h = Math.min(277, (canvas.height / canvas.width) * w);
-        if (k) pdf.addPage();
-        pdf.addImage(canvas.toDataURL("image/jpeg", 0.8), "JPEG", 10, 10, w, h, undefined, "FAST");
+      const M = 10, PW = 210 - 2 * M, PH = 297 - 2 * M;           // printable area in mm
+      const pxToMm = PW / view.holder.querySelector(".mast").offsetWidth; // page width = the view's width
+      const paint = () => { pdf.setFillColor(PAPER[0], PAPER[1], PAPER[2]); pdf.rect(0, 0, 210, 297, "F"); };
+      paint();
+      let y = M, pages = 1;
+      const newPage = () => { pdf.addPage(); paint(); y = M; pages++; };
+      const canvases = [];
+      for (let k = 0; k < view.blocks.length; k++) {
+        toast(`Making your PDF… section ${k + 1} of ${view.blocks.length}`);
+        canvases.push(await window.html2canvas(view.blocks[k], { scale: SCALE, backgroundColor: "rgb(" + PAPER.join(",") + ")", useCORS: true, logging: false, windowWidth: 1300 }));
       }
-      pv.classList.remove("capturing");
+      for (let k = 0; k < canvases.length; k++) {
+        const cv = canvases[k], el = view.blocks[k];
+        const wMm = (cv.width / SCALE) * pxToMm, hMm = (cv.height / SCALE) * pxToMm;
+        const isHeading = /^H[1-6]$/.test(el.tagName) || el.classList.contains("city-band") || el.classList.contains("city-stay");
+        const room = M + PH - y;
+        if (isHeading) {
+          // keep headings with at least the start of what follows
+          const nextH = canvases[k + 1] ? Math.min(45, (canvases[k + 1].height / SCALE) * pxToMm) : 0;
+          if (y > M && hMm + nextH > room) newPage();
+          pdf.addImage(cv.toDataURL("image/jpeg", Q), "JPEG", M, y, wMm, hMm, undefined, "FAST");
+          y += hMm + 1;
+          continue;
+        }
+        if (hMm <= room) {
+          pdf.addImage(cv.toDataURL("image/jpeg", Q), "JPEG", M, y, wMm, hMm, undefined, "FAST");
+          y += hMm + 4;
+          continue;
+        }
+        // Doesn't fit: start on a new page only if little room is left and it would fit there whole
+        if (room < PH * 0.35 && hMm <= PH) {
+          newPage();
+          pdf.addImage(cv.toDataURL("image/jpeg", Q), "JPEG", M, y, wMm, hMm, undefined, "FAST");
+          y += hMm + 4;
+          continue;
+        }
+        if (room < 25) newPage();
+        // Otherwise fill this page and carry on, splitting between lines of text
+        let src = 0;
+        while (src < cv.height - 2) {
+          const roomPx = ((M + PH - y) / pxToMm) * SCALE;
+          let cut = src + roomPx >= cv.height ? cv.height : quietRow(cv, src + roomPx, Math.min(260, roomPx * 0.4));
+          if (cut <= src + 20) cut = Math.min(cv.height, src + roomPx);
+          const part = document.createElement("canvas");
+          part.width = cv.width; part.height = cut - src;
+          part.getContext("2d").drawImage(cv, 0, src, cv.width, cut - src, 0, 0, cv.width, cut - src);
+          const partMm = ((cut - src) / SCALE) * pxToMm;
+          pdf.addImage(part.toDataURL("image/jpeg", Q), "JPEG", M, y, wMm, partMm, undefined, "FAST");
+          y += partMm + 4;
+          src = cut;
+          if (src < cv.height - 2) newPage();
+        }
+      }
       const ids = state.stops.map((x) => CITIES[x.city].name).filter((v, i, a) => a.indexOf(v) === i);
       const blob = pdf.output("blob");
       const t = $(".toast"); if (t) t.hidden = true;
-      deliverFile(blob, `China trip itinerary (${state.days} days).pdf`, "PDF", `${pages.length} A4 pages: overview, route map, one page per day, key information, checklist and phrases (${ids.join(", ")}).`);
+      deliverFile(blob, `China trip itinerary (${state.days} days).pdf`, "PDF", `${pages} A4 pages laid out like the planner page: summary and route map, day-by-day plans, map, hotels & halal food, before you go and phrases (${ids.join(", ")}). For a shorter version, use Print.`);
     } catch (e) {
-      pv.classList.remove("capturing");
       toast("Couldn't make the PDF — it needs an internet connection the first time. You can also use Print → Save as PDF.");
-    } finally { pdfBusy = false; }
+    } finally {
+      if (view && view.holder.parentNode) view.holder.parentNode.removeChild(view.holder);
+      pdfBusy = false;
+    }
   }
 
   /* ---------- export & misc ---------- */

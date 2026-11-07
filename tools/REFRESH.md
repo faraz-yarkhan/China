@@ -43,3 +43,6 @@ restaurants and hotels open and close. Once a week a scheduled Claude session fo
    publish `.build/site/index.html` to that `url` with `files` data.js, map-data.js and app.js from
    `.build/site/`. If the tool is missing or refuses, say so in the log and the final summary.
 7. End with a short summary of what changed and what couldn't be verified.
+
+## Note: guide-data.js
+`guide-data.js` (the owner's personal travel guide) exists only on the published Claude page, never in this public repo. The weekly publish sends only index.html, data.js, map-data.js and app.js, so the guide file on the page is kept — do not delete it or pass `null` for it. Without the file the app simply hides guide tips.

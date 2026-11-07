@@ -60,6 +60,9 @@ const CITIES = {
     ],
     night: ["Dinner at Donglaishun, then a walk along Wangfujing's lit-up pedestrian street.", "Evening rickshaw or walk through the Dongcheng hutongs near your hotel."],
     places: [
+      { n: "Beihai Park", zh: "北海公园", t: ["sightseeing", "relaxing", "culture", "family"], s: ["m", "e"], h: "1.5–2 h", c: "¥10 (¥20 with the White Dagoba)", m: "Beihai North · Line 6", ll: [39.9254, 116.3893], r: 2,
+        d: "Former imperial garden around a lake, crowned by the White Dagoba on Jade Flower Island. Hire a paddle boat or walk the shoreline.",
+        tip: "next to Jingshan Park – combine the two after the Forbidden City." },
       { n: "Forbidden City & Tiananmen Square", zh: "故宫博物院", t: ["culture", "history", "sightseeing"], s: ["m"], h: "3–4 h", c: "¥60 (Apr–Oct), ¥40 (Nov–Mar)", m: "Tiananmen East · Line 1", ll: [39.9163, 116.3972], r: 3, cl: [1],
         d: "The Ming and Qing imperial palace. Enter through the Meridian Gate (south), walk the central axis through the great halls, then the Treasure Gallery and Imperial Garden, and leave by the Gate of Divine Prowess (north).",
         tip: "Tickets are timed and must be booked online (official site or WeChat mini program) up to 7 days ahead with your passport. They sell out. Closed Mondays except public holidays." },
@@ -266,6 +269,9 @@ const CITIES = {
     ],
     night: ["Find a 清真 hotpot place for dinner (search Dianping), then walk Taikoo Li.", "Evening stroll along the Jinjiang River to the lit Anshun Bridge."],
     places: [
+      { n: "Jinsha Site Museum", zh: "金沙遗址博物馆", t: ["culture", "history", "family"], s: ["m", "e"], h: "2 h", c: "¥70", ll: [30.6820, 104.0130], r: 1,
+        d: "Built over a 3,000-year-old Shu kingdom site; the golden Sun Bird disc found here is now Chengdu's emblem.",
+        tip: "pair with a calm afternoon – closed most Mondays.", x: "DiDi ~25 min from Chunxi Road.", cl: [1] },
       { n: "Giant Panda Breeding Research Base", zh: "成都大熊猫繁育研究基地", t: ["nature", "family", "sightseeing"], s: ["m"], h: "3–4 h", c: "¥55", ll: [30.7330, 104.1460], r: 3,
         x: "DiDi from the centre ~30–40 min (~¥40–60). Or Metro Line 3 to Panda Avenue + 10 min DiDi.",
         d: "Dozens of giant and red pandas in forested enclosures. Pandas are active at feeding time early in the morning and sleep by noon.",
@@ -458,6 +464,9 @@ const CITIES = {
     mosques: [],
     night: ["Early dinner at a 清真 noodle shop and rest — park days start early."],
     places: [
+      { n: "Baofeng Lake", zh: "宝峰湖", t: ["nature", "relaxing", "family"], s: ["m", "e"], h: "2 h", c: "~¥96", ll: [29.3445, 110.5440], r: 1,
+        d: "A mountain lake ringed by sandstone peaks, reached up a short climb past a waterfall. A boat ride crosses the lake with Tujia singers on the shore.",
+        tip: "quieter than the Forest Park – good half day near Wulingyuan.", x: "Taxi ~10 min from Wulingyuan town." },
       { n: "National Forest Park: Yuanjiajie & Bailong Elevator", zh: "袁家界 百龙天梯", t: ["nature", "adventure", "sightseeing"], s: ["full"], h: "Full day", c: "¥225 (4-day pass) + elevator ¥72 one way", ll: [29.3450, 110.4320], r: 3,
         x: "Walk or DiDi from Wulingyuan to the park gate (Wulingyuan entrance), then free eco-buses inside.",
         d: "The Avatar Hallelujah Mountain, First Bridge Under Heaven and the 326 m Bailong glass elevator.",
@@ -715,6 +724,12 @@ const CITIES = {
     mosques: [{ n: "Shenzhen Mosque (深圳清真寺)", ll: [22.5690, 114.0590], note: "Main mosque, Shangmeilin, Futian." }],
     night: ["Night views from Shenzhen Bay Park or the Civic Center light show."],
     places: [
+      { n: "Nantou Ancient City", zh: "南头古城", t: ["culture", "history", "food", "shopping"], s: ["e", "n"], h: "1.5–2 h", c: "Free", ll: [22.5440, 113.9230], r: 2,
+        d: "A 1,700-year-old walled town reborn as lanes of cafés, design shops and street food.",
+        tip: "best in the late afternoon into the evening." , x: "Metro Line 1 or 12 to Zhongshan Park, then a short walk." },
+      { n: "OCT-LOFT & OCT Harbour", zh: "华侨城创意文化园 · 欢乐港湾", t: ["culture", "shopping", "relaxing", "nightlife"], s: ["e", "n"], h: "2 h", c: "Free", ll: [22.5410, 113.9900], r: 1,
+        d: "Old factories turned into galleries, cafés and bookshops, near the OCT Harbour waterfront with its big Ferris wheel.",
+        tip: "easy add-on to Window of the World.", x: "Metro to Qiaocheng East (Line 1) or Qiaocheng North." },
       { n: "Window of the World", zh: "世界之窗", t: ["family", "sightseeing"], s: ["e", "n"], h: "3 h", c: "~¥200", m: "Window of the World · Lines 1/2", ll: [22.5400, 113.9730], r: 1,
         d: "Miniature world landmarks; a fun evening show and fireworks some nights.",
         tip: "Afternoon-to-evening tickets are cheaper." },

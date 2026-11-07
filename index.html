@@ -1055,6 +1055,19 @@ table.wxsum td, table.wxmon td { vertical-align: top; }
 .glance .kind-chip { display: block; font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gold); }
 .day { scroll-margin-top: 64px; }
 .refresh { max-width: 1320px; margin: 28px auto 0; padding-top: 12px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); }
+/* Travel-guide extras (shown only when guide-data.js is present) */
+.g-box { border: 1px solid var(--line); border-left: 4px solid var(--seal, #B23A2E); border-radius: 8px; padding: 10px 14px; background: #fffaf3; }
+.g-box summary { font-weight: 700; cursor: pointer; }
+.g-box h5 { margin: 12px 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--seal, #B23A2E); }
+.g-box ul { margin: 0; padding-left: 18px; } .g-box li { margin: 4px 0; }
+.g-list { display: grid; gap: 6px; } .g-row, .g-area { display: grid; gap: 2px; border-bottom: 1px dotted var(--line); padding: 4px 0 6px; }
+.g-area ul { margin-top: 4px; }
+.g-v { justify-self: start; font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 9px; background: #eee; }
+.g-v.best { background: #FFE58A; color: #5a4300; } .g-v.good { background: #d8f3dc; color: #1b4332; } .g-v.ok { background: #fff3bf; color: #5c4400; } .g-v.skip { background: #ffe3e3; color: #9b1c1c; }
+.g-cat { font-style: normal; font-size: 11px; font-weight: 700; background: #f1e7ff; color: #5b2b8a; padding: 0 6px; border-radius: 8px; }
+.g-tip { display: grid; gap: 3px; background: #fffaf3; border-left: 3px solid var(--seal, #B23A2E); padding: 6px 10px; border-radius: 6px; margin: 6px 0; font-size: 0.95em; }
+.g-link { font-weight: 600; font-size: 13px; margin-left: 8px; }
+.g-banner { display: inline-block; margin-top: 6px; font-weight: 700; }
 .print-only { display: none; }
 .print-btn { border-color: var(--ink); font-weight: 600; }
 #printView { display: none; }
@@ -1144,7 +1157,7 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; color:
   <span id="jsError"></span>
 </div>
 <header class="mast">
-  <div>
+  <div id="mastText">
     <h1>China & Hong Kong Trip Planner <span class="han">中国 · 香港</span></h1>
     <p>Choose your days, cities and travel style. You get a day-by-day plan with directions between stops, halal food at every stop, hotels, and everything to sort out before you fly.</p>
   </div>
@@ -1253,6 +1266,7 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; color:
 </script>
 <script src="data.js"></script>
 <script src="map-data.js"></script>
+<script src="guide-data.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

@@ -866,6 +866,7 @@
         <p class="act-desc">${esc(p.d)}</p>
         <div class="kv"><span>Time needed <b>${esc(p.h)}</b></span><span>Cost <b>${esc(p.c)}</b></span>${p.m ? `<span>Nearest metro <b>${esc(p.m)}</b></span>` : ""}</div>
         ${p.tip ? `<p class="tip">${esc(p.tip)}</p>` : ""}
+        ${guideTip(pc, p)}
         ${mapLinks(p, pc)}
         ${s.alt ? `<p class="alt">Prefer something else? <b>${esc(s.alt.n)}</b> — ${esc(s.alt.d.split(". ")[0].replace(/\.$/, ""))}.</p>` : ""}
         ${day.friday && (s.part === "m" || s.part === "full") ? jumuah(pc, p.ll) : ""}
@@ -1514,6 +1515,31 @@
     if (scroll) out.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
+  /* ---------- your travel guide (guide-data.js) ---------- */
+  const G_ON = typeof GUIDE !== "undefined";
+  function guideFor(city) { return G_ON && city ? Object.values(GUIDE).find((g) => g.guideCity === city.name) : null; }
+  function guideLink(label) { return G_ON && GUIDE_INFO.url && GUIDE_INFO.url.startsWith("http") ? `<a class="g-link" href="${esc(GUIDE_INFO.url)}" target="_blank" rel="noopener">${label}</a>` : ""; }
+  function guideTip(city, p) {
+    const g = guideFor(city); const t = g && g.tips[p.n];
+    if (!t || !t.length) return "";
+    return `<div class="g-tip"><b>📘 From your travel guide</b>${t.map((x) => `<span>${x.k !== "Guide" ? `<i class="g-cat">${esc(x.k)}</i> ` : ""}<b>${esc(x.n)}</b> — ${esc(x.t)}</span>`).join("")}</div>`;
+  }
+  function guidePanel(city) {
+    const g = guideFor(city); if (!g) return "";
+    const li = (a) => a.join("");
+    const vcls = { "BEST PICK": "best", Good: "good", OK: "ok", Skip: "skip" };
+    const short = g.shortlist.length ? `<h5>Your shortlist – checked</h5><div class="g-list">${li(g.shortlist.map((h) => `<div class="g-row"><span class="g-v ${vcls[h.verdict] || ""}">${h.verdict === "BEST PICK" ? "★ " : ""}${esc(h.verdict)}</span><b>${esc(h.n)}</b> <span class="hint">${esc(h.price)} · ${esc(h.score)}</span><span>📍 ${esc(h.near)}</span><span class="hint">${esc(h.note)}</span></div>`))}</div>` : "";
+    return `<details class="g-box"><summary>📘 From your travel guide — ${esc(city.name)} ${guideLink("Open the full guide ↗")}</summary>
+      ${short}
+      <h5>Best hotel picks</h5><div class="g-list">${li(g.picks.map((h) => `<div class="g-row"><span class="g-v best">${esc(h.tier)}</span><b>${esc(h.n)}</b> <span class="hint">${esc(h.aud)} 2 adults · ${esc(h.fam)} with a child</span><span>${esc(h.why)}</span></div>`))}</div>
+      <h5>Where to stay – by what's nearby</h5>${li(g.areas.map((a) => `<div class="g-area"><b>${esc(a.area)}</b> <span class="hint">${esc(a.best)}</span><span>🚶 ${esc(a.near)}</span><ul>${li(a.hotels.map((h) => `<li><b>${esc(h.n)}</b> <span class="hint">${esc(h.tier)} · ${esc(h.aud)}</span> — 📍 ${esc(h.near)}</li>`))}</ul></div>`))}
+      <h5>Viral & Instagram-worthy</h5><ul>${li(g.viral.map((v) => `<li><i class="g-cat">${esc(v.cat)}</i> <b>${esc(v.n)}</b> <span class="hint">${esc(v.area)}</span> — ${esc(v.tip)}</li>`))}</ul>
+      <h5>Instagram cafés</h5><ul>${li(g.cafes.map((c) => `<li><b>${esc(c.n)}</b> <span class="hint">${esc(c.area)}</span> — ${esc(c.why)}</li>`))}</ul>
+      <h5>Shopping</h5><ul>${li(g.shopping.map((x) => `<li><b>${esc(x.n)}</b> — ${esc(x.d)}</li>`))}</ul>
+      <h5>Halal food – what to order</h5><ul>${li(g.halal.map((h) => `<li><b>${esc(h.n)}</b> <span class="hint">${esc(h.area)}${h.addr ? " · " + esc(h.addr) : ""}</span>${h.order ? `<br>🍽 ${esc(h.order)}` : ""}</li>`))}</ul>
+    </details>`;
+  }
+
   function stayHTML(ids) {
     const uniq = ids.filter((v, i, a) => a.indexOf(v) === i);
     return uniq.map((id) => {
@@ -1526,6 +1552,7 @@
         <p>${esc(c.intro)}</p>
         <h4>Best area to stay</h4><p><b>${esc(c.stay.area)}.</b> ${esc(c.stay.why)}</p>
         <h4>Hotels</h4><div class="hotels">${hotels}</div>
+        ${guidePanel(c)}
         <p class="hint">Book on Trip.com, Booking.com or directly. In the mainland, a small number of hotels still cannot register foreign guests — Trip.com listings show this, and the hotel will register your passport with the police for you.</p>
         <h4>Top-rated things to do</h4><ul>${c.places.filter((p) => p.r >= 2).sort((a, b) => b.r - a.r).map((p) => `<li><b>${esc(p.n)}</b> <span style="color:var(--gold)">${"★".repeat(p.r)}</span> — ${esc(p.d.split(". ")[0].replace(/\.$/, ""))}. <span class="hint">${esc(p.h)} · ${esc(p.c)}</span></li>`).join("")}</ul>
         <h4>Halal food</h4><ul>${halal}</ul><p>${esc(c.halalTip)}</p>
@@ -2710,6 +2737,13 @@ ${pv}
     if (m[1] === "ownq") findOwnPlace(+m[2]); else findHotel(+m[2]);
   });
   applyCustomPlaces();
+  // Banner when the traveller's own guide (guide-data.js) is loaded
+  if (G_ON && $("#mastText")) {
+    const gb = document.createElement("p");
+    gb.className = "g-banner";
+    gb.innerHTML = `📘 Linked to your ${GUIDE_INFO.url && /^https?:/.test(GUIDE_INFO.url) ? `<a href="${esc(GUIDE_INFO.url)}" target="_blank" rel="noopener">China Travel Guide</a>` : "China Travel Guide"} — guide tips show on matching stops, and each city's Hotels tab has the guide's picks, viral spots, cafés and halal “what to order”.`;
+    $("#mastText").appendChild(gb);
+  }
   const rf = $("#refreshFooter");
   if (rf) rf.textContent = refreshLine();
 

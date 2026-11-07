@@ -33,7 +33,7 @@ if n != 1:
     raise SystemExit("index.html: refresh footer not found")
 open("index.html", "w", encoding="utf-8").write(page)
 
-single = page
+single = page.replace('<script src="guide-data.js"></script>\n', "")  # the personal guide file isn't part of the shareable build
 for f in ["data.js", "map-data.js", "app.js"]:
     js = open(f, encoding="utf-8").read().replace("</script", "<\\/script")
     single = single.replace(f'<script src="{f}"></script>', "<script>\n" + js + "\n</script>")

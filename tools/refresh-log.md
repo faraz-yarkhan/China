@@ -11,6 +11,10 @@ Newest first. Each daily refresh adds an entry (see `tools/REFRESH.md`).
   Executive Traveller, AeroRoutes) — added to the Shenzhen flight note; `direct` left false until it is operating.
   A single source says China Southern also flies SZX–SYD 3–4/week — not confirmed, not added. Other Sydney nonstops
   (Air China PEK, Sichuan TFU, Juneyao PVG) still listed by aggregators; no 2026 timetables checked.
+- **Not published to the claude.ai page.** The live page (version 1794182812-6735) has changes that are not in this repo:
+  booked hotels (Beijing: Guo Ji Yi Yuan Hotel; Shanghai: Hanting Waitan Jiujiang Road; others), a "✅ Booked" hotel
+  feature in app.js, and an 8 Nov refresh (rates ¥ 0.218, HK$ 0.186, MOP 0.180). Publishing this build would have wiped
+  them, so the page was left as is. The live files need to be merged into this branch before the next publish.
 
 ## 2026-11-06 — added Furong Town (芙蓉镇)
 - New city "Furong Town" (Yongshun County, western Hunan): coordinates 28.7431, 109.9462 (Wikipedia).

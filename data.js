@@ -8,10 +8,10 @@
 
 /* ---------- DATA REFRESH — updated by the daily refresh (see tools/REFRESH.md) ---------- */
 const DATA_INFO = {
-  refreshed: "2026-11-05", // date the data below was last checked (YYYY-MM-DD)
+  refreshed: "2026-11-09", // date the data below was last checked (YYYY-MM-DD)
   // Mid-market rates to Australian dollars: A$ per 1 unit of local currency
-  audRates: { "¥": 0.214, "HK$": 0.179, "MOP": 0.174 },
-  ratesNote: "1 CNY ≈ A$0.214 · HK$1 ≈ A$0.179 · MOP 1 ≈ A$0.174 (mid-market)",
+  audRates: { "¥": 0.217, "HK$": 0.182, "MOP": 0.177 },
+  ratesNote: "1 CNY ≈ A$0.217 · HK$1 ≈ A$0.182 · MOP 1 ≈ A$0.177 (mid-market)",
   covers: "exchange rates, entry rules for Australians, Sydney flights, prices, opening days, hotels and halal food listings",
 };
 
@@ -951,7 +951,7 @@ const SYD_FLIGHTS = {
   xa: { direct: false, airport: "Xi'an Xianyang (XIY)", text: "No nonstop. Connect in Guangzhou, Shanghai or Beijing (~14–17 h total)." },
   hz: { direct: false, airport: "Hangzhou Xiaoshan (HGH)", text: "No regular nonstop. Easiest: fly to Shanghai Pudong, then high-speed train to Hangzhou (~1 h from Hongqiao; ~2 h from Pudong)." },
   su: { direct: false, airport: "Shanghai (PVG/SHA)", text: "Fly to Shanghai Pudong (nonstop, ~11 h), then train to Suzhou (~1.5 h from Pudong)." },
-  sz: { direct: false, airport: "Shenzhen Bao'an (SZX)", text: "No regular nonstop. Fly to Hong Kong (~9.5 h) and take the high-speed train from West Kowloon (~15–20 min), or fly to Guangzhou." },
+  sz: { direct: false, airport: "Shenzhen Bao'an (SZX)", text: "Shenzhen Airlines plans a new nonstop Sydney–Shenzhen from 14 Dec 2026 (4 a week, check it is running for your dates). Otherwise fly to Hong Kong (~9.5 h) and take the high-speed train from West Kowloon (~15–20 min), or fly to Guangzhou." },
   gl: { direct: false, airport: "Guilin Liangjiang (KWL)", text: "No nonstop. Fly to Guangzhou (~9 h) and take the high-speed train (~2.5–3 h), or connect by air." },
   ys: { direct: false, airport: "Guilin Liangjiang (KWL)", text: "No nonstop. Fly to Guangzhou (~9 h), then high-speed train to Yangshuo (~2.5 h)." },
   fr: { direct: false, airport: "Zhangjiajie Hehua (DYG)", text: "No nonstop. Fly to Zhangjiajie (via Guangzhou, Shanghai or Chengdu), then the high-speed train from Zhangjiajie West to Furongzhen (~25 min)." },

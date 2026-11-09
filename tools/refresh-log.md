@@ -2,6 +2,16 @@
 
 Newest first. Each daily refresh adds an entry (see `tools/REFRESH.md`).
 
+## 2026-11-09 — daily refresh
+- Exchange rates: 1 AUD ≈ ¥4.58–4.61 (Xe 8 Nov, Forbes Advisor 9 Nov; RBA 4.60 on 6 Nov) → 1 CNY ≈ A$0.217 (was 0.214);
+  1 AUD ≈ HK$5.49 (moneyexchangerate.org, 5 Nov) → HK$1 ≈ A$0.182; MOP 1 ≈ A$0.177 from the MOP 1.03 = HK$1 peg.
+- Entry rules: no extension of the 30-day visa-free arrangement beyond 31 Dec 2026 announced yet (chinaeasymode, tripprof,
+  chinavisacheck, as of early Nov 2026). Wording unchanged.
+- Flights (rotation): Shenzhen Airlines starts Shenzhen–Sydney nonstop 14 Dec 2026, 4/week, A330-300 (Destination NSW,
+  Executive Traveller, AeroRoutes) — added to the Shenzhen flight note; `direct` left false until it is operating.
+  A single source says China Southern also flies SZX–SYD 3–4/week — not confirmed, not added. Other Sydney nonstops
+  (Air China PEK, Sichuan TFU, Juneyao PVG) still listed by aggregators; no 2026 timetables checked.
+
 ## 2026-11-06 — added Furong Town (芙蓉镇)
 - New city "Furong Town" (Yongshun County, western Hunan): coordinates 28.7431, 109.9462 (Wikipedia).
 - Access: high-speed train Zhangjiajie West → Furongzhen, 20–30 min, ~¥40, roughly 07:30–21:40 (Trip.com, China Discovery,

@@ -2,6 +2,17 @@
 
 Newest first. Each daily refresh adds an entry (see `tools/REFRESH.md`).
 
+## 2026-11-10 — daily refresh
+- Exchange rates: 1 AUD ≈ ¥4.58 (OFX, 10 Nov) / CNY 1 ≈ A$0.2169 (Pluang, 10 Nov) → 1 CNY ≈ A$0.218 (was 0.217);
+  1 AUD ≈ HK$5.37–5.43 (XE 9 Nov 5.374, Coinbase 10 Nov 5.37–5.43, OFX 5.43) → HK$1 ≈ A$0.185 (was 0.182 — yesterday's
+  5 Nov quote was stale); MOP 1 ≈ A$0.180 from the MOP 1.03 = HK$1 peg.
+- Entry rules: still no announcement extending the 30-day visa-free arrangement past 31 Dec 2026 (chinaeasymode as of
+  4 Nov, trip.com, chinavisacheck). Third-party sites only; nothing official checked. Wording unchanged.
+- Payments (rotation): ¥200 fee-free / 3% above still the consensus (chinavigators, travelofchina, chinatravelsorted);
+  no official Alipay/WeChat page checked. Wording unchanged.
+- **Not published to the claude.ai page** — same reason as 9 Nov: the live page (version 1794182812-6735, unchanged
+  since) still has booked hotels and app.js changes that are not in this repo.
+
 ## 2026-11-09 — daily refresh
 - Exchange rates: 1 AUD ≈ ¥4.58–4.61 (Xe 8 Nov, Forbes Advisor 9 Nov; RBA 4.60 on 6 Nov) → 1 CNY ≈ A$0.217 (was 0.214);
   1 AUD ≈ HK$5.49 (moneyexchangerate.org, 5 Nov) → HK$1 ≈ A$0.182; MOP 1 ≈ A$0.177 from the MOP 1.03 = HK$1 peg.

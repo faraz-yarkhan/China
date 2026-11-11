@@ -2,6 +2,11 @@
 
 Newest first. Each daily refresh adds an entry (see `tools/REFRESH.md`).
 
+## 2026-11-11 — daily refresh, no data changes
+- Rates unchanged (¥ 0.218, HK$ 0.185, MOP 0.180): Wise/XE ~HK$5.375–5.39 per A$1 and ~¥4.58, but no quote dated 11 Nov found.
+  Visa-free: still no 2027 extension announced (chinaeasymode, visapreflight, chinavisacheck; third-party sites). Not
+  published to the claude.ai page — the live page (version 1794182812-6735) still has booked hotels / app.js changes not in this repo.
+
 ## 2026-11-10 — daily refresh
 - Exchange rates: 1 AUD ≈ ¥4.58 (OFX, 10 Nov) / CNY 1 ≈ A$0.2169 (Pluang, 10 Nov) → 1 CNY ≈ A$0.218 (was 0.217);
   1 AUD ≈ HK$5.37–5.43 (XE 9 Nov 5.374, Coinbase 10 Nov 5.37–5.43, OFX 5.43) → HK$1 ≈ A$0.185 (was 0.182 — yesterday's

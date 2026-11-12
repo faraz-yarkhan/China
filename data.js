@@ -8,10 +8,10 @@
 
 /* ---------- DATA REFRESH — updated by the daily refresh (see tools/REFRESH.md) ---------- */
 const DATA_INFO = {
-  refreshed: "2026-11-11", // date the data below was last checked (YYYY-MM-DD)
+  refreshed: "2026-11-12", // date the data below was last checked (YYYY-MM-DD)
   // Mid-market rates to Australian dollars: A$ per 1 unit of local currency
-  audRates: { "¥": 0.218, "HK$": 0.185, "MOP": 0.18 },
-  ratesNote: "1 CNY ≈ A$0.218 · HK$1 ≈ A$0.185 · MOP 1 ≈ A$0.180 (mid-market)",
+  audRates: { "¥": 0.218, "HK$": 0.187, "MOP": 0.182 },
+  ratesNote: "1 CNY ≈ A$0.218 · HK$1 ≈ A$0.187 · MOP 1 ≈ A$0.182 (mid-market)",
   covers: "exchange rates, entry rules for Australians, Sydney flights, prices, opening days, hotels and halal food listings",
 };
 

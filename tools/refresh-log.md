@@ -2,6 +2,16 @@
 
 Newest first. Each daily refresh adds an entry (see `tools/REFRESH.md`).
 
+## 2026-11-12 — daily refresh
+- Exchange rates: 1 AUD ≈ HK$5.34 (Wise 5.342, TradingView 5.347, Yahoo 5.338) → HK$1 ≈ A$0.187 (was 0.185);
+  MOP 1 ≈ A$0.182 from the peg. CNY unchanged at A$0.218 (Pluang 0.21793, 11 Nov).
+- Entry rules: still no 2027 extension of the 30-day visa-free arrangement (CGTN, visapreflight, blisstravel; only Russia
+  extended to 2027). Rotation: 240-hour transit now covers 57 countries (Kyrgyzstan and Vietnam added 20 Aug 2026 —
+  english.www.gov.cn, en.hainan.gov.cn, en.shaanxi.gov.cn); app.js wording updated from 55 and now names Australia.
+  Hong Kong 90 days for Australians not re-checked today.
+- Not published to the claude.ai page — the live page (version 1794182812-6735) still has booked hotels / app.js changes
+  not in this repo.
+
 ## 2026-11-11 — daily refresh, no data changes
 - Rates unchanged (¥ 0.218, HK$ 0.185, MOP 0.180): Wise/XE ~HK$5.375–5.39 per A$1 and ~¥4.58, but no quote dated 11 Nov found.
   Visa-free: still no 2027 extension announced (chinaeasymode, visapreflight, chinavisacheck; third-party sites). Not

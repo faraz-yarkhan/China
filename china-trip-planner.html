@@ -1334,15 +1334,10 @@ const CITIES = {
     name: "Beijing", zh: "北京", region: "mainland", metro: true, cur: "¥", ride: "DiDi",
     taxi: [13, 3, 2.3],
     intro: "The imperial capital: the Forbidden City, the Great Wall, hutong alleys and the country's best-known Hui (Chinese Muslim) food street at Niujie.",
-    stay: { area: "Wangfujing / Dongcheng", ll: [39.9139, 116.4108], m: "Wangfujing · Line 1",
-      why: "Walkable to the Forbidden City and Tiananmen, on Line 1, and Donglaishun halal hotpot is on the doorstep. Niujie (halal food street) is 20 min away by metro or DiDi." },
+    stay: { area: "Guo Ji Yi Yuan Hotel, Wangfujing", ll: [39.9195, 116.4105], m: "Dengshikou · Line 8",
+      why: "Your booked hotel: 48 Wangfujing Avenue (formerly Crowne Plaza Wangfujing). On Wangfujing's main street, about 10 min walk to the Forbidden City's east side; Wangfujing (Line 1) and Dengshikou (Line 8) metro nearby." },
     hotels: [
-      { tier: "lux", n: "The Peninsula Beijing", ll: [39.9152, 116.4135], area: "Wangfujing", note: "Classic luxury, 10 min walk to the Forbidden City's east side." },
-      { tier: "lux", n: "Waldorf Astoria Beijing", ll: [39.9163, 116.4138], area: "Wangfujing", note: "Modern, quiet rooms, excellent service." },
-      { tier: "mid", n: "Hotel Kapok Beijing", ll: [39.9148, 116.4048], area: "Donghuamen", note: "Design hotel a few minutes' walk from the Forbidden City." },
-      { tier: "mid", n: "Guo Ji Yi Yuan Hotel (Crowne Plaza Beijing Wangfujing)", ll: [39.9195, 116.4105], area: "48 Wangfujing Avenue", note: "On Wangfujing's main street near Dengshikou; walk to Wangfujing and Dengshikou metro. Location approximate." },
-      { tier: "mid", n: "Novotel Beijing Peace", ll: [39.9128, 116.4128], area: "Wangfujing", note: "Reliable international chain right on Wangfujing." },
-      { tier: "budget", n: "Atour, JI Hotel or Hanting branches", area: "Wangfujing / Qianmen", note: "Clean Chinese chains from ~¥350. On Trip.com, check the listing accepts foreign passports." },
+      { tier: "booked", booked: true, n: "Guo Ji Yi Yuan Hotel (formerly Crowne Plaza Wangfujing)", ll: [39.9195, 116.4105], area: "48 Wangfujing Avenue", note: "Your booked hotel. Older décor; walk to Wangfujing St and the Forbidden City." },
     ],
     getAround: "Metro is fast and cheap (¥3–10). Scan the Alipay transport QR code at the gates. Every metro station has an airport-style bag check, so allow 5 extra minutes. DiDi works well outside rush hour (7:30–9:30, 17:30–19:30).",
     arrive: "Capital Airport (PEK): Airport Express to Dongzhimen (~25 min, ¥25), then Line 2/Line 5 or a DiDi to your hotel. Daxing Airport (PKX): Daxing Airport Express to Caoqiao (~20 min, ¥35), then Line 10 or DiDi. A DiDi from either airport to Wangfujing is roughly ¥100–180 and 45–70 min.",
@@ -1362,9 +1357,6 @@ const CITIES = {
     ],
     night: ["Dinner at Donglaishun, then a walk along Wangfujing's lit-up pedestrian street.", "Evening rickshaw or walk through the Dongcheng hutongs near your hotel."],
     places: [
-      { n: "Beihai Park", zh: "北海公园", t: ["sightseeing", "relaxing", "culture", "family"], s: ["m", "e"], h: "1.5–2 h", c: "¥10 (¥20 with the White Dagoba)", m: "Beihai North · Line 6", ll: [39.9254, 116.3893], r: 2,
-        d: "Former imperial garden around a lake, crowned by the White Dagoba on Jade Flower Island. Hire a paddle boat or walk the shoreline.",
-        tip: "next to Jingshan Park – combine the two after the Forbidden City." },
       { n: "Forbidden City & Tiananmen Square", zh: "故宫博物院", t: ["culture", "history", "sightseeing"], s: ["m"], h: "3–4 h", c: "¥60 (Apr–Oct), ¥40 (Nov–Mar)", m: "Tiananmen East · Line 1", ll: [39.9163, 116.3972], r: 3, cl: [1],
         d: "The Ming and Qing imperial palace. Enter through the Meridian Gate (south), walk the central axis through the great halls, then the Treasure Gallery and Imperial Garden, and leave by the Gate of Divine Prowess (north).",
         tip: "Tickets are timed and must be booked online (official site or WeChat mini program) up to 7 days ahead with your passport. They sell out. Closed Mondays except public holidays." },
@@ -1408,6 +1400,9 @@ const CITIES = {
       { n: "Kung fu or acrobatics show", zh: "红剧场 功夫传奇", t: ["culture", "family"], s: ["n"], h: "1.5 h", c: "¥180–680", m: "Tiantan East Gate · Line 5", ll: [39.8888, 116.4253], r: 1,
         d: "'The Legend of Kung Fu' at the Red Theatre: martial arts and acrobatics with English subtitles. Shows usually start at 19:30.",
         tip: "Book on Trip.com a day or two ahead." },
+      { n: "Beihai Park", zh: "北海公园", t: ["sightseeing", "relaxing", "culture", "family"], s: ["m", "e"], h: "1.5–2 h", c: "¥10 (¥20 with the White Dagoba)", m: "Beihai North · Line 6", ll: [39.9254, 116.3893], r: 2,
+        d: "Former imperial garden around a lake, crowned by the White Dagoba on Jade Flower Island. Hire a paddle boat or walk the shoreline.",
+        tip: "next to Jingshan Park – combine the two after the Forbidden City." },
     ],
   },
 
@@ -1415,14 +1410,10 @@ const CITIES = {
     name: "Shanghai", zh: "上海", region: "mainland", metro: true, cur: "¥", ride: "DiDi",
     taxi: [14, 3, 2.7],
     intro: "China's most international city: colonial Bund, futuristic Pudong skyline, leafy Former French Concession and nearby canal towns.",
-    stay: { area: "The Bund / East Nanjing Road / People's Square", ll: [31.2366, 121.4800], m: "East Nanjing Road · Lines 2/10",
-      why: "Walk to the Bund, two metro lines, near Hongchangxing halal hotpot and a short ride to Xiaotaoyuan Mosque." },
+    stay: { area: "Hanting Hotel Shanghai Waitan Jiujiang Road", ll: [31.2368, 121.4815], m: "East Nanjing Road · Lines 2/10",
+      why: "Your booked hotel: by Jiujiang Road, about 300 m from East Nanjing Road metro (Lines 2 & 10) and ~10 min walk to the Bund. Location approximate — check the pin." },
     hotels: [
-      { tier: "lux", n: "The Peninsula Shanghai", ll: [31.2425, 121.4902], area: "The Bund", note: "Bund views, top service." },
-      { tier: "lux", n: "Fairmont Peace Hotel", ll: [31.2403, 121.4903], area: "The Bund", note: "1929 Art Deco landmark on the corner of Nanjing Road." },
-      { tier: "mid", n: "Hotel Indigo Shanghai on the Bund", ll: [31.2248, 121.4988], area: "South Bund", note: "River views at mid-range prices." },
-      { tier: "mid", n: "Les Suites Orient, Bund Shanghai", ll: [31.2297, 121.4957], area: "Bund", note: "Spacious rooms, near Yu Garden and Xiaotaoyuan Mosque." },
-      { tier: "budget", n: "JI Hotel or Atour near People's Square / East Nanjing Road", area: "Huangpu", note: "From ~¥400. Confirm the listing accepts foreign passports." },
+      { tier: "booked", booked: true, n: "Hanting Hotel Shanghai Waitan Jiujiang Road", ll: [31.2368, 121.4815], area: "Jiujiang Rd, near East Nanjing Rd", note: "Your booked hotel. Basic 2★ rooms; Nanjing Road and the Bund on foot." },
     ],
     getAround: "Excellent metro (¥3–10), pay with the Alipay QR code. Lines 2 and 10 cover most sights. DiDi is easy; taxis are plentiful. Hellobike/Meituan bikes are good in the French Concession.",
     arrive: "Pudong Airport (PVG): Maglev to Longyang Road (8 min, ¥50) then Line 2, or a DiDi (~50–60 min, ¥180–220). Hongqiao Airport/Station (SHA): Line 2 or 10 straight into the centre (~35 min).",
@@ -1549,13 +1540,10 @@ const CITIES = {
     name: "Chengdu", zh: "成都", region: "mainland", metro: true, cur: "¥", ride: "DiDi",
     taxi: [8, 2, 1.9],
     intro: "Laid-back capital of Sichuan: giant pandas, teahouses and fiery cuisine. Halal food is less concentrated than in Xi'an, so plan meals ahead.",
-    stay: { area: "Chunxi Road / Taikoo Li", ll: [30.6570, 104.0830], m: "Chunxi Road · Lines 2/3",
-      why: "Central, on two metro lines, close to nightlife and transport to the Panda Base." },
+    stay: { area: "Holiday Inn Express Chengdu West Gate", ll: [30.683, 104.047], m: "Huapaifang · Line 5",
+      why: "Your booked hotel: Jinniu District, 2 min walk to Huapaifang station (Line 5). Kuanzhai Alley, Taikoo Li and Chunxi Road are 10–15 min by DiDi. Free breakfast. Location approximate." },
     hotels: [
-      { tier: "lux", n: "The Temple House", ll: [30.6547, 104.0848], area: "Taikoo Li", note: "Boutique luxury built around a Qing courtyard." },
-      { tier: "mid", n: "Buddhazen Hotel", ll: [30.6742, 104.0738], area: "Wenshu Monastery", note: "Quiet courtyard hotel in a temple neighbourhood." },
-      { tier: "mid", n: "International chains around Tianfu Square (Hilton, Marriott, Holiday Inn)", area: "Tianfu Square", note: "Reliable mid-range, on Lines 1/2." },
-      { tier: "budget", n: "JI Hotel or Atour near Chunxi Road", area: "Jinjiang", note: "From ~¥300. Confirm foreign passports accepted." },
+      { tier: "booked", booked: true, n: "Holiday Inn Express Chengdu West Gate", ll: [30.683, 104.047], area: "Jinniu District, by Huapaifang station", note: "Your booked hotel. Free breakfast; Line 5 into the centre." },
     ],
     getAround: "Metro covers the centre (pay with Alipay QR). DiDi is very cheap. Day trips to Leshan and Qingcheng go from Chengdu East or Xipu stations.",
     arrive: "Tianfu Airport (TFU) is 50 km out: Line 18 to the South Railway Station (~40 min) then Line 1, or DiDi (~1 h, ~¥150). Shuangliu Airport (CTU): Line 10 or DiDi (~35 min). Chengdu East Station: Line 2 to Chunxi Road.",
@@ -1571,9 +1559,6 @@ const CITIES = {
     ],
     night: ["Find a 清真 hotpot place for dinner (search Dianping), then walk Taikoo Li.", "Evening stroll along the Jinjiang River to the lit Anshun Bridge."],
     places: [
-      { n: "Jinsha Site Museum", zh: "金沙遗址博物馆", t: ["culture", "history", "family"], s: ["m", "e"], h: "2 h", c: "¥70", ll: [30.6820, 104.0130], r: 1,
-        d: "Built over a 3,000-year-old Shu kingdom site; the golden Sun Bird disc found here is now Chengdu's emblem.",
-        tip: "pair with a calm afternoon – closed most Mondays.", x: "DiDi ~25 min from Chunxi Road.", cl: [1] },
       { n: "Giant Panda Breeding Research Base", zh: "成都大熊猫繁育研究基地", t: ["nature", "family", "sightseeing"], s: ["m"], h: "3–4 h", c: "¥55", ll: [30.7330, 104.1460], r: 3,
         x: "DiDi from the centre ~30–40 min (~¥40–60). Or Metro Line 3 to Panda Avenue + 10 min DiDi.",
         d: "Dozens of giant and red pandas in forested enclosures. Pandas are active at feeding time early in the morning and sleep by noon.",
@@ -1607,6 +1592,9 @@ const CITIES = {
       { n: "Anshun Bridge & Jiuyanqiao riverside", zh: "安顺廊桥 九眼桥", t: ["nightlife", "relaxing"], s: ["n"], h: "1 h", c: "Free", ll: [30.6440, 104.0880], r: 1,
         d: "Lit covered bridge over the Jinjiang River; the bar strip at Jiuyanqiao livens up after 21:00.",
         tip: "Fine just for a riverside walk if you don't drink." },
+      { n: "Jinsha Site Museum", zh: "金沙遗址博物馆", t: ["culture", "history", "family"], s: ["m", "e"], h: "2 h", c: "¥70", ll: [30.6820, 104.0130], r: 1,
+        d: "Built over a 3,000-year-old Shu kingdom site; the golden Sun Bird disc found here is now Chengdu's emblem.",
+        tip: "pair with a calm afternoon – closed most Mondays.", x: "DiDi ~25 min from Chunxi Road.", cl: [1] },
     ],
   },
 
@@ -1750,50 +1738,48 @@ const CITIES = {
     name: "Zhangjiajie", zh: "张家界", region: "mainland", metro: false, cur: "¥", ride: "DiDi",
     taxi: [8, 2, 2.0],
     intro: "Towering sandstone pillars that inspired Avatar's floating mountains, plus glass bridges and skywalks. Plan at least 2 nights.",
-    stay: { area: "Wulingyuan town (by the national park's east gate)", ll: [29.3480, 110.5450], m: null,
-      why: "Walk to the park entrance and save 1 h each way compared with the city." },
+    stay: { area: "Hilton Garden Inn Zhangjiajie Tianmen Mountain", ll: [29.1075, 110.456], m: null,
+      why: "Your booked hotel: 32 Airport Road, Yongding — about 2 km (3–5 min taxi) from the Tianmen Mountain cable car and 10 km from Zhangjiajie West high-speed station. The National Forest Park at Wulingyuan is about 50 km (1 h–1 h 15 min by car), so start those days early. Location approximate." },
     hotels: [
-      { tier: "lux", n: "Pullman Zhangjiajie", ll: [29.1225, 110.479], area: "City centre", note: "Best for Tianmen Mountain (cable car is in the city)." },
-      { tier: "mid", n: "Pipaxi Hotel (琵琶溪宾馆)", ll: [29.3462, 110.5395], area: "Wulingyuan", note: "Near the park entrance." },
-      { tier: "budget", n: "Guesthouses in Wulingyuan", area: "Wulingyuan", note: "From ~¥150; many offer park transport tips." },
+      { tier: "booked", booked: true, n: "Hilton Garden Inn Zhangjiajie Tianmen Mountain", ll: [29.1075, 110.456], area: "32 Airport Rd, Yongding", note: "Your booked hotel. Opened 2025; breakfast extra; near the airport and the Tianmen cable car." },
     ],
     getAround: "Inside the park, free eco-buses link everything. Between Wulingyuan, the city and Tianmen Mountain, use DiDi or buses (~45 min).",
-    arrive: "Zhangjiajie Hehua Airport (DYG): DiDi to Wulingyuan ~50 min (~¥100). Zhangjiajie West HSR station: DiDi ~50 min. Buses from the central bus station to Wulingyuan ~45 min.",
-    depart: "Allow 1 h from Wulingyuan to the airport or Zhangjiajie West station.",
+    arrive: "Zhangjiajie Hehua Airport (DYG): your hotel is about 770 m away – a 5 min taxi. Zhangjiajie West high-speed station: DiDi about 20 min (~10 km) to the hotel.",
+    depart: "From your hotel: about 5 min to the airport, about 20 min to Zhangjiajie West station (trains to Furong Town).",
     dishes: ["Three-pot dish (三下锅) — pork-based, avoid", "Lanzhou beef noodles", "Bring halal snacks for park days"],
     halal: [{ n: "Lanzhou noodle shops in Wulingyuan town and the city", ll: null, note: "Search 清真 on Amap. Inside the park there is no halal food." }],
     halalTip: "Halal food is very limited. Pack snacks, nuts and bread for each park day.",
     mosques: [],
     night: ["Early dinner at a 清真 noodle shop and rest — park days start early."],
     places: [
-      { n: "Baofeng Lake", zh: "宝峰湖", t: ["nature", "relaxing", "family"], s: ["m", "e"], h: "2 h", c: "~¥96", ll: [29.3445, 110.5440], r: 1,
-        d: "A mountain lake ringed by sandstone peaks, reached up a short climb past a waterfall. A boat ride crosses the lake with Tujia singers on the shore.",
-        tip: "quieter than the Forest Park – good half day near Wulingyuan.", x: "Taxi ~10 min from Wulingyuan town." },
       { n: "National Forest Park: Yuanjiajie & Bailong Elevator", zh: "袁家界 百龙天梯", t: ["nature", "adventure", "sightseeing"], s: ["full"], h: "Full day", c: "¥225 (4-day pass) + elevator ¥72 one way", ll: [29.3450, 110.4320], r: 3,
-        x: "Walk or DiDi from Wulingyuan to the park gate (Wulingyuan entrance), then free eco-buses inside.",
+        x: "From your hotel near Tianmen: DiDi about 1 h–1 h 15 min (roughly ¥120–150) to the Wulingyuan entrance, or the bus from Zhangjiajie central bus station to Wulingyuan (~1 h). Leave by 7:00. Free eco-buses inside the park.",
         d: "The Avatar Hallelujah Mountain, First Bridge Under Heaven and the 326 m Bailong glass elevator.",
         tip: "Enter at 7:00. Your ticket is tied to your passport and fingerprint for 4 days. Wear good shoes." },
       { n: "Tianzi Mountain & Yangjiajie", zh: "天子山 杨家界", t: ["nature", "adventure"], s: ["full"], h: "Full day", c: "Included in park pass; cable car ~¥72", ll: [29.3920, 110.4600], r: 2,
-        x: "Use the same 4-day park pass; eco-buses link the zones.",
+        x: "Same 4-day park pass; eco-buses link the zones. From your hotel it is about 1 h 15 min by DiDi to the park, so pair it with a Forest Park day.",
         d: "Sea of stone pillars viewed from above, often wrapped in cloud.",
         tip: "Ride the Tianzi Mountain cable car down to save your knees." },
       { n: "Golden Whip Stream", zh: "金鞭溪", t: ["nature", "relaxing", "family"], s: ["m", "e"], h: "2–3 h", c: "Included in park pass", ll: [29.3270, 110.4380], r: 2,
         d: "Flat 7 km walk along a clear stream beneath the pillars, with wild monkeys.",
-        tip: "Keep food in your bag — the monkeys snatch." },
+        tip: "Keep food in your bag — the monkeys snatch.", x: "Inside the Forest Park – about 1 h by DiDi from your hotel to the Zhangjiajie Forest Park (south) gate." },
       { n: "Tianmen Mountain & glass skywalk", zh: "天门山", t: ["adventure", "nature", "sightseeing"], s: ["full"], h: "Full day", c: "~¥258–278 incl. cable car", ll: [29.0500, 110.4800], r: 3,
-        x: "The cable car starts in Zhangjiajie city centre (~45 min DiDi from Wulingyuan). Book a time slot in advance.",
+        x: "The cable car station is about 2 km from your hotel – a 3–5 min taxi. Book a time slot in advance.",
         d: "One of the world's longest cable cars, cliff-side glass walkways, 99-bend road and the Heaven's Gate arch.",
         tip: "Pick ticket line A or B carefully (direction of the loop). Avoid weekends." },
       { n: "Grand Canyon Glass Bridge", zh: "张家界大峡谷玻璃桥", t: ["adventure"], s: ["m", "e"], h: "3 h", c: "~¥219", ll: [29.3990, 110.6990], r: 2,
-        x: "DiDi from Wulingyuan ~40 min.",
+        x: "DiDi about 1 h 15 min from your hotel (about 40 min from Wulingyuan) – best on a Wulingyuan day.",
         d: "Glass-bottomed bridge 300 m above a canyon, plus a slide down into the gorge.",
         tip: "Book online with your passport. Some days there is a bungee from the bridge." },
       { n: "Huanglong Cave", zh: "黄龙洞", t: ["nature", "family"], s: ["e"], h: "2 h", c: "~¥100", ll: [29.3700, 110.5650], r: 1,
         d: "Huge cave system with an underground river and boat ride.",
-        tip: "Good rainy-day option." },
+        tip: "Good rainy-day option.", x: "In Wulingyuan, about 1 h by DiDi from your hotel – combine with a park day." },
       { n: "Charming Xiangxi show", zh: "魅力湘西", t: ["culture", "family"], s: ["n"], h: "1.5 h", c: "¥200–400", ll: [29.3450, 110.5510], r: 1,
         d: "Tujia and Miao folk music, dance and costumes.",
-        tip: "Usually 20:00 nightly in Wulingyuan." },
+        tip: "Usually 20:00 nightly in Wulingyuan.", x: "The theatre is in Wulingyuan, about 1 h by DiDi from your hotel – see it on a Forest Park day and DiDi back after." },
+      { n: "Baofeng Lake", zh: "宝峰湖", t: ["nature", "relaxing", "family"], s: ["m", "e"], h: "2 h", c: "~¥96", ll: [29.3445, 110.5440], r: 1,
+        d: "A mountain lake ringed by sandstone peaks, reached up a short climb past a waterfall. A boat ride crosses the lake with Tujia singers on the shore.",
+        tip: "quieter than the Forest Park – good half day near Wulingyuan.", x: "About 1 h by DiDi from your hotel (10 min from Wulingyuan town)." },
     ],
   },
 
@@ -1801,14 +1787,9 @@ const CITIES = {
     name: "Furong Town", zh: "芙蓉镇", region: "mainland", metro: false, cur: "¥", ride: "taxi",
     taxi: [8, 2, 2.0],
     intro: "A 2,000-year-old Tujia town (formerly Wangcun) built on cliffs around a 60 m waterfall in western Hunan, about 30 minutes by high-speed train from Zhangjiajie. Best as one night: arrive in the afternoon, see the waterfall lit up after dark, and explore the stone lanes early next morning before the crowds.",
-    stay: { area: "In or opposite the old town, facing the waterfall", ll: [28.7431, 109.9462], m: null,
-      why: "Staying overnight lets you see the night lights and the empty lanes at dawn. Waterfall-view rooms are the draw but can be noisy; cheaper guesthouses are on the new-town walking street just outside the gate." },
-    hotels: [
-      { tier: "mid", n: "Tianquan Inn", area: "Opposite the waterfall", ll: [28.7440, 109.9468], note: "Family-run inn facing the waterfall; basic rooms, great view. Bring earplugs." },
-      { tier: "mid", n: "Furong Town Waterfall View Inn", area: "By the old-town entrance", ll: [28.7436, 109.9471], note: "Across from the entrance; waterfall-view rooms." },
-      { tier: "mid", n: "Tusi Xuanfu (Furong Town Waterfall Store)", area: "Old town", ll: [28.7442, 109.9458], note: "Boutique inn in the core scenic area. Breakfast often not included." },
-      { tier: "budget", n: "Guesthouses on the new-town walking street", area: "Just outside the gate", note: "A fraction of the in-town price, a short walk from the entrance." },
-    ],
+    stay: { area: "Furong Town old town (no hotel booked)", ll: [28.7431, 109.9462], m: null,
+      why: "No hotel booked: visit as a day trip from Zhangjiajie (23 min by high-speed train; last trains back ~21:30), or book one night to see the waterfall lights." },
+    hotels: [],
     getAround: "The old town is small and walkable, but built on steep stone steps. Taxis and minibuses (~¥15) link Furongzhen station and the town; DiDi may not operate here, so use the taxis waiting at the station.",
     arrive: "From Zhangjiajie West: high-speed train to Furongzhen station (20–30 min, about ¥40; roughly 07:30–21:40 — not from Zhangjiajie's city-centre station), then a taxi or minibus about 10 minutes (~¥15) to the old town. By car from Wulingyuan about 1.5–2 h. Nearest airport: Zhangjiajie Hehua (DYG).",
     depart: "Taxi to Furongzhen station (~10 min). The last trains back to Zhangjiajie West leave around 21:30–21:50 — check 12306, especially if you stay for the night lights.",
@@ -2007,12 +1988,10 @@ const CITIES = {
     name: "Shenzhen", zh: "深圳", region: "mainland", metro: true, cur: "¥", ride: "DiDi",
     taxi: [10, 2, 2.7],
     intro: "China's tech city on the Hong Kong border: futuristic skyline, parks, electronics markets and seaside walks.",
-    stay: { area: "Futian", ll: [22.5380, 114.0560], m: "Shopping Park · Lines 1/3",
-      why: "Central, on several lines, 20 min from the Hong Kong border, near Shenzhen Mosque." },
+    stay: { area: "Gary Executive Apartment, Huaqiangbei", ll: [22.548, 114.088], m: null,
+      why: "Your booked hotel: Bldg 2, Hengbang One Peak, 89 Zhenhua Road, Futian — in the Huaqiangbei electronics district (despite 'Convention Centre' in the name). Apartment with kitchen and laundry. Location approximate — check the pin." },
     hotels: [
-      { tier: "lux", n: "Four Seasons Hotel Shenzhen", ll: [22.5392, 114.0562], area: "Futian", note: "Central luxury near the Civic Center." },
-      { tier: "mid", n: "Hilton Shenzhen Shekou Nanhai", ll: [22.4842, 113.9142], area: "Shekou", note: "Seaside; ferries to Hong Kong airport and Macau." },
-      { tier: "budget", n: "JI Hotel or Atour in Futian", area: "Futian", note: "From ~¥300." },
+      { tier: "booked", booked: true, n: "Gary Executive Apartment (Futian Convention & Exhibition Centre)", ll: [22.548, 114.088], area: "89 Zhenhua Rd, Futian", note: "Your booked hotel. Apartment rooms with kitchen and laundry; in Huaqiangbei." },
     ],
     getAround: "Excellent metro (Alipay QR). DiDi is easy. Border crossings at Futian, Luohu and Shenzhen Bay.",
     arrive: "Bao'an Airport (SZX): Line 11 to Futian (~35 min). Futian HSR station: Lines 2/3/11. From Hong Kong: see the route info.",
@@ -2026,12 +2005,6 @@ const CITIES = {
     mosques: [{ n: "Shenzhen Mosque (深圳清真寺)", ll: [22.5690, 114.0590], note: "Main mosque, Shangmeilin, Futian." }],
     night: ["Night views from Shenzhen Bay Park or the Civic Center light show."],
     places: [
-      { n: "Nantou Ancient City", zh: "南头古城", t: ["culture", "history", "food", "shopping"], s: ["e", "n"], h: "1.5–2 h", c: "Free", ll: [22.5440, 113.9230], r: 2,
-        d: "A 1,700-year-old walled town reborn as lanes of cafés, design shops and street food.",
-        tip: "best in the late afternoon into the evening." , x: "Metro Line 1 or 12 to Zhongshan Park, then a short walk." },
-      { n: "OCT-LOFT & OCT Harbour", zh: "华侨城创意文化园 · 欢乐港湾", t: ["culture", "shopping", "relaxing", "nightlife"], s: ["e", "n"], h: "2 h", c: "Free", ll: [22.5410, 113.9900], r: 1,
-        d: "Old factories turned into galleries, cafés and bookshops, near the OCT Harbour waterfront with its big Ferris wheel.",
-        tip: "easy add-on to Window of the World.", x: "Metro to Qiaocheng East (Line 1) or Qiaocheng North." },
       { n: "Window of the World", zh: "世界之窗", t: ["family", "sightseeing"], s: ["e", "n"], h: "3 h", c: "~¥200", m: "Window of the World · Lines 1/2", ll: [22.5400, 113.9730], r: 1,
         d: "Miniature world landmarks; a fun evening show and fireworks some nights.",
         tip: "Afternoon-to-evening tickets are cheaper." },
@@ -2056,6 +2029,12 @@ const CITIES = {
       { n: "Dafen Oil Painting Village", zh: "大芬油画村", t: ["culture", "shopping"], s: ["m", "e"], h: "1.5 h", c: "Free", m: "Dafen · Line 3", ll: [22.6110, 114.1350], r: 1,
         d: "Thousands of painters producing art (and famous copies) in narrow lanes.",
         tip: "Commission a portrait — it can be ready in a day or two." },
+      { n: "Nantou Ancient City", zh: "南头古城", t: ["culture", "history", "food", "shopping"], s: ["e", "n"], h: "1.5–2 h", c: "Free", ll: [22.5440, 113.9230], r: 2,
+        d: "A 1,700-year-old walled town reborn as lanes of cafés, design shops and street food.",
+        tip: "best in the late afternoon into the evening." , x: "Metro Line 1 or 12 to Zhongshan Park, then a short walk." },
+      { n: "OCT-LOFT & OCT Harbour", zh: "华侨城创意文化园 · 欢乐港湾", t: ["culture", "shopping", "relaxing", "nightlife"], s: ["e", "n"], h: "2 h", c: "Free", ll: [22.5410, 113.9900], r: 1,
+        d: "Old factories turned into galleries, cafés and bookshops, near the OCT Harbour waterfront with its big Ferris wheel.",
+        tip: "easy add-on to Window of the World.", x: "Metro to Qiaocheng East (Line 1) or Qiaocheng North." },
     ],
   },
 
@@ -2244,6 +2223,22 @@ const ROUTES = {
 
 /* Flights between Sydney (SYD) and each destination. Nonstop routes checked October 2026;
    airlines and schedules change each season, so confirm on the airline's site before booking. */
+/* Official border forms and pages (checked 13 Nov 2026 — see tools/refresh-log.md) */
+const BORDER_LINKS = {
+  cnArrival: { url: "https://s.nia.gov.cn/ArrivalCardFillingPC/", label: "China arrival card (National Immigration Administration, free)" },
+  cnCustoms: { url: "https://english.customs.gov.cn/", label: "China Customs" },
+  hkImmd: { url: "https://www.immd.gov.hk/eng/", label: "Hong Kong Immigration" },
+  hkCustoms: { url: "https://www.customs.gov.hk/en/", label: "Hong Kong Customs" },
+  moPolice: { url: "https://www.fsm.gov.mo/", label: "Macau Public Security Police" },
+  auIpc: { url: "https://www.abf.gov.au/entering-and-leaving-australia/crossing-the-border/at-the-border/incoming-passenger-card-(ipc)-faqs", label: "Incoming Passenger Card (ABF)" },
+  auAtd: { url: "https://www.abf.gov.au/newsroom-subsite/Pages/Australia-Travel-Declaration-to-be-rolled-out-nationwide.aspx", label: "Australia Travel Declaration (ABF)" },
+  auBorder: { url: "https://www.abf.gov.au/entering-and-leaving-australia/crossing-the-border/at-the-border", label: "Arriving and leaving Australia (ABF)" },
+  auCash: { url: "https://www.austrac.gov.au/cbm", label: "Declaring A$10,000+ in cash (AUSTRAC)" },
+  smartraveller: { url: "https://www.smartraveller.gov.au/destinations/china", label: "Smartraveller: China (subscribe for updates)" },
+  smartHK: { url: "https://www.smartraveller.gov.au/destinations/hong-kong", label: "Smartraveller: Hong Kong" },
+  smartMO: { url: "https://www.smartraveller.gov.au/destinations/macau", label: "Smartraveller: Macau" },
+};
+
 const SYD_FLIGHTS = {
   bj: { direct: true, airport: "Beijing Capital (PEK)", text: "Nonstop with Air China, about 11.5–12 h. Otherwise connect in Shanghai, Guangzhou or Hong Kong." },
   sh: { direct: true, airport: "Shanghai Pudong (PVG)", text: "Nonstop with China Eastern (also sold by Qantas as a codeshare) and Juneyao Air, about 10.5–11 h. China Eastern's overnight flight leaves Sydney late evening and lands around 05:00." },
@@ -2323,7 +2318,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     mid: { label: "Mid-range", day: "¥1,000–1,700", hk: "HK$1,600–2,600" },
     lux: { label: "Luxury", day: "¥3,000+", hk: "HK$4,500+" },
   };
-  const TIER = { lux: "Luxury", mid: "Mid-range", budget: "Budget" };
+  const TIER = { lux: "Luxury", mid: "Mid-range", budget: "Budget", booked: "✅ Booked" };
   const STORE = "chk-trip-planner-v1";
 
   // Give every place a stable id
@@ -2392,7 +2387,14 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
   }
 
   /* ---------- the traveller's own hotel (optional), else the recommended area ---------- */
-  const userHotel = (city) => (state.hotels && state.hotels[city.id] && state.hotels[city.id].ll ? state.hotels[city.id] : null);
+  const bookedHotel = (city) => (city.hotels || []).find((h) => h.booked && h.ll);
+  const userHotel = (city) => {
+    const s = state.hotels && state.hotels[city.id];
+    // an older pick from the (now removed) suggestion list gives way to the booked hotel
+    if (s && s.ll && !(s.src === "list" && !(city.hotels || []).some((h) => h.n === s.name))) return s;
+    const b = bookedHotel(city);
+    return b ? { name: b.n, ll: b.ll, src: "list", booked: true } : null;
+  };
   const stayLL = (city) => (userHotel(city) ? userHotel(city).ll : city.stay.ll);
   const stayName = (city) => (userHotel(city) ? userHotel(city).name : city.stay.area);
   // Nearest known metro station to a point (within ~1.3 km), from the city's sights and recommended area
@@ -2449,6 +2451,19 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     return `${name}: fly (~${(d / 700 + 0.6).toFixed(1)} h in the air). Trains exist but take most of a day.` + macau;
   }
   const crossesBorder = (a, b) => CITIES[a].region !== CITIES[b].region;
+
+  /* Border forms: what to fill in at each crossing, with official links (BORDER_LINKS in data.js) */
+  const bl = (k, t) => `<a href="${BORDER_LINKS[k].url}" target="_blank" rel="noopener">${esc(t || BORDER_LINKS[k].label)} ↗</a>`;
+  function entryFormsHTML(region) {
+    if (region === "mainland") return `<b>Mainland China:</b> fill in the arrival card free online up to a few days before you land — ${bl("cnArrival")} (also in the NIA 12367 app or the WeChat/Alipay mini program), or on paper/QR at the airport. A new card is needed for every mainland entry. Ignore look-alike sites that charge a fee. <b>Customs:</b> nothing to fill in unless you have goods to declare or carry more than ¥20,000 in yuan cash (or over US$5,000 in foreign cash) — then use the red channel (${bl("cnCustoms")}). No health form unless you have fever or other symptoms.`;
+    if (region === "hk") return `<b>Hong Kong:</b> no arrival card and no health form — just your passport. Keep the small landing slip you're given. <b>Customs:</b> green channel unless you have something to declare (${bl("hkCustoms")}).`;
+    return `<b>Macau:</b> no arrival card and no health form — just your passport. Keep the entry slip you're given until you leave (${bl("moPolice")}).`;
+  }
+  function leaveFormsHTML(region) {
+    if (region === "mainland") return `<b>Leaving the mainland:</b> no online form. Declare at customs only if you carry more than ¥20,000 in yuan cash, over US$5,000 in foreign cash, or restricted goods. A few airports may still hand out paper departure cards — staff will tell you.`;
+    return `<b>Leaving ${region === "hk" ? "Hong Kong" : "Macau"}:</b> no departure card — passport only.`;
+  }
+  const homeArrivalHTML = () => `<b>Landing in Australia:</b> fill in the paper Incoming Passenger Card handed out on the plane (${bl("auIpc", "how to fill it in")}). On some Qantas flights you can instead do the digital Australia Travel Declaration in the Qantas app, up to 72 h before (${bl("auAtd", "about the Travel Declaration")}). Declare all food, plant and animal products (many Chinese snacks contain meat, egg or seeds) and cash of A$10,000 or more. Duty-free allowance: A$900 of goods, 2.25 L alcohol, 25 cigarettes.`;
 
   /* Halal food nearest a point */
   function eatNear(city, ll, n = 2) {
@@ -2882,8 +2897,8 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
     return `<div class="hotelrow">
       <label class="hint lbl" for="hotel-${i}">🏨 Your hotel in ${esc(c.name)}:</label>
       <select id="hotel-${i}" data-act="hotelsel" data-i="${i}">
-        <option value="" ${!h && !open ? "selected" : ""}>Not booked yet — plan around ${esc(c.stay.area)}</option>
-        <optgroup label="Suggested hotels">${listOpts}</optgroup>
+        ${bookedHotel(c) ? "" : `<option value="" ${!h && !open ? "selected" : ""}>Not booked yet — plan around ${esc(c.stay.area)}</option>`}
+        ${listOpts ? `<optgroup label="${bookedHotel(c) ? "Your booked hotel" : "Suggested hotels"}">${listOpts}</optgroup>` : ""}
         <option value="other" ${open && !(h && h.src === "list") ? "selected" : ""}>${h && h.src !== "list" ? "📍 " + esc(h.name) : "Another hotel… (search or map link)"}</option>
       </select>
       ${open ? `<div class="hotelfind"><input type="text" id="hotelq-${i}" placeholder="Hotel name, address or map link" aria-label="Find your hotel in ${esc(c.name)}"><button type="button" class="btn small" data-act="hotelfind" data-i="${i}">Find</button></div><div class="hotelres" id="hotelres-${i}" aria-live="polite"></div>` : ""}
@@ -3189,8 +3204,8 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
         : `<span class="timing">${fl}lands at <b>${hhmm(s.land)}</b>. Allow about ${IMMIGRATION} min for immigration and bags.${s.ready != null ? ` With the ~${AIRPORT_MIN[s.flyIn] || 60} min ride into town you'll reach the hotel at about <b>${hhmm(s.ready)}</b>.` : ""}</span>
           ${s.ready != null && s.ready < 14 * 60 ? `<span class="timing">Hotel check-in is usually from 14:00. Ask for early check-in when you book, or leave your bags at reception and head out.</span>` : ""}`;
       body = s.via
-        ? `<div class="travel"><b class="k">Land in ${esc(s.city.name)}</b>${timing}${fromSyd() ? `<span>${sydLine(s.flyIn, "in")}</span>` : ""}<span>${esc(s.text)}</span></div>`
-        : `<div class="travel"><b class="k">Arrive & check in</b>${timing}${fromSyd() ? `<span>${sydLine(s.flyIn, "in")}</span>` : ""}<span>${esc(s.text)}</span><span>Check in ${userHotel(city) ? "at" : "to your hotel in"} <b>${esc(stayName(city))}</b>, rest, and change money/test Alipay if you haven't.</span></div>`;
+        ? `<div class="travel"><b class="k">Land in ${esc(s.city.name)}</b>${timing}${fromSyd() ? `<span>${sydLine(s.flyIn, "in")}</span>` : ""}<span>${esc(s.text)}</span><span>📝 ${entryFormsHTML(s.city.region)}</span></div>`
+        : `<div class="travel"><b class="k">Arrive & check in</b>${timing}${fromSyd() ? `<span>${sydLine(s.flyIn, "in")}</span>` : ""}<span>${esc(s.text)}</span><span>Check in ${userHotel(city) ? "at" : "to your hotel in"} <b>${esc(stayName(city))}</b>, rest, and change money/test Alipay if you haven't.</span><span>📝 ${entryFormsHTML(city.region)}</span></div>`;
     } else if (s.type === "travel") {
       body = `<div class="travel"><b class="k">${s.toFlight ? "To your flight" : s.sameDay ? "Onward the same day" : "Travel day"} · ${esc(s.from.name)} → ${esc(s.to.name)}</b>
         ${s.dep != null ? `<span class="timing">${s.est ? `Estimated${s.leg && !s.leg.chosen ? " (assuming " + MODE[s.leg.rec].label.toLowerCase() + ")" : ""}: departs` : "Departs"} <b>${hhmm(s.dep)}</b>, arrives <b>${hhmm(s.arr)}</b>${s.est ? " — add your booked times in the form for an exact plan" : ""}.${s.leaveBy != null && !s.toFlight ? ` Leave the hotel by <b>${hhmm(s.leaveBy)}</b>.` : ""}</span>` : !s.toFlight ? `<span class="timing">No times entered — add your departure and arrival times on the ${esc(s.to.name)} card in the form for an exact plan.</span>` : ""}
@@ -3203,7 +3218,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
           : s.leg && s.leg.chosen
           ? `<span><b>${MODE[s.leg.chosen].icon} ${MODE[s.leg.chosen].label}:</b> ${esc(s.text)}</span>`
           : `<span><b>How you'll travel isn't chosen yet.</b> Pick it on the ${esc(s.toFlight ? "“Fly home from” section" : s.to.name + " card")} in the form. Until then, timings assume the usual choice (${MODE[(s.leg || {}).rec || "train"].label.toLowerCase()}).</span>${legOptionsHTML(s.fromId, s.toId)}`}
-        ${s.border ? `<span><b>Border crossing:</b> passport out. ${isAU() ? (s.to.region === "mainland" ? "Australians: entering the mainland starts a fresh visa-free stay of up to 30 days." : s.to.region === "hk" ? "Australians: visa-free in Hong Kong for up to 90 days." : "Australians: visa-free entry to Macau.") : "Leaving or entering the mainland uses one visa entry — see Before you go."}</span>` : ""}
+        ${s.border ? `<span><b>Border crossing:</b> passport out. ${isAU() ? (s.to.region === "mainland" ? "Australians: entering the mainland starts a fresh visa-free stay of up to 30 days." : s.to.region === "hk" ? "Australians: visa-free in Hong Kong for up to 90 days." : "Australians: visa-free entry to Macau.") : "Leaving or entering the mainland uses one visa entry — see Before you go."}</span><span>📝 ${entryFormsHTML(s.to.region)}</span>` : ""}
         ${s.toFlight ? "" : `<span><b>On arrival:</b> ${esc(s.arrive)}</span>
         <span>Check in ${userHotel(s.to) ? "at" : "to your hotel in"} <b>${esc(stayName(s.to))}</b>.</span>`}</div>
         ${s.toFlight || (s.arr != null && s.arr >= 16 * 60) ? "" : eatHTML({ label: s.sameDay || (s.arr != null && s.arr >= 14 * 60) ? "First meal on arrival (halal)" : "Lunch on arrival (halal)", ...eatNear(s.to, stayLL(s.to)) })}`;
@@ -3212,7 +3227,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
       const timing = s.off == null
         ? `<span class="timing">Add your take-off time in the form (step 2) and the last day is planned around it.</span>`
         : `<span class="timing">${fl}takes off at <b>${hhmm(s.off)}</b>. Be at the airport by <b>${hhmm(s.off - INTL_BUFFER)}</b>${s.leaveBy != null ? ` — leave the hotel by <b>${hhmm(s.leaveBy)}</b> (about ${s.airportMin} min to the airport)` : ""}.</span>`;
-      body = `<div class="travel"><b class="k">Departure</b>${timing}${s.collect ? `<span><b>Collect your bags first:</b> ${s.collect}</span>` : ""}<span>${day.flyOut === day.cityId ? "Check out (usually by 12:00; ask the hotel to hold bags). " : ""}${esc(s.text)}</span>${fromSyd() ? `<span>${sydLine(s.flyOut, "out")}</span>` : ""}${fromSyd() && isAU() ? `<span><b>Landing in Sydney:</b> declare all food, plant and animal products (many Chinese snacks contain meat, egg or seeds). Duty-free allowance: A$900 of goods, 2.25 L alcohol, 25 cigarettes.</span>` : ""}</div>`;
+      body = `<div class="travel"><b class="k">Departure</b>${timing}${s.collect ? `<span><b>Collect your bags first:</b> ${s.collect}</span>` : ""}<span>${day.flyOut === day.cityId ? "Check out (usually by 12:00; ask the hotel to hold bags). " : ""}${esc(s.text)}</span>${fromSyd() ? `<span>${sydLine(s.flyOut, "out")}</span>` : ""}<span>📝 ${leaveFormsHTML(CITIES[s.flyOut].region)}</span>${fromSyd() ? `<span>🛬 ${homeArrivalHTML()}</span>` : ""}</div>`;
     } else if (s.type === "rest") {
       body = `<p class="act-name">Free time & rest</p><p class="act-desc">Keep this block open: nap, pray, do laundry, or revisit somewhere you liked. A relaxed pace keeps a 2-week trip enjoyable.</p>`;
     } else if (s.type === "free") {
@@ -4705,11 +4720,8 @@ Request: ${txt.trim()}`;
     const g = guideFor(city); if (!g) return "";
     const li = (a) => a.join("");
     const vcls = { "BEST PICK": "best", Good: "good", OK: "ok", Skip: "skip" };
-    const short = g.shortlist.length ? `<h5>Your shortlist – checked</h5><div class="g-list">${li(g.shortlist.map((h) => `<div class="g-row"><span class="g-v ${vcls[h.verdict] || ""}">${h.verdict === "BEST PICK" ? "★ " : ""}${esc(h.verdict)}</span><b>${esc(h.n)}</b> <span class="hint">${esc(h.price)} · ${esc(h.score)}</span><span>📍 ${esc(h.near)}</span><span class="hint">${esc(h.note)}</span></div>`))}</div>` : "";
     return `<details class="g-box"><summary>📘 From your travel guide — ${esc(city.name)} ${guideLink("Open the full guide ↗")}</summary>
-      ${short}
-      <h5>Best hotel picks</h5><div class="g-list">${li(g.picks.map((h) => `<div class="g-row"><span class="g-v best">${esc(h.tier)}</span><b>${esc(h.n)}</b> <span class="hint">${esc(h.aud)} 2 adults · ${esc(h.fam)} with a child</span><span>${esc(h.why)}</span></div>`))}</div>
-      <h5>Where to stay – by what's nearby</h5>${li(g.areas.map((a) => `<div class="g-area"><b>${esc(a.area)}</b> <span class="hint">${esc(a.best)}</span><span>🚶 ${esc(a.near)}</span><ul>${li(a.hotels.map((h) => `<li><b>${esc(h.n)}</b> <span class="hint">${esc(h.tier)} · ${esc(h.aud)}</span> — 📍 ${esc(h.near)}</li>`))}</ul></div>`))}
+      ${g.booked ? `<h5>Your hotel</h5><div class="g-row"><span class="g-v best">✅ Booked</span><b>${esc(g.booked.n)}</b> <span class="hint">${esc(g.booked.addr)} · ${esc(g.booked.score)}</span><span>🚇 ${esc(g.booked.metro)}</span><span>📍 ${esc(g.booked.near)}</span><span class="hint">${esc(g.booked.note)}</span></div>` : `<h5>Your hotel</h5><p class="hint">Not booked yet.</p>`}
       <h5>Viral & Instagram-worthy</h5><ul>${li(g.viral.map((v) => `<li><i class="g-cat">${esc(v.cat)}</i> <b>${esc(v.n)}</b> <span class="hint">${esc(v.area)}</span> — ${esc(v.tip)}</li>`))}</ul>
       <h5>Instagram cafés</h5><ul>${li(g.cafes.map((c) => `<li><b>${esc(c.n)}</b> <span class="hint">${esc(c.area)}</span> — ${esc(c.why)}</li>`))}</ul>
       <h5>Shopping</h5><ul>${li(g.shopping.map((x) => `<li><b>${esc(x.n)}</b> — ${esc(x.d)}</li>`))}</ul>
@@ -4721,14 +4733,14 @@ Request: ${txt.trim()}`;
     const uniq = ids.filter((v, i, a) => a.indexOf(v) === i);
     return uniq.map((id) => {
       const c = CITIES[id];
-      const hotels = c.hotels.map((h) => `<div class="hotel ${h.tier === state.budget ? "pick" : ""}"><span class="tier">${TIER[h.tier]}${h.tier === state.budget ? " · your budget" : ""}</span><b>${esc(h.n)}</b><span>${esc(h.area)} — ${esc(h.note)}</span></div>`).join("");
+      const hotels = c.hotels.length ? c.hotels.map((h) => `<div class="hotel ${h.booked || h.tier === state.budget ? "pick" : ""}"><span class="tier">${TIER[h.tier]}${!h.booked && h.tier === state.budget ? " · your budget" : ""}</span><b>${esc(h.n)}</b><span>${esc(h.area)} — ${esc(h.note)}</span></div>`).join("") : `<div class="hotel"><span class="tier">Not booked yet</span><span>${esc(c.stay.why)}</span></div>`;
       const halal = c.halal.map((h) => `<li><b>${esc(h.n)}</b> — ${esc(h.note)}</li>`).join("");
       const mosques = c.mosques.length ? `<h4>Mosques</h4><ul>${c.mosques.map((m) => `<li><b>${esc(m.n)}</b> — ${esc(m.note)}</li>`).join("")}</ul>` : `<h4>Mosques</h4><p>No major mosque listed here; search <span class="han">清真寺</span> in Amap and use Muslim Pro for prayer times and qibla.</p>`;
       return `<section class="panel">
         <h3>${esc(c.name)} <span class="han" style="color:var(--seal)">${c.zh}</span></h3>
         <p>${esc(c.intro)}</p>
         <h4>Best area to stay</h4><p><b>${esc(c.stay.area)}.</b> ${esc(c.stay.why)}</p>
-        <h4>Hotels</h4><div class="hotels">${hotels}</div>
+        <h4>${bookedHotel(c) ? "Your hotel" : "Hotels"}</h4><div class="hotels">${hotels}</div>
         ${guidePanel(c)}
         <p class="hint">Book on Trip.com, Booking.com or directly. In the mainland, a small number of hotels still cannot register foreign guests — Trip.com listings show this, and the hotel will register your passport with the police for you.</p>
         <h4>Top-rated things to do</h4><ul>${c.places.filter((p) => p.r >= 2).sort((a, b) => b.r - a.r).map((p) => `<li><b>${esc(p.n)}</b> <span style="color:var(--gold)">${"★".repeat(p.r)}</span> — ${esc(p.d.split(". ")[0].replace(/\.$/, ""))}. <span class="hint">${esc(p.h)} · ${esc(p.c)}</span></li>`).join("")}</ul>
@@ -4767,6 +4779,24 @@ Request: ${txt.trim()}`;
     ];
   }
 
+  function formsPanel(ids, hasMainland, hasHK, hasMO) {
+    const first = lastPlan && CITIES[lastPlan.arriveId] ? CITIES[lastPlan.arriveId].region : CITIES[ids[0]].region;
+    const last = lastPlan && CITIES[lastPlan.departId] ? CITIES[lastPlan.departId].region : CITIES[ids[ids.length - 1]].region;
+    const NAME = { mainland: "mainland China", hk: "Hong Kong", mo: "Macau" };
+    const others = [["mainland", hasMainland], ["hk", hasHK], ["mo", hasMO]].filter((r) => r[1] && r[0] !== first).map((r) => r[0]);
+    const steps = [];
+    steps.push(fromSyd()
+      ? `<b>Before you leave Australia:</b> there's no outgoing passenger card. ${isAU() ? `Subscribe to Smartraveller updates for ${bl("smartraveller", "China")}${hasHK ? `, ${bl("smartHK", "Hong Kong")}` : ""}${hasMO ? `, ${bl("smartMO", "Macau")}` : ""}. ` : ""}Carrying A$10,000 or more in cash? Declare it to Border Force before you fly (${bl("auCash", "AUSTRAC form")}).`
+      : `<b>Before you leave home:</b> check your own country's exit and customs rules.`);
+    steps.push(`<b>Arriving in ${NAME[first]}:</b> ${entryFormsHTML(first).replace(/^<b>[^<]*<\/b>\s*/, "")}`);
+    others.forEach((r) => steps.push(`<b>Crossing into ${NAME[r]} during the trip:</b> ${entryFormsHTML(r).replace(/^<b>[^<]*<\/b>\s*/, "")}`));
+    steps.push(leaveFormsHTML(last));
+    steps.push(fromSyd() ? homeArrivalHTML() + ` More: ${bl("auBorder")}.` : `<b>Back home:</b> check your country's arrival card and customs rules.`);
+    return `<section class="panel"><h3>Forms at each border — step by step</h3>
+      <p class="hint">Everything you need to fill in, in order, with the official links. These steps also appear on the arrival, border-crossing and departure days of your plan.</p>
+      <ol>${steps.map((x) => `<li>${x}</li>`).join("")}</ol></section>`;
+  }
+
   function prepHTML(ids, hasMainland, hasHK, hasMO) {
     const checklist = checklistItems();
     return `
@@ -4783,7 +4813,7 @@ Request: ${txt.trim()}`;
       </ul>
       <h4>On arrival</h4>
       <ul>
-        <li>Fill in the foreigner arrival card (paper cards at the airport, or pre-fill online via the National Immigration Administration's website/app where offered). Write your first hotel's address.</li>
+        <li>Fill in the foreigner arrival card — free online before you land at ${bl("cnArrival", "s.nia.gov.cn")}, or on paper/QR at the airport. Write your first hotel's address.</li>
         <li>Fingerprints and a photo are taken at immigration. Tell the officer you're visiting for tourism under visa-free entry.</li>
         <li>Hotels register you with the police automatically. Staying in a private home means registering at the local police station within 24 h.</li>
         <li>Carry your passport at all times: it's your ticket for trains, museums and many attractions.</li>
@@ -4802,7 +4832,7 @@ Request: ${txt.trim()}`;
       </ol>
       <h4>On arrival</h4>
       <ul>
-        <li>Fill in the foreigner arrival card (paper cards at the airport, or pre-fill online via the National Immigration Administration's website/app where offered). Have your first hotel's address ready.</li>
+        <li>Fill in the foreigner arrival card — free online before you land at ${bl("cnArrival", "s.nia.gov.cn")}, or on paper/QR at the airport. Have your first hotel's address ready.</li>
         <li>Fingerprints and a photo are taken at immigration.</li>
         <li>Hotels register you with the police automatically. If you stay in a private home, you must register at the local police station within 24 h.</li>
         <li>Carry your passport at all times: it's your ticket for trains, museums and many attractions.</li>
@@ -4814,6 +4844,7 @@ Request: ${txt.trim()}`;
       <div class="note ${isAU() ? "info" : "warn"}"><b class="tag">${isAU() ? "Good to know" : "Important"}</b><span>Hong Kong and Macau are outside mainland immigration. Going mainland → Hong Kong → mainland counts as two mainland entries${isAU() ? " — fine for Australians, since each visa-free entry gets its own 30 days" : ""}.</span></div>
     </section>
 
+    ${formsPanel(ids, hasMainland, hasHK, hasMO)}
     ${fromSyd() ? flightsPanel(ids, lastPlan.arriveId, lastPlan.departId) : ""}
     ${isAU() ? ausPanel(ids) : ""}
     <section class="panel">
@@ -5407,7 +5438,7 @@ Request: ${txt.trim()}`;
         ${day.friday && (s.part === "m" || s.part === "full") ? `<div class="pv-halal"><b>Jumu'ah:</b> ${esc((day.city.mosques[0] || { n: "search 清真寺 in Amap" }).n)}</div>` : ""}
         ${s.alt ? `<div class="pv-meta">Or instead: ${esc(s.alt.n)}</div>` : ""}`;
     } else if (s.type === "arrive") {
-      b = `<div class="pv-name">${s.via ? "Land in " + esc(s.city.name) : "Arrive & check in"}</div>${s.land != null ? `<div><b>${s.flightNo ? esc(s.flightNo) + " lands" : "Lands"} ${hhmm(s.land)}</b>${s.ready != null ? ` · at the hotel about ${hhmm(s.ready)}` : ""}</div>` : ""}${fromSyd() ? `<div>${plain(sydLine(s.flyIn, "in"))}</div>` : ""}<div>${esc(s.text)}</div>`;
+      b = `<div class="pv-name">${s.via ? "Land in " + esc(s.city.name) : "Arrive & check in"}</div>${s.land != null ? `<div><b>${s.flightNo ? esc(s.flightNo) + " lands" : "Lands"} ${hhmm(s.land)}</b>${s.ready != null ? ` · at the hotel about ${hhmm(s.ready)}` : ""}</div>` : ""}${fromSyd() ? `<div>${plain(sydLine(s.flyIn, "in"))}</div>` : ""}<div>${esc(s.text)}</div>${s.city.region === "mainland" ? `<div>Arrival card: fill in free online at s.nia.gov.cn/ArrivalCardFillingPC (or on paper at the airport).</div>` : `<div>No arrival card needed — passport only.</div>`}`;
     } else if (s.type === "travel") {
       b = `<div class="pv-name">${s.toFlight ? "To your flight" : "Travel"}: ${esc(s.from.name)} → ${esc(s.to.name)}</div>
         ${s.dep != null ? `<div><b>${s.est ? "Est. " : ""}departs ${hhmm(s.dep)} → arrives ${hhmm(s.arr)}</b>${s.leaveBy != null && !s.toFlight ? ` · leave hotel by ${hhmm(s.leaveBy)}` : ""}</div>` : ""}
@@ -5417,7 +5448,7 @@ Request: ${txt.trim()}`;
         ${s.border ? `<div>Border crossing — passport ready.</div>` : ""}
         ${s.toFlight ? "" : `<div><b>On arrival:</b> ${esc(firstSentence(s.arrive))} Check in at ${esc(stayName(s.to))}.</div>`}`;
     } else if (s.type === "depart") {
-      b = `<div class="pv-name">Departure</div>${s.off != null ? `<div><b>${s.flightNo ? esc(s.flightNo) + " takes off" : "Take-off"} ${hhmm(s.off)}</b> · at the airport by ${hhmm(s.off - INTL_BUFFER)}${s.leaveBy != null ? ` · leave hotel by ${hhmm(s.leaveBy)}` : ""}</div>` : ""}<div>${esc(s.text)}</div>${fromSyd() ? `<div>${plain(sydLine(s.flyOut, "out"))}</div>` : ""}`;
+      b = `<div class="pv-name">Departure</div>${s.off != null ? `<div><b>${s.flightNo ? esc(s.flightNo) + " takes off" : "Take-off"} ${hhmm(s.off)}</b> · at the airport by ${hhmm(s.off - INTL_BUFFER)}${s.leaveBy != null ? ` · leave hotel by ${hhmm(s.leaveBy)}` : ""}</div>` : ""}<div>${esc(s.text)}</div>${fromSyd() ? `<div>${plain(sydLine(s.flyOut, "out"))}</div><div>Landing in Australia: Incoming Passenger Card on the plane (or the Australia Travel Declaration in the Qantas app on eligible flights). Declare food and A$10,000+ cash.</div>` : ""}`;
     } else if (s.type === "rest") {
       b = `<div class="pv-name">Free time & rest</div><div>Rest, pray, or revisit somewhere you liked.</div>`;
     } else if (s.type === "free") {
@@ -5451,7 +5482,7 @@ Request: ${txt.trim()}`;
     // 2. One page per day
     plan.days.forEach((d, i) => {
       const firstInCity = d.kind === "arrival" || d.kind === "transfer";
-      const hotel = d.city.hotels.find((h) => h.tier === state.budget) || d.city.hotels[0];
+      const hotel = d.city.hotels.find((h) => h.booked) || d.city.hotels.find((h) => h.tier === state.budget) || d.city.hotels[0] || { n: "a hotel near " + d.city.stay.area };
       pages.push(`${head(`Day ${i + 1} · ${esc(d.city.name)} <span class="han">${d.city.zh}</span>`, (d.date ? fmtDate(d.date) + " · " : "") + (KIND[d.kind] || "Sightseeing"))}
         <p class="pv-sub">${esc(dayTitle(d))}</p>
         ${d.date ? `<p class="pv-meta">🌤 ${esc(wxPlain(d))}</p>` : ""}

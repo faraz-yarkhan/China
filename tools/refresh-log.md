@@ -2,6 +2,22 @@
 
 Newest first. Each daily refresh adds an entry (see `tools/REFRESH.md`).
 
+## 2026-11-13 — border forms with links; live page merged back
+- New "Forms at each border — step by step" panel in Before you go, plus 📝 lines on the arrival, border-crossing and
+  departure days, with official links (`BORDER_LINKS` in data.js):
+  - China: online arrival card at s.nia.gov.cn/ArrivalCardFillingPC (live since 20 Nov 2025, free; paper/QR fallback —
+    Israeli embassy Beijing notice, entrycardguide, chinasimply). Filing window given as 24 h or 72 h by different
+    sources, so the app just says "up to a few days before". Health declaration abolished 1 Nov 2023 (symptoms only).
+    Customs: declare over ¥20,000 yuan cash / US$5,000 foreign cash. Paper departure cards: unclear, so "staff will tell you".
+  - Hong Kong: arrival/departure cards abolished 16 Oct 2024 (ImmD annual report 2024, press release 27 Jan 2025).
+  - Australia: paper Incoming Passenger Card still the default; digital Australia Travel Declaration on some Qantas
+    flights (Qantas app, up to 72 h before), nationwide by end 2027 (abf.gov.au newsroom, ABF IPC FAQ). Cash A$10,000+
+    must be declared (AUSTRAC). No outgoing passenger card.
+  - Link pages were taken from search results; direct fetching is blocked in this environment, so home pages are used
+    where a deep link couldn't be confirmed (english.customs.gov.cn, customs.gov.hk, fsm.gov.mo, immd.gov.hk).
+- Merged the live claude.ai page (version 1794182812-6735) back into this branch with a three-way merge against 4edd3d1:
+  booked hotels in data.js and the "✅ Booked" hotel feature in app.js are now in the repo; newer date/rates kept.
+
 ## 2026-11-12 — daily refresh
 - Exchange rates: 1 AUD ≈ HK$5.34 (Wise 5.342, TradingView 5.347, Yahoo 5.338) → HK$1 ≈ A$0.187 (was 0.185);
   MOP 1 ≈ A$0.182 from the peg. CNY unchanged at A$0.218 (Pluang 0.21793, 11 Nov).

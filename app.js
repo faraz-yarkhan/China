@@ -18,7 +18,7 @@
     mid: { label: "Mid-range", day: "¥1,000–1,700", hk: "HK$1,600–2,600" },
     lux: { label: "Luxury", day: "¥3,000+", hk: "HK$4,500+" },
   };
-  const TIER = { lux: "Luxury", mid: "Mid-range", budget: "Budget" };
+  const TIER = { lux: "Luxury", mid: "Mid-range", budget: "Budget", booked: "✅ Booked" };
   const STORE = "chk-trip-planner-v1";
 
   // Give every place a stable id
@@ -87,7 +87,14 @@
   }
 
   /* ---------- the traveller's own hotel (optional), else the recommended area ---------- */
-  const userHotel = (city) => (state.hotels && state.hotels[city.id] && state.hotels[city.id].ll ? state.hotels[city.id] : null);
+  const bookedHotel = (city) => (city.hotels || []).find((h) => h.booked && h.ll);
+  const userHotel = (city) => {
+    const s = state.hotels && state.hotels[city.id];
+    // an older pick from the (now removed) suggestion list gives way to the booked hotel
+    if (s && s.ll && !(s.src === "list" && !(city.hotels || []).some((h) => h.n === s.name))) return s;
+    const b = bookedHotel(city);
+    return b ? { name: b.n, ll: b.ll, src: "list", booked: true } : null;
+  };
   const stayLL = (city) => (userHotel(city) ? userHotel(city).ll : city.stay.ll);
   const stayName = (city) => (userHotel(city) ? userHotel(city).name : city.stay.area);
   // Nearest known metro station to a point (within ~1.3 km), from the city's sights and recommended area
@@ -144,6 +151,19 @@
     return `${name}: fly (~${(d / 700 + 0.6).toFixed(1)} h in the air). Trains exist but take most of a day.` + macau;
   }
   const crossesBorder = (a, b) => CITIES[a].region !== CITIES[b].region;
+
+  /* Border forms: what to fill in at each crossing, with official links (BORDER_LINKS in data.js) */
+  const bl = (k, t) => `<a href="${BORDER_LINKS[k].url}" target="_blank" rel="noopener">${esc(t || BORDER_LINKS[k].label)} ↗</a>`;
+  function entryFormsHTML(region) {
+    if (region === "mainland") return `<b>Mainland China:</b> fill in the arrival card free online up to a few days before you land — ${bl("cnArrival")} (also in the NIA 12367 app or the WeChat/Alipay mini program), or on paper/QR at the airport. A new card is needed for every mainland entry. Ignore look-alike sites that charge a fee. <b>Customs:</b> nothing to fill in unless you have goods to declare or carry more than ¥20,000 in yuan cash (or over US$5,000 in foreign cash) — then use the red channel (${bl("cnCustoms")}). No health form unless you have fever or other symptoms.`;
+    if (region === "hk") return `<b>Hong Kong:</b> no arrival card and no health form — just your passport. Keep the small landing slip you're given. <b>Customs:</b> green channel unless you have something to declare (${bl("hkCustoms")}).`;
+    return `<b>Macau:</b> no arrival card and no health form — just your passport. Keep the entry slip you're given until you leave (${bl("moPolice")}).`;
+  }
+  function leaveFormsHTML(region) {
+    if (region === "mainland") return `<b>Leaving the mainland:</b> no online form. Declare at customs only if you carry more than ¥20,000 in yuan cash, over US$5,000 in foreign cash, or restricted goods. A few airports may still hand out paper departure cards — staff will tell you.`;
+    return `<b>Leaving ${region === "hk" ? "Hong Kong" : "Macau"}:</b> no departure card — passport only.`;
+  }
+  const homeArrivalHTML = () => `<b>Landing in Australia:</b> fill in the paper Incoming Passenger Card handed out on the plane (${bl("auIpc", "how to fill it in")}). On some Qantas flights you can instead do the digital Australia Travel Declaration in the Qantas app, up to 72 h before (${bl("auAtd", "about the Travel Declaration")}). Declare all food, plant and animal products (many Chinese snacks contain meat, egg or seeds) and cash of A$10,000 or more. Duty-free allowance: A$900 of goods, 2.25 L alcohol, 25 cigarettes.`;
 
   /* Halal food nearest a point */
   function eatNear(city, ll, n = 2) {
@@ -577,8 +597,8 @@
     return `<div class="hotelrow">
       <label class="hint lbl" for="hotel-${i}">🏨 Your hotel in ${esc(c.name)}:</label>
       <select id="hotel-${i}" data-act="hotelsel" data-i="${i}">
-        <option value="" ${!h && !open ? "selected" : ""}>Not booked yet — plan around ${esc(c.stay.area)}</option>
-        <optgroup label="Suggested hotels">${listOpts}</optgroup>
+        ${bookedHotel(c) ? "" : `<option value="" ${!h && !open ? "selected" : ""}>Not booked yet — plan around ${esc(c.stay.area)}</option>`}
+        ${listOpts ? `<optgroup label="${bookedHotel(c) ? "Your booked hotel" : "Suggested hotels"}">${listOpts}</optgroup>` : ""}
         <option value="other" ${open && !(h && h.src === "list") ? "selected" : ""}>${h && h.src !== "list" ? "📍 " + esc(h.name) : "Another hotel… (search or map link)"}</option>
       </select>
       ${open ? `<div class="hotelfind"><input type="text" id="hotelq-${i}" placeholder="Hotel name, address or map link" aria-label="Find your hotel in ${esc(c.name)}"><button type="button" class="btn small" data-act="hotelfind" data-i="${i}">Find</button></div><div class="hotelres" id="hotelres-${i}" aria-live="polite"></div>` : ""}
@@ -884,8 +904,8 @@
         : `<span class="timing">${fl}lands at <b>${hhmm(s.land)}</b>. Allow about ${IMMIGRATION} min for immigration and bags.${s.ready != null ? ` With the ~${AIRPORT_MIN[s.flyIn] || 60} min ride into town you'll reach the hotel at about <b>${hhmm(s.ready)}</b>.` : ""}</span>
           ${s.ready != null && s.ready < 14 * 60 ? `<span class="timing">Hotel check-in is usually from 14:00. Ask for early check-in when you book, or leave your bags at reception and head out.</span>` : ""}`;
       body = s.via
-        ? `<div class="travel"><b class="k">Land in ${esc(s.city.name)}</b>${timing}${fromSyd() ? `<span>${sydLine(s.flyIn, "in")}</span>` : ""}<span>${esc(s.text)}</span></div>`
-        : `<div class="travel"><b class="k">Arrive & check in</b>${timing}${fromSyd() ? `<span>${sydLine(s.flyIn, "in")}</span>` : ""}<span>${esc(s.text)}</span><span>Check in ${userHotel(city) ? "at" : "to your hotel in"} <b>${esc(stayName(city))}</b>, rest, and change money/test Alipay if you haven't.</span></div>`;
+        ? `<div class="travel"><b class="k">Land in ${esc(s.city.name)}</b>${timing}${fromSyd() ? `<span>${sydLine(s.flyIn, "in")}</span>` : ""}<span>${esc(s.text)}</span><span>📝 ${entryFormsHTML(s.city.region)}</span></div>`
+        : `<div class="travel"><b class="k">Arrive & check in</b>${timing}${fromSyd() ? `<span>${sydLine(s.flyIn, "in")}</span>` : ""}<span>${esc(s.text)}</span><span>Check in ${userHotel(city) ? "at" : "to your hotel in"} <b>${esc(stayName(city))}</b>, rest, and change money/test Alipay if you haven't.</span><span>📝 ${entryFormsHTML(city.region)}</span></div>`;
     } else if (s.type === "travel") {
       body = `<div class="travel"><b class="k">${s.toFlight ? "To your flight" : s.sameDay ? "Onward the same day" : "Travel day"} · ${esc(s.from.name)} → ${esc(s.to.name)}</b>
         ${s.dep != null ? `<span class="timing">${s.est ? `Estimated${s.leg && !s.leg.chosen ? " (assuming " + MODE[s.leg.rec].label.toLowerCase() + ")" : ""}: departs` : "Departs"} <b>${hhmm(s.dep)}</b>, arrives <b>${hhmm(s.arr)}</b>${s.est ? " — add your booked times in the form for an exact plan" : ""}.${s.leaveBy != null && !s.toFlight ? ` Leave the hotel by <b>${hhmm(s.leaveBy)}</b>.` : ""}</span>` : !s.toFlight ? `<span class="timing">No times entered — add your departure and arrival times on the ${esc(s.to.name)} card in the form for an exact plan.</span>` : ""}
@@ -898,7 +918,7 @@
           : s.leg && s.leg.chosen
           ? `<span><b>${MODE[s.leg.chosen].icon} ${MODE[s.leg.chosen].label}:</b> ${esc(s.text)}</span>`
           : `<span><b>How you'll travel isn't chosen yet.</b> Pick it on the ${esc(s.toFlight ? "“Fly home from” section" : s.to.name + " card")} in the form. Until then, timings assume the usual choice (${MODE[(s.leg || {}).rec || "train"].label.toLowerCase()}).</span>${legOptionsHTML(s.fromId, s.toId)}`}
-        ${s.border ? `<span><b>Border crossing:</b> passport out. ${isAU() ? (s.to.region === "mainland" ? "Australians: entering the mainland starts a fresh visa-free stay of up to 30 days." : s.to.region === "hk" ? "Australians: visa-free in Hong Kong for up to 90 days." : "Australians: visa-free entry to Macau.") : "Leaving or entering the mainland uses one visa entry — see Before you go."}</span>` : ""}
+        ${s.border ? `<span><b>Border crossing:</b> passport out. ${isAU() ? (s.to.region === "mainland" ? "Australians: entering the mainland starts a fresh visa-free stay of up to 30 days." : s.to.region === "hk" ? "Australians: visa-free in Hong Kong for up to 90 days." : "Australians: visa-free entry to Macau.") : "Leaving or entering the mainland uses one visa entry — see Before you go."}</span><span>📝 ${entryFormsHTML(s.to.region)}</span>` : ""}
         ${s.toFlight ? "" : `<span><b>On arrival:</b> ${esc(s.arrive)}</span>
         <span>Check in ${userHotel(s.to) ? "at" : "to your hotel in"} <b>${esc(stayName(s.to))}</b>.</span>`}</div>
         ${s.toFlight || (s.arr != null && s.arr >= 16 * 60) ? "" : eatHTML({ label: s.sameDay || (s.arr != null && s.arr >= 14 * 60) ? "First meal on arrival (halal)" : "Lunch on arrival (halal)", ...eatNear(s.to, stayLL(s.to)) })}`;
@@ -907,7 +927,7 @@
       const timing = s.off == null
         ? `<span class="timing">Add your take-off time in the form (step 2) and the last day is planned around it.</span>`
         : `<span class="timing">${fl}takes off at <b>${hhmm(s.off)}</b>. Be at the airport by <b>${hhmm(s.off - INTL_BUFFER)}</b>${s.leaveBy != null ? ` — leave the hotel by <b>${hhmm(s.leaveBy)}</b> (about ${s.airportMin} min to the airport)` : ""}.</span>`;
-      body = `<div class="travel"><b class="k">Departure</b>${timing}${s.collect ? `<span><b>Collect your bags first:</b> ${s.collect}</span>` : ""}<span>${day.flyOut === day.cityId ? "Check out (usually by 12:00; ask the hotel to hold bags). " : ""}${esc(s.text)}</span>${fromSyd() ? `<span>${sydLine(s.flyOut, "out")}</span>` : ""}${fromSyd() && isAU() ? `<span><b>Landing in Sydney:</b> declare all food, plant and animal products (many Chinese snacks contain meat, egg or seeds). Duty-free allowance: A$900 of goods, 2.25 L alcohol, 25 cigarettes.</span>` : ""}</div>`;
+      body = `<div class="travel"><b class="k">Departure</b>${timing}${s.collect ? `<span><b>Collect your bags first:</b> ${s.collect}</span>` : ""}<span>${day.flyOut === day.cityId ? "Check out (usually by 12:00; ask the hotel to hold bags). " : ""}${esc(s.text)}</span>${fromSyd() ? `<span>${sydLine(s.flyOut, "out")}</span>` : ""}<span>📝 ${leaveFormsHTML(CITIES[s.flyOut].region)}</span>${fromSyd() ? `<span>🛬 ${homeArrivalHTML()}</span>` : ""}</div>`;
     } else if (s.type === "rest") {
       body = `<p class="act-name">Free time & rest</p><p class="act-desc">Keep this block open: nap, pray, do laundry, or revisit somewhere you liked. A relaxed pace keeps a 2-week trip enjoyable.</p>`;
     } else if (s.type === "free") {
@@ -2400,11 +2420,8 @@ Request: ${txt.trim()}`;
     const g = guideFor(city); if (!g) return "";
     const li = (a) => a.join("");
     const vcls = { "BEST PICK": "best", Good: "good", OK: "ok", Skip: "skip" };
-    const short = g.shortlist.length ? `<h5>Your shortlist – checked</h5><div class="g-list">${li(g.shortlist.map((h) => `<div class="g-row"><span class="g-v ${vcls[h.verdict] || ""}">${h.verdict === "BEST PICK" ? "★ " : ""}${esc(h.verdict)}</span><b>${esc(h.n)}</b> <span class="hint">${esc(h.price)} · ${esc(h.score)}</span><span>📍 ${esc(h.near)}</span><span class="hint">${esc(h.note)}</span></div>`))}</div>` : "";
     return `<details class="g-box"><summary>📘 From your travel guide — ${esc(city.name)} ${guideLink("Open the full guide ↗")}</summary>
-      ${short}
-      <h5>Best hotel picks</h5><div class="g-list">${li(g.picks.map((h) => `<div class="g-row"><span class="g-v best">${esc(h.tier)}</span><b>${esc(h.n)}</b> <span class="hint">${esc(h.aud)} 2 adults · ${esc(h.fam)} with a child</span><span>${esc(h.why)}</span></div>`))}</div>
-      <h5>Where to stay – by what's nearby</h5>${li(g.areas.map((a) => `<div class="g-area"><b>${esc(a.area)}</b> <span class="hint">${esc(a.best)}</span><span>🚶 ${esc(a.near)}</span><ul>${li(a.hotels.map((h) => `<li><b>${esc(h.n)}</b> <span class="hint">${esc(h.tier)} · ${esc(h.aud)}</span> — 📍 ${esc(h.near)}</li>`))}</ul></div>`))}
+      ${g.booked ? `<h5>Your hotel</h5><div class="g-row"><span class="g-v best">✅ Booked</span><b>${esc(g.booked.n)}</b> <span class="hint">${esc(g.booked.addr)} · ${esc(g.booked.score)}</span><span>🚇 ${esc(g.booked.metro)}</span><span>📍 ${esc(g.booked.near)}</span><span class="hint">${esc(g.booked.note)}</span></div>` : `<h5>Your hotel</h5><p class="hint">Not booked yet.</p>`}
       <h5>Viral & Instagram-worthy</h5><ul>${li(g.viral.map((v) => `<li><i class="g-cat">${esc(v.cat)}</i> <b>${esc(v.n)}</b> <span class="hint">${esc(v.area)}</span> — ${esc(v.tip)}</li>`))}</ul>
       <h5>Instagram cafés</h5><ul>${li(g.cafes.map((c) => `<li><b>${esc(c.n)}</b> <span class="hint">${esc(c.area)}</span> — ${esc(c.why)}</li>`))}</ul>
       <h5>Shopping</h5><ul>${li(g.shopping.map((x) => `<li><b>${esc(x.n)}</b> — ${esc(x.d)}</li>`))}</ul>
@@ -2416,14 +2433,14 @@ Request: ${txt.trim()}`;
     const uniq = ids.filter((v, i, a) => a.indexOf(v) === i);
     return uniq.map((id) => {
       const c = CITIES[id];
-      const hotels = c.hotels.map((h) => `<div class="hotel ${h.tier === state.budget ? "pick" : ""}"><span class="tier">${TIER[h.tier]}${h.tier === state.budget ? " · your budget" : ""}</span><b>${esc(h.n)}</b><span>${esc(h.area)} — ${esc(h.note)}</span></div>`).join("");
+      const hotels = c.hotels.length ? c.hotels.map((h) => `<div class="hotel ${h.booked || h.tier === state.budget ? "pick" : ""}"><span class="tier">${TIER[h.tier]}${!h.booked && h.tier === state.budget ? " · your budget" : ""}</span><b>${esc(h.n)}</b><span>${esc(h.area)} — ${esc(h.note)}</span></div>`).join("") : `<div class="hotel"><span class="tier">Not booked yet</span><span>${esc(c.stay.why)}</span></div>`;
       const halal = c.halal.map((h) => `<li><b>${esc(h.n)}</b> — ${esc(h.note)}</li>`).join("");
       const mosques = c.mosques.length ? `<h4>Mosques</h4><ul>${c.mosques.map((m) => `<li><b>${esc(m.n)}</b> — ${esc(m.note)}</li>`).join("")}</ul>` : `<h4>Mosques</h4><p>No major mosque listed here; search <span class="han">清真寺</span> in Amap and use Muslim Pro for prayer times and qibla.</p>`;
       return `<section class="panel">
         <h3>${esc(c.name)} <span class="han" style="color:var(--seal)">${c.zh}</span></h3>
         <p>${esc(c.intro)}</p>
         <h4>Best area to stay</h4><p><b>${esc(c.stay.area)}.</b> ${esc(c.stay.why)}</p>
-        <h4>Hotels</h4><div class="hotels">${hotels}</div>
+        <h4>${bookedHotel(c) ? "Your hotel" : "Hotels"}</h4><div class="hotels">${hotels}</div>
         ${guidePanel(c)}
         <p class="hint">Book on Trip.com, Booking.com or directly. In the mainland, a small number of hotels still cannot register foreign guests — Trip.com listings show this, and the hotel will register your passport with the police for you.</p>
         <h4>Top-rated things to do</h4><ul>${c.places.filter((p) => p.r >= 2).sort((a, b) => b.r - a.r).map((p) => `<li><b>${esc(p.n)}</b> <span style="color:var(--gold)">${"★".repeat(p.r)}</span> — ${esc(p.d.split(". ")[0].replace(/\.$/, ""))}. <span class="hint">${esc(p.h)} · ${esc(p.c)}</span></li>`).join("")}</ul>
@@ -2462,6 +2479,24 @@ Request: ${txt.trim()}`;
     ];
   }
 
+  function formsPanel(ids, hasMainland, hasHK, hasMO) {
+    const first = lastPlan && CITIES[lastPlan.arriveId] ? CITIES[lastPlan.arriveId].region : CITIES[ids[0]].region;
+    const last = lastPlan && CITIES[lastPlan.departId] ? CITIES[lastPlan.departId].region : CITIES[ids[ids.length - 1]].region;
+    const NAME = { mainland: "mainland China", hk: "Hong Kong", mo: "Macau" };
+    const others = [["mainland", hasMainland], ["hk", hasHK], ["mo", hasMO]].filter((r) => r[1] && r[0] !== first).map((r) => r[0]);
+    const steps = [];
+    steps.push(fromSyd()
+      ? `<b>Before you leave Australia:</b> there's no outgoing passenger card. ${isAU() ? `Subscribe to Smartraveller updates for ${bl("smartraveller", "China")}${hasHK ? `, ${bl("smartHK", "Hong Kong")}` : ""}${hasMO ? `, ${bl("smartMO", "Macau")}` : ""}. ` : ""}Carrying A$10,000 or more in cash? Declare it to Border Force before you fly (${bl("auCash", "AUSTRAC form")}).`
+      : `<b>Before you leave home:</b> check your own country's exit and customs rules.`);
+    steps.push(`<b>Arriving in ${NAME[first]}:</b> ${entryFormsHTML(first).replace(/^<b>[^<]*<\/b>\s*/, "")}`);
+    others.forEach((r) => steps.push(`<b>Crossing into ${NAME[r]} during the trip:</b> ${entryFormsHTML(r).replace(/^<b>[^<]*<\/b>\s*/, "")}`));
+    steps.push(leaveFormsHTML(last));
+    steps.push(fromSyd() ? homeArrivalHTML() + ` More: ${bl("auBorder")}.` : `<b>Back home:</b> check your country's arrival card and customs rules.`);
+    return `<section class="panel"><h3>Forms at each border — step by step</h3>
+      <p class="hint">Everything you need to fill in, in order, with the official links. These steps also appear on the arrival, border-crossing and departure days of your plan.</p>
+      <ol>${steps.map((x) => `<li>${x}</li>`).join("")}</ol></section>`;
+  }
+
   function prepHTML(ids, hasMainland, hasHK, hasMO) {
     const checklist = checklistItems();
     return `
@@ -2478,7 +2513,7 @@ Request: ${txt.trim()}`;
       </ul>
       <h4>On arrival</h4>
       <ul>
-        <li>Fill in the foreigner arrival card (paper cards at the airport, or pre-fill online via the National Immigration Administration's website/app where offered). Write your first hotel's address.</li>
+        <li>Fill in the foreigner arrival card — free online before you land at ${bl("cnArrival", "s.nia.gov.cn")}, or on paper/QR at the airport. Write your first hotel's address.</li>
         <li>Fingerprints and a photo are taken at immigration. Tell the officer you're visiting for tourism under visa-free entry.</li>
         <li>Hotels register you with the police automatically. Staying in a private home means registering at the local police station within 24 h.</li>
         <li>Carry your passport at all times: it's your ticket for trains, museums and many attractions.</li>
@@ -2497,7 +2532,7 @@ Request: ${txt.trim()}`;
       </ol>
       <h4>On arrival</h4>
       <ul>
-        <li>Fill in the foreigner arrival card (paper cards at the airport, or pre-fill online via the National Immigration Administration's website/app where offered). Have your first hotel's address ready.</li>
+        <li>Fill in the foreigner arrival card — free online before you land at ${bl("cnArrival", "s.nia.gov.cn")}, or on paper/QR at the airport. Have your first hotel's address ready.</li>
         <li>Fingerprints and a photo are taken at immigration.</li>
         <li>Hotels register you with the police automatically. If you stay in a private home, you must register at the local police station within 24 h.</li>
         <li>Carry your passport at all times: it's your ticket for trains, museums and many attractions.</li>
@@ -2509,6 +2544,7 @@ Request: ${txt.trim()}`;
       <div class="note ${isAU() ? "info" : "warn"}"><b class="tag">${isAU() ? "Good to know" : "Important"}</b><span>Hong Kong and Macau are outside mainland immigration. Going mainland → Hong Kong → mainland counts as two mainland entries${isAU() ? " — fine for Australians, since each visa-free entry gets its own 30 days" : ""}.</span></div>
     </section>
 
+    ${formsPanel(ids, hasMainland, hasHK, hasMO)}
     ${fromSyd() ? flightsPanel(ids, lastPlan.arriveId, lastPlan.departId) : ""}
     ${isAU() ? ausPanel(ids) : ""}
     <section class="panel">
@@ -3102,7 +3138,7 @@ Request: ${txt.trim()}`;
         ${day.friday && (s.part === "m" || s.part === "full") ? `<div class="pv-halal"><b>Jumu'ah:</b> ${esc((day.city.mosques[0] || { n: "search 清真寺 in Amap" }).n)}</div>` : ""}
         ${s.alt ? `<div class="pv-meta">Or instead: ${esc(s.alt.n)}</div>` : ""}`;
     } else if (s.type === "arrive") {
-      b = `<div class="pv-name">${s.via ? "Land in " + esc(s.city.name) : "Arrive & check in"}</div>${s.land != null ? `<div><b>${s.flightNo ? esc(s.flightNo) + " lands" : "Lands"} ${hhmm(s.land)}</b>${s.ready != null ? ` · at the hotel about ${hhmm(s.ready)}` : ""}</div>` : ""}${fromSyd() ? `<div>${plain(sydLine(s.flyIn, "in"))}</div>` : ""}<div>${esc(s.text)}</div>`;
+      b = `<div class="pv-name">${s.via ? "Land in " + esc(s.city.name) : "Arrive & check in"}</div>${s.land != null ? `<div><b>${s.flightNo ? esc(s.flightNo) + " lands" : "Lands"} ${hhmm(s.land)}</b>${s.ready != null ? ` · at the hotel about ${hhmm(s.ready)}` : ""}</div>` : ""}${fromSyd() ? `<div>${plain(sydLine(s.flyIn, "in"))}</div>` : ""}<div>${esc(s.text)}</div>${s.city.region === "mainland" ? `<div>Arrival card: fill in free online at s.nia.gov.cn/ArrivalCardFillingPC (or on paper at the airport).</div>` : `<div>No arrival card needed — passport only.</div>`}`;
     } else if (s.type === "travel") {
       b = `<div class="pv-name">${s.toFlight ? "To your flight" : "Travel"}: ${esc(s.from.name)} → ${esc(s.to.name)}</div>
         ${s.dep != null ? `<div><b>${s.est ? "Est. " : ""}departs ${hhmm(s.dep)} → arrives ${hhmm(s.arr)}</b>${s.leaveBy != null && !s.toFlight ? ` · leave hotel by ${hhmm(s.leaveBy)}` : ""}</div>` : ""}
@@ -3112,7 +3148,7 @@ Request: ${txt.trim()}`;
         ${s.border ? `<div>Border crossing — passport ready.</div>` : ""}
         ${s.toFlight ? "" : `<div><b>On arrival:</b> ${esc(firstSentence(s.arrive))} Check in at ${esc(stayName(s.to))}.</div>`}`;
     } else if (s.type === "depart") {
-      b = `<div class="pv-name">Departure</div>${s.off != null ? `<div><b>${s.flightNo ? esc(s.flightNo) + " takes off" : "Take-off"} ${hhmm(s.off)}</b> · at the airport by ${hhmm(s.off - INTL_BUFFER)}${s.leaveBy != null ? ` · leave hotel by ${hhmm(s.leaveBy)}` : ""}</div>` : ""}<div>${esc(s.text)}</div>${fromSyd() ? `<div>${plain(sydLine(s.flyOut, "out"))}</div>` : ""}`;
+      b = `<div class="pv-name">Departure</div>${s.off != null ? `<div><b>${s.flightNo ? esc(s.flightNo) + " takes off" : "Take-off"} ${hhmm(s.off)}</b> · at the airport by ${hhmm(s.off - INTL_BUFFER)}${s.leaveBy != null ? ` · leave hotel by ${hhmm(s.leaveBy)}` : ""}</div>` : ""}<div>${esc(s.text)}</div>${fromSyd() ? `<div>${plain(sydLine(s.flyOut, "out"))}</div><div>Landing in Australia: Incoming Passenger Card on the plane (or the Australia Travel Declaration in the Qantas app on eligible flights). Declare food and A$10,000+ cash.</div>` : ""}`;
     } else if (s.type === "rest") {
       b = `<div class="pv-name">Free time & rest</div><div>Rest, pray, or revisit somewhere you liked.</div>`;
     } else if (s.type === "free") {
@@ -3146,7 +3182,7 @@ Request: ${txt.trim()}`;
     // 2. One page per day
     plan.days.forEach((d, i) => {
       const firstInCity = d.kind === "arrival" || d.kind === "transfer";
-      const hotel = d.city.hotels.find((h) => h.tier === state.budget) || d.city.hotels[0];
+      const hotel = d.city.hotels.find((h) => h.booked) || d.city.hotels.find((h) => h.tier === state.budget) || d.city.hotels[0] || { n: "a hotel near " + d.city.stay.area };
       pages.push(`${head(`Day ${i + 1} · ${esc(d.city.name)} <span class="han">${d.city.zh}</span>`, (d.date ? fmtDate(d.date) + " · " : "") + (KIND[d.kind] || "Sightseeing"))}
         <p class="pv-sub">${esc(dayTitle(d))}</p>
         ${d.date ? `<p class="pv-meta">🌤 ${esc(wxPlain(d))}</p>` : ""}

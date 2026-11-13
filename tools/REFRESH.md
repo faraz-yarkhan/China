@@ -22,6 +22,9 @@ restaurants and hotels open and close. Every day a scheduled Claude session foll
    the 30-day visa-free arrangement currently runs to 31 Dec 2026 — check for an extension or change
    and update the wording in `app.js` (search `31 December 2026`, `2026-12-31`, `visa-free`).
    Also check the 240-hour transit rule and Hong Kong / Macau stays.
+   Also check the border forms (`BORDER_LINKS` in `data.js`, wording in `entryFormsHTML` / `leaveFormsHTML` /
+   `homeArrivalHTML` in `app.js`): China online arrival card, Hong Kong/Macau (no card), Australia's Incoming
+   Passenger Card vs the digital Australia Travel Declaration (rolling out to all airports by end 2027).
 3. **Flights from Sydney** (`SYD_FLIGHTS` in `data.js`): nonstop routes and airlines still operating.
 4. **Payments**: Alipay / WeChat Pay fees for foreign cards (search `3%` in `app.js`).
 5. **Places** (`CITIES[...].places`): ticket prices, closing days (`cl`), booking rules, closures.

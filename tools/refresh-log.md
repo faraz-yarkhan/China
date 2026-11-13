@@ -2,6 +2,12 @@
 
 Newest first. Each daily refresh adds an entry (see `tools/REFRESH.md`).
 
+## 2026-11-13 (daily) — no data changes
+- Rates unchanged (¥ 0.218, HK$ 0.187, MOP 0.182): Wise HK$5.342 / XE 5.318 per A$1 match; no AUD/CNY quote dated today
+  found. Visa-free: still no 2027 extension announced (chinaeasymode, chinavisacheck, blisstravel; AirAsia blog's
+  "2027 pilot" claim contradicts all others and is ignored). Rotation: Forbidden City ¥60 Apr–Oct / ¥40 Nov–Mar,
+  booking 7 days ahead from 20:00 — matches current text (trip.com, realchinatrip; Palace Museum site not checked).
+
 ## 2026-11-13 — border forms with links; live page merged back
 - New "Forms at each border — step by step" panel in Before you go, plus 📝 lines on the arrival, border-crossing and
   departure days, with official links (`BORDER_LINKS` in data.js):

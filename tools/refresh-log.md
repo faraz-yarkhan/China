@@ -2,6 +2,12 @@
 
 Newest first. Each daily refresh adds an entry (see `tools/REFRESH.md`).
 
+## 2026-11-14 — no data changes
+- Rates unchanged (¥ 0.218, HK$ 0.187, MOP 0.182): Wise/XE ~HK$5.31–5.32, ~¥4.52–4.58 per A$1, none dated today.
+  Visa-free: still no 2027 extension (only Russia, announced 20 May 2026 — english.www.gov.cn, CGTN). Rotation: Beijing
+  halal — Donglaishun Wangfujing flagship still listed (Beijing APM, 138 Wangfujing, 5F — beijing.gov.cn, zabihah);
+  Jubaoyuan not re-confirmed (no 2026 source found either way), left as is.
+
 ## 2026-11-13 (daily) — no data changes
 - Rates unchanged (¥ 0.218, HK$ 0.187, MOP 0.182): Wise HK$5.342 / XE 5.318 per A$1 match; no AUD/CNY quote dated today
   found. Visa-free: still no 2027 extension announced (chinaeasymode, chinavisacheck, blisstravel; AirAsia blog's

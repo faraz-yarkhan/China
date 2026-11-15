@@ -2,6 +2,10 @@
 
 Newest first. Each daily refresh adds an entry (see `tools/REFRESH.md`).
 
+## 2026-11-15 — refresh schedule changed to weekly
+- At the owner's request the scheduled refresh now runs weekly (Mondays 08:59 Sydney) instead of daily, covering the
+  whole checklist each run. REFRESH.md and the page footer ("Checked weekly.") updated. No data changes.
+
 ## 2026-11-14 — no data changes
 - Rates unchanged (¥ 0.218, HK$ 0.187, MOP 0.182): Wise/XE ~HK$5.31–5.32, ~¥4.52–4.58 per A$1, none dated today.
   Visa-free: still no 2027 extension (only Russia, announced 20 May 2026 — english.www.gov.cn, CGTN). Rotation: Beijing

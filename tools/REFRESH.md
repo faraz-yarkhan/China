@@ -1,7 +1,7 @@
-# Daily data refresh
+# Weekly data refresh
 
 The planner's facts go stale: exchange rates move, visa rules change, flights and prices change,
-restaurants and hotels open and close. Every day a scheduled Claude session follows this checklist.
+restaurants and hotels open and close. Every Monday morning (Sydney time) a scheduled Claude session follows this checklist.
 
 ## Ground rules
 - Work on branch `claude/lucid-feynman-omifim` only (pull it first). Never force-push.
@@ -40,7 +40,7 @@ restaurants and hotels open and close. Every day a scheduled Claude session foll
 2. `python3 tools/build.py` — rebuilds `china-trip-planner.html` and `.build/site/`.
 3. `node tools/smoke-test.js` — must print PASS for both files. Fix anything you broke.
 4. Add an entry at the top of `tools/refresh-log.md`: date, what changed, sources, anything unverified.
-5. Commit (`Daily data refresh YYYY-MM-DD`) and push to `claude/lucid-feynman-omifim`.
+5. Commit (`Weekly data refresh YYYY-MM-DD`) and push to `claude/lucid-feynman-omifim`.
    GitHub Pages (if enabled) updates from this branch automatically.
 6. Update the claude.ai page https://claude.ai/artifact/EYAy1zPmQ4mTAHKWsCaDCK with the Artifact tool:
    publish `.build/site/index.html` to that `url` with `files` data.js, map-data.js and app.js from
@@ -48,7 +48,13 @@ restaurants and hotels open and close. Every day a scheduled Claude session foll
 7. End with a short summary of what changed and what couldn't be verified.
 
 ## Note: guide-data.js
-`guide-data.js` (the owner's personal travel guide) exists only on the published Claude page, never in this public repo. The daily publish sends only index.html, data.js, map-data.js and app.js, so the guide file on the page is kept — do not delete it or pass `null` for it. Without the file the app simply hides guide tips.
+`guide-data.js` (the owner's personal travel guide) exists only on the published Claude page, never in this public repo. The weekly publish sends only index.html, data.js, map-data.js and app.js, so the guide file on the page is kept — do not delete it or pass `null` for it. Without the file the app simply hides guide tips.
 
-## Daily runs
-The refresh runs every day. Most days little changes: check exchange rates and any news on entry rules for Australians every day, and work through the rest of the checklist on a rotating basis (a few cities per day) so every item is still covered at least weekly. If nothing changed, only update `DATA_INFO.refreshed`, add a one-line log entry, commit and publish. Publishing without `capabilities` keeps the page's existing ones (it uses `sample` for "Ask Claude").
+## Weekly runs
+The refresh runs once a week (Mondays, 08:59 Sydney time; it was daily until 15 Nov 2026). Each run covers the whole
+checklist: start with exchange rates and entry rules for Australians (including border forms), then go through the
+rest. If a run can't get through everything, say which items were skipped in the log so the next run starts with them.
+Always update `DATA_INFO.refreshed`, add a log entry, commit and publish, even if nothing changed. Before publishing,
+compare the live page's files with `.build/site/`: if the page has changes that aren't in this repo, merge them in
+first (three-way merge against the commit the page was built from) rather than overwriting them. Publishing without
+`capabilities` keeps the page's existing ones (it uses `sample` for "Ask Claude").

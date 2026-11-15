@@ -1286,7 +1286,7 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; color:
 
   <section class="out" id="out" aria-live="polite"></section>
 </main>
-<footer class="refresh" id="refreshFooter">Data last refreshed: 14 Nov 2026 (exchange rates, entry rules for Australians, Sydney flights, prices, opening days, hotels and halal food listings). Checked daily.</footer>
+<footer class="refresh" id="refreshFooter">Data last refreshed: 14 Nov 2026 (exchange rates, entry rules for Australians, Sydney flights, prices, opening days, hotels and halal food listings). Checked weekly.</footer>
 
 <script>
   window.onerror = function (msg) {
@@ -1308,7 +1308,7 @@ a.btn { display: inline-flex; align-items: center; text-decoration: none; color:
    tip, x how to get there when it is far from the centre, cl closed weekdays (0 Sun … 6 Sat),
    r rating 1–3 (3 = unmissable). */
 
-/* ---------- DATA REFRESH — updated by the daily refresh (see tools/REFRESH.md) ---------- */
+/* ---------- DATA REFRESH — updated by the weekly refresh (see tools/REFRESH.md) ---------- */
 const DATA_INFO = {
   refreshed: "2026-11-14", // date the data below was last checked (YYYY-MM-DD)
   // Mid-market rates to Australian dollars: A$ per 1 unit of local currency
@@ -2360,7 +2360,7 @@ const MAP_GEO = { w: 1000, h: 734, lon0: 72, lat1: 54.5, cos: 0.819152, k: 19.07
   // "5 Nov 2026" from "2026-11-05"
   const refreshedLabel = (() => { const d = new Date(DATA_INFO.refreshed + "T00:00:00"); return isNaN(d) ? DATA_INFO.refreshed : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }); })();
   const AUD_NOTE = DATA_INFO.ratesNote + ", checked " + refreshedLabel;
-  const refreshLine = () => `Data last refreshed: ${refreshedLabel} (${DATA_INFO.covers}). Checked daily.`;
+  const refreshLine = () => `Data last refreshed: ${refreshedLabel} (${DATA_INFO.covers}). Checked weekly.`;
   const audFmt = (v) => (v < 1 ? String(Math.max(0.5, Math.round(v * 2) / 2)) : v < 10 ? String(Math.round(v * 2) / 2) : v < 100 ? String(Math.round(v)) : (v < 1000 ? Math.round(v / 5) * 5 : Math.round(v / 10) * 10).toLocaleString("en-US"));
   // Adds "(≈A$…)" after every ¥ / HK$ / MOP amount or range in a piece of text
   const PRICE_RE = /(¥|HK\$|MOP\$?\s?)(\d[\d,]*(?:\.\d+)?)(\s?[–-]\s?(?:¥|HK\$|MOP\$?\s?)?(\d[\d,]*(?:\.\d+)?))?(?![\d,]*\.?\d)(?!\s*\(?≈\s?A\$)/g;

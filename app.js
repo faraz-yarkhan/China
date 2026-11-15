@@ -60,7 +60,7 @@
   // "5 Nov 2026" from "2026-11-05"
   const refreshedLabel = (() => { const d = new Date(DATA_INFO.refreshed + "T00:00:00"); return isNaN(d) ? DATA_INFO.refreshed : d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }); })();
   const AUD_NOTE = DATA_INFO.ratesNote + ", checked " + refreshedLabel;
-  const refreshLine = () => `Data last refreshed: ${refreshedLabel} (${DATA_INFO.covers}). Checked daily.`;
+  const refreshLine = () => `Data last refreshed: ${refreshedLabel} (${DATA_INFO.covers}). Checked weekly.`;
   const audFmt = (v) => (v < 1 ? String(Math.max(0.5, Math.round(v * 2) / 2)) : v < 10 ? String(Math.round(v * 2) / 2) : v < 100 ? String(Math.round(v)) : (v < 1000 ? Math.round(v / 5) * 5 : Math.round(v / 10) * 10).toLocaleString("en-US"));
   // Adds "(≈A$…)" after every ¥ / HK$ / MOP amount or range in a piece of text
   const PRICE_RE = /(¥|HK\$|MOP\$?\s?)(\d[\d,]*(?:\.\d+)?)(\s?[–-]\s?(?:¥|HK\$|MOP\$?\s?)?(\d[\d,]*(?:\.\d+)?))?(?![\d,]*\.?\d)(?!\s*\(?≈\s?A\$)/g;

@@ -238,13 +238,13 @@ const CITIES = {
     name: "Chengdu", zh: "成都", region: "mainland", metro: true, cur: "¥", ride: "DiDi",
     taxi: [8, 2, 1.9],
     intro: "Laid-back capital of Sichuan: giant pandas, teahouses and fiery cuisine. Halal food is less concentrated than in Xi'an, so plan meals ahead.",
-    stay: { area: "Holiday Inn Express Chengdu West Gate", ll: [30.683, 104.047], m: "Huapaifang · Line 5",
-      why: "Your booked hotel: Jinniu District, 2 min walk to Huapaifang station (Line 5). Kuanzhai Alley, Taikoo Li and Chunxi Road are 10–15 min by DiDi. Free breakfast. Location approximate." },
+    stay: { area: "Holiday Inn Express Chengdu Tianfu Square", ll: [30.657, 104.057], m: "Jinjiang Hotel · Line 1",
+      why: "Your booked hotel: 52 Jindun Rd, Qingyang, by People's Park. ~7 min walk to Jinjiang Hotel station (Line 1), ~12–14 min walk to Tianfu Square (Lines 1 & 2). Kuanzhai Alley 5–10 min and Taikoo Li/Chunxi Rd ~10 min by DiDi. Free breakfast. Location approximate." },
     hotels: [
-      { tier: "booked", booked: true, n: "Holiday Inn Express Chengdu West Gate", ll: [30.683, 104.047], area: "Jinniu District, by Huapaifang station", note: "Your booked hotel. Free breakfast; Line 5 into the centre." },
+      { tier: "booked", booked: true, n: "Holiday Inn Express Chengdu Tianfu Square", ll: [30.657, 104.057], area: "52 Jindun Rd, by People's Park", note: "Your booked hotel. Free breakfast; walk to People's Park and Tianfu Square; Line 2 from Tianfu Square straight to Chengdu East station." },
     ],
     getAround: "Metro covers the centre (pay with Alipay QR). DiDi is very cheap. Day trips to Leshan and Qingcheng go from Chengdu East or Xipu stations.",
-    arrive: "Tianfu Airport (TFU) is 50 km out: Line 18 to the South Railway Station (~40 min) then Line 1, or DiDi (~1 h, ~¥150). Shuangliu Airport (CTU): Line 10 or DiDi (~35 min). Chengdu East Station: Line 2 to Chunxi Road.",
+    arrive: "Tianfu Airport (TFU) is 50 km out: Line 18 to the South Railway Station (~40 min) then Line 1, or DiDi (~1 h, ~¥150). Shuangliu Airport (CTU): Line 10 or DiDi (~35 min). Chengdu East Station: Line 2 to Tianfu Square (no change), then a 12-min walk to your hotel.",
     depart: "TFU: leave 3.5 h before, DiDi ~1 h. CTU: ~40 min. Chengdu East (trains to Chongqing, Xi'an): Line 2.",
     dishes: ["Hotpot — ask for a 清真 hotpot restaurant; regular hotpot uses beef tallow of unknown slaughter", "Mapo tofu — usually made with beef in halal kitchens", "Sichuan peppercorn beef (麻辣牛肉)", "Sweet water noodles (甜水面)", "Avoid: rabbit heads, twice-cooked pork, dan dan noodles (pork)"],
     halal: [

@@ -2422,6 +2422,7 @@ Request: ${txt.trim()}`;
     const vcls = { "BEST PICK": "best", Good: "good", OK: "ok", Skip: "skip" };
     return `<details class="g-box"><summary>📘 From your travel guide — ${esc(city.name)} ${guideLink("Open the full guide ↗")}</summary>
       ${g.booked ? `<h5>Your hotel</h5><div class="g-row"><span class="g-v best">✅ Booked</span><b>${esc(g.booked.n)}</b> <span class="hint">${esc(g.booked.addr)} · ${esc(g.booked.score)}</span><span>🚇 ${esc(g.booked.metro)}</span><span>📍 ${esc(g.booked.near)}</span><span class="hint">${esc(g.booked.note)}</span></div>` : `<h5>Your hotel</h5><p class="hint">Not booked yet.</p>`}
+      ${g.train ? `<h5>🚄 Bullet-train station</h5><div class="g-row"><b>${esc(g.train.station)}</b><span class="hint">Nearest high-speed station: ${esc(g.train.nearest)}</span><span>🚶 ${esc(g.train.how)}</span><span>➡ ${esc(g.train.leg)}</span><span class="hint">${esc(g.train.tip)}</span></div>` : ""}
       <h5>Viral & Instagram-worthy</h5><ul>${li(g.viral.map((v) => `<li><i class="g-cat">${esc(v.cat)}</i> <b>${esc(v.n)}</b> <span class="hint">${esc(v.area)}</span> — ${esc(v.tip)}</li>`))}</ul>
       <h5>Instagram cafés</h5><ul>${li(g.cafes.map((c) => `<li><b>${esc(c.n)}</b> <span class="hint">${esc(c.area)}</span> — ${esc(c.why)}</li>`))}</ul>
       <h5>Shopping</h5><ul>${li(g.shopping.map((x) => `<li><b>${esc(x.n)}</b> — ${esc(x.d)}</li>`))}</ul>

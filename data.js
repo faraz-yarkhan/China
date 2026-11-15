@@ -8,7 +8,7 @@
 
 /* ---------- DATA REFRESH — updated by the weekly refresh (see tools/REFRESH.md) ---------- */
 const DATA_INFO = {
-  refreshed: "2026-11-14", // date the data below was last checked (YYYY-MM-DD)
+  refreshed: "2026-11-16", // date the data below was last checked (YYYY-MM-DD)
   // Mid-market rates to Australian dollars: A$ per 1 unit of local currency
   audRates: { "¥": 0.218, "HK$": 0.187, "MOP": 0.182 },
   ratesNote: "1 CNY ≈ A$0.218 · HK$1 ≈ A$0.187 · MOP 1 ≈ A$0.182 (mid-market)",
@@ -767,7 +767,7 @@ const CITIES = {
     ],
     night: ["Halal dinner around Kowloon Mosque, then the harbour promenade.", "Star Ferry to Central and back for the lights."],
     places: [
-      { n: "Victoria Peak via the Peak Tram", zh: "山頂纜車 太平山頂", t: ["sightseeing", "family"], s: ["e", "n"], h: "2–3 h", c: "Peak Tram ~HK$88 return; Sky Terrace extra", m: "Central · Island/Tsuen Wan lines", ll: [22.2710, 114.1500], r: 3,
+      { n: "Victoria Peak via the Peak Tram", zh: "山頂纜車 太平山頂", t: ["sightseeing", "family"], s: ["e", "n"], h: "2–3 h", c: "Peak Tram HK$116 return, HK$82 one way (same price every day); with Sky Terrace 428 HK$182 return", m: "Central · Island/Tsuen Wan lines", ll: [22.2710, 114.1500], r: 3,
         d: "Steep historic tram up to the city's most famous view. Walk the flat Lugard Road loop (~45 min) for the best panorama.",
         tip: "Lower terminus is on Garden Road (15 min walk from Central MTR exit J2). Queues are long at sunset — go 1 h before, or take bus 15 / a taxi up." },
       { n: "Star Ferry, TST Promenade & Symphony of Lights", zh: "天星小輪 幻彩詠香江", t: ["sightseeing", "relaxing", "family"], s: ["n"], h: "1.5 h", c: "Star Ferry ~HK$5–6.5", m: "Tsim Sha Tsui · Tsuen Wan Line", ll: [22.2940, 114.1690], r: 3,

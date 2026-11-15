@@ -2,6 +2,25 @@
 
 Newest first. Each daily refresh adds an entry (see `tools/REFRESH.md`).
 
+## 2026-11-16 — weekly refresh (first weekly run)
+- Exchange rates unchanged (¥ 0.218, HK$ 0.187, MOP 0.182): OFX HK$5.338 per A$1 (13 Nov), Wise 5.314, XE 5.315; no
+  dated AUD/CNY quote this week beyond Pluang 0.21793 (11 Nov).
+- Entry rules: still no official 2027 extension of the 30-day visa-free arrangement. A German visa site
+  (buch-dein-visum.de, ~12 Nov) reports China has signalled willingness to extend to end of 2027 — not confirmed by MFA
+  or NIA; wording unchanged. Border forms re-checked 13 Nov (see that entry).
+- Covered earlier this week and not repeated: Sydney flights (9 Nov), payments (10 Nov), 240-hour transit (12 Nov),
+  Forbidden City (13 Nov), Beijing halal (14 Nov).
+- **Places:** Peak Tram fare updated from ~HK$88 return to HK$116 return / HK$82 single, same price every day, HK$182
+  with Sky Terrace 428 (Peak Tramways press release, effective 29 Dec 2025, thepeak.com.hk; SCMP on single pricing).
+  Checked and unchanged: Terracotta Army ¥120 (one site claims ¥100 Dec–Feb, unconfirmed), Panda Base ¥55 (online
+  booking only), Shanghai Tower ~¥180, Great Mosque of Xi'an free for Muslims / ~¥25 others (¥15 off-season per some
+  sources; closed to visitors before 13:00 Fridays).
+- **Intercity:** Beijing South–Shanghai Hongqiao 2nd class quoted ¥553–695 across sources (seat61, chinavigators,
+  chinafortravelers citing 12306); current text "¥550–670" left as is.
+- **Mosques:** Kowloon Mosque — no 2026 visitor info found; unchanged.
+- Not checked this run: hotels other than booked ones, halal lists outside Beijing, ROUTES/BOATS beyond Beijing–Shanghai,
+  OUTINGS train times, climate. Start next run with these.
+
 ## 2026-11-15 — refresh schedule changed to weekly
 - At the owner's request the scheduled refresh now runs weekly (Mondays 08:59 Sydney) instead of daily, covering the
   whole checklist each run. REFRESH.md and the page footer ("Checked weekly.") updated. No data changes.

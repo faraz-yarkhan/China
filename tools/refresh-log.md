@@ -2,6 +2,25 @@
 
 Newest first. Each daily refresh adds an entry (see `tools/REFRESH.md`).
 
+## 2026-11-23 — weekly refresh
+- **Exchange rates (A$ weaker):** RBA 19 Nov: A$1 = ¥4.4512, HK$5.2382 (18 Nov: ¥4.4798, HK$5.2722) → 1 CNY ≈ A$0.225
+  (was 0.218), HK$1 ≈ A$0.191 (was 0.187), MOP 1 ≈ A$0.185 (peg). Source: rba.gov.au exchange-rate RSS, ozfinancehub.
+- **Entry rules:** still no official 2027 extension of the 30-day visa-free arrangement (trackers checked 16–20 Nov:
+  babagoeschina, chopmarkchina, viatsy). Slovakia's foreign minister said on 10 Nov that China is ready to extend for
+  Slovaks — no Chinese notice for Australia or others. Wording unchanged.
+- **Intercity:** Guangzhou South–HK West Kowloon updated to ~45 min–1 h, ¥185–215 2nd class, ~24 trains/day each way
+  (was ~50 min–1 h, ¥200–250) — sz.gov.cn (24 pairs from late Sept 2026), trip.com, travelchinaguide, chinahighlights.
+  HK–Macau ferry updated to HK$192–212 economy, HK$242 night (was HK$175–200): fares rose 25 Apr 2026 — Macau Daily
+  Times, GGRAsia, Macau Post Daily (TurboJET HK$194/212/242; Cotai Class HK$192/209/242). Changed in data.js and BOATS.
+  Bridge bus HK$65–70 not re-checked.
+- **Places/transport checked, unchanged:** HK Airport Express to Kowloon HK$105 Octopus (mtr.com.hk).
+- **Halal/mosques:** Hongchangxing (1 South Yunnan Rd, Shanghai), Jia San Guantang Baozi (Beiyuanmen, Xi'an), Islamic
+  Centre Canteen (Oi Kwan Rd, Wan Chai) all still listed (zabihah, smartshanghai, openrice, discoverhongkong) — no 2026
+  closure found, but no 2026 confirmation of opening either. Huaisheng Mosque, Guangzhou: one guide says it "now opens
+  only to Muslims"; not confirmed by gz.gov.cn, so not changed — worth checking before a non-Muslim visit.
+- Not covered this run: hotels other than booked ones, Furong/Zhangjiajie last trains (set 6 Nov), climate (rarely
+  changes). Sydney flights: Shenzhen Airlines SZX–SYD still due 14 Dec.
+
 ## 2026-11-16 — weekly refresh (first weekly run)
 - Exchange rates unchanged (¥ 0.218, HK$ 0.187, MOP 0.182): OFX HK$5.338 per A$1 (13 Nov), Wise 5.314, XE 5.315; no
   dated AUD/CNY quote this week beyond Pluang 0.21793 (11 Nov).

@@ -8,10 +8,10 @@
 
 /* ---------- DATA REFRESH — updated by the weekly refresh (see tools/REFRESH.md) ---------- */
 const DATA_INFO = {
-  refreshed: "2026-11-16", // date the data below was last checked (YYYY-MM-DD)
+  refreshed: "2026-11-23", // date the data below was last checked (YYYY-MM-DD)
   // Mid-market rates to Australian dollars: A$ per 1 unit of local currency
-  audRates: { "¥": 0.218, "HK$": 0.187, "MOP": 0.182 },
-  ratesNote: "1 CNY ≈ A$0.218 · HK$1 ≈ A$0.187 · MOP 1 ≈ A$0.182 (mid-market)",
+  audRates: { "¥": 0.225, "HK$": 0.191, "MOP": 0.185 },
+  ratesNote: "1 CNY ≈ A$0.225 · HK$1 ≈ A$0.191 · MOP 1 ≈ A$0.185 (mid-market)",
   covers: "exchange rates, entry rules for Australians, Sydney flights, prices, opening days, hotels and halal food listings",
 };
 
@@ -900,9 +900,9 @@ const ROUTES = {
   "zjj|fr": "High-speed train Zhangjiajie West → Furongzhen, 20–30 min, approx. ¥40 (roughly 07:30–21:40; not from Zhangjiajie's city-centre station), then taxi or minibus about 10 min (~¥15) to the old town. By car from Wulingyuan about 1.5–2 h.",
   "cq|zjj": "Flying (~1.5 h) is usually simplest; rail connections change often, so compare on Trip.com.",
   "gz|sz": "High-speed train Guangzhou South/East → Shenzhen North/Futian, 30–45 min, approx. ¥75–100.",
-  "gz|hk": "High-speed train Guangzhou South → Hong Kong West Kowloon, ~50 min – 1 h, approx. ¥200–250. Both immigration checks happen inside West Kowloon station.",
+  "gz|hk": "High-speed train Guangzhou South → Hong Kong West Kowloon, ~45 min – 1 h, approx. ¥185–215 (2nd class); about 24 trains a day each way. Both immigration checks happen inside West Kowloon station.",
   "sz|hk": "Fastest: high-speed train Futian or Shenzhen North → Hong Kong West Kowloon (15–25 min, approx. ¥70–90). Or metro to Futian Checkpoint/Luohu, cross on foot, then MTR East Rail Line into Kowloon (~45–60 min, approx. HK$40–60).",
-  "hk|mo": "Hong Kong–Zhuhai–Macao Bridge shuttle bus from the HK Port near Tung Chung (~45 min, approx. HK$65–70), or TurboJET ferry from the Hong Kong–Macau Ferry Terminal in Sheung Wan (~1 h, approx. HK$175–200).",
+  "hk|mo": "Hong Kong–Zhuhai–Macao Bridge shuttle bus from the HK Port near Tung Chung (~45 min, approx. HK$65–70), or TurboJET ferry from the Hong Kong–Macau Ferry Terminal in Sheung Wan (~1 h, approx. HK$194–212 economy; HK$242 at night).",
   "gz|mo": "Intercity train Guangzhou South → Zhuhai (~1 h), then walk across the Gongbei–Border Gate crossing into Macau.",
   "sz|mo": "Ferry from Shekou to Macau (~1 h), or coach via the Hong Kong–Zhuhai–Macao Bridge.",
   "gl|ys": "Best: make the Li River cruise your transfer (Guilin pier → Yangshuo, ~4–5 h, most tickets include hotel pick-up; luggage can go with you). Faster: high-speed train Guilin/Guilin North → Yangshuo station (~25 min) + 30 min shuttle into town, or a direct bus (~1.5 h).",

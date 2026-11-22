@@ -2774,7 +2774,7 @@ Request: ${txt.trim()}`;
   };
   // Routes where a boat is a real option, with what it is
   const BOATS = {
-    "hk|mo": { text: "TurboJET or Cotai ferry Hong Kong (Sheung Wan or Kowloon) ↔ Macau, about 1 h, approx. HK$175–200.", min: 60, cost: "HK$175–200" },
+    "hk|mo": { text: "TurboJET or Cotai ferry Hong Kong (Sheung Wan or Kowloon) ↔ Macau, about 1 h, approx. HK$192–212 economy (HK$242 on night sailings).", min: 60, cost: "HK$192–212" },
     "mo|sz": { text: "Ferry Shekou ↔ Macau, about 1 h, approx. ¥175–220.", min: 60, cost: "¥175–220" },
     "gl|ys": { text: "Li River cruise Guilin → Yangshuo, about 4–5 h with lunch on board (not halal), approx. ¥215–450; most tickets include hotel pick-up and the bus back.", min: 270, cost: "¥215–450" },
   };
